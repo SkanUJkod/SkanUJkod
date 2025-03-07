@@ -1,0 +1,22 @@
+name: Build cargo project
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (Clippy)
+        # Strict linting for now, may be relaxed once we get the hang of Rust
+        run: cargo clippy -- -D warnings -D clippy::pedantic -D clippy::nursery
+      - name: Run tests
+        run: cargo test --verbose
