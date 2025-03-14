@@ -1,14 +1,15 @@
 ## usefull links to further investigation
 
-https://github.com/SonarSource/sonar-go
+[core](https://github.com/SonarSource/sonarqube)
+[commons](https://github.com/SonarSource/sonar-analyzer-commons)
 
-https://github.com/SonarSource/sonar-scanner-cli
+[scanner go](https://github.com/SonarSource/sonar-go)
 
-https://github.com/SonarSource/sonar-analyzer-commons
+[cli](https://github.com/SonarSource/sonar-scanner-cli)
+
 
 [Developing a Query Engine for Source Code Analyzers](https://github.com/SonarSource/analysis-ast-query/blob/master/MasterThesis.pdf)
 [thesis gh project](https://github.com/SonarSource/analysis-ast-query)
-
 
 [Start Analyzing your Projects with SonarQube](https://docs.bitnami.com/general/how-to/analyze-projects-sonarqube/)
 
@@ -47,3 +48,6 @@ Currently, the strategy when analyzing pull requests is to only send files to th
 
 [Analyzer cache](https://github.com/SonarSource/sonar-plugin-api/blob/master/docs/optimize-sensors.md#analyzer-cache)
 Analyzers can persist data in a cache that will be made available to it in a later analysis. The cached data is stored on the server side and the analyzer can store and retrieve data using any key. Analyzers must make sure that there’s no risk of key collision between different analyzers.
+
+
+https://arc.net/l/quote/qobclsqu
