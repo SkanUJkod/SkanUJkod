@@ -4,7 +4,7 @@
 
 Most of this report is based on the documentation available [here](https://www.frama-c.com/download/frama-c-plugin-development-guide.pdf). I will be referring to specific sections of the guide throughout the report. At the time of writing, the guide describes Frama-C 30.0 (Zinc).
 
-### 1: User interface
+## 1: User interface
 
 Frama-C offers both a CLI and a GUI to run analyses. I have only used the CLI.
 
@@ -14,7 +14,7 @@ Some plugins have dependencies between each other, e.g. a plugin that computes t
 
 While the tool offers "persistent" sessions that can be loaded once analysis is started, AFAIK, modifying the analysed source requires starting a new analysis.
 
-### 2: Available metrics
+## 2: Available metrics
 
 The tool centers around formal methods, proving properties of C programs, etc.
 A list of official plugins can be found [here](https://frama-c.com/html/kernel-plugin.html). However, such formal analyses are not mentioned by our project requirements.
@@ -32,13 +32,13 @@ The coverage metrics our MVP should include would probably be:
 
 This is a conservative estimate. If overall efforts maintain the current development velocity, this list could be expanded.
 
-### 3: Extensibility
+## 3: Extensibility
 
 The [guide](#disclaimer) goes into detail about plugin development. A plugin is basically a dune library, that calls the `Boot.Main.extend` function to register the plugin with the kernel. It is built with `dune build` and the resulting artifacts are moved to Frama-C's installed directory using `dune install`.
 
 The guide describes two "dummy" plugins. One just logs "Hello, world!" to the console on each invocation of `frama-c`, while the other computes the CFG of an input program in .dot format. These are described by sections 2.3 and 2.4, respectively.
 
-### 4: Architecture
+## 4: Architecture
 
 ![Frama-C architecture diagram](frama-c-plugin-development-guide.svg)
 
