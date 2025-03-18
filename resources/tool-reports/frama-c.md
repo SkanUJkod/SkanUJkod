@@ -42,31 +42,12 @@ The guide describes two "dummy" plugins. One just logs "Hello, world!" to the co
 
 ![Frama-C architecture diagram](frama-c-plugin-development-guide.svg)
 
-The above diagram visualizes the architecture, as well as the structure of the kernel repository.
+The above diagram visualizes the architecture, as well as the structure of the kernel repository. It is lifted from section 3 of the [guide](#disclaimer), which describes its components in detail.
 
-<!-- As mentioned previously, plugins are linked dynamically.
+Projects are consumed by the CLI by specifying each source file explicitly. As an alternative, Frama-C offers the `frama-c-script` command, which can, for example, read the Compilation Database (CDB) of a project, in the form of a `compile_commands.json` file, which can be exported by most build tools for C like CMake. Based on this file a suite of scripts is generated in the file `GNUmakefile`, which can then be ran to parse the project, run specific analyses and open the GUI. I have not tested this feature thoroughly, as I've only worked with single source files, but the framework is well documented and thus finding out more details shouldn't be difficult.
 
-1. How is the project structured?
+Frama-C implements its own parsing and semantic analysis. This is the focus of the `parsing` and `typing` directories. The untyped AST spec is contained in `src/kernel_services/parsetree/cabs.ml`. The typed AST spec is in `src/kernel_services/ast_data/cil_types.ml`.
 
-   - This includes subdirectories of the source repository, modules of the actual code, etc.
-   - Tools that generate UML diagrams from source code can be useful for this.
+CIL is actually an acronym for [C Intermediate Language](https://en.wikipedia.org/wiki/George_Necula#C_Intermediate_Language) initially developed at the University of California, Berkeley by George Necula. The Frama-C fork has since diverged enough to now be considered its own entity, but the prototype probably used the original CIL parsing and semantic analysis.
 
-2. How are inputs represented?
-
-   - Most tools should be able to analyse an entire project, but some also allow analysing single files.
-   - For tools supporting multiple languages this is of particular interest, because they need to define an abstraction layer that defines the operations that can be performed on an input project, irrespective of the input project language. Describe how this is achieved.
-
-3. Parsing
-
-   - Does the tool implement its own lexing/parsing/semantic analysis? Which of these does it delegate to the compiler of the input language?
-   - Semantic analysis is usually done immediately after parsing, to check context-sensitive information like whether variables are declared before they're used,for static languages, whether the types check, etc.
-   - Implementing your own semantic analysis is hard, which is why a lot of static analysis tools are closely coupled with the corresponding compiler, e.g. clang-tidy, gcc's static analyser, etc.
-   - We want to have native implementations for all of these steps, so if your tool does not use the compiler utilities for the above, you are free to go into more detail.
-
-4. Linking checks
-
-   - For plugin-oriented architectures especially, describe how specific projects implement communication between the kernel and the plugin.
-   - Are the plugins linked statically, requiring re-compilation of the entire tool when adding a new plugin?
-   - Are the plugins linked dynamically, as shared libraries, etc.? Do they use C interop for FFI, or native language utilities?
-   - Are the plugins implemented using IPC? The known approaches is communicating using OS sockets, pipes, or shared memory. How is data flowing between plugins [de]serialized? Were there documented performance considerations?
-   - If any other approach is taken (WASM, eBPF), summarise it and link to any relevant discussions between maintainers. -->
+Plugins are linked together via dynamic linking, mainly using the [Dynlink](https://ocaml.org/manual/5.3/libdynlink.html) library. In particular, dependencies between plugins are allowed and can even contain cycles, though this requires a different way of specifying them (Section 4.8 of the [guide](#disclaimer)).
