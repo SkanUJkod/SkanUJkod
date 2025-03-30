@@ -148,16 +148,10 @@ The input consists of:
 - **Changed files** (`git log --name-only --pretty=format:''`)  
 - **File line contributions** (`git blame`)  
 
-### 3. Parsing  
-// todo
-
-### 4. Linking Checks  
+### 3. Linking Checks  
 
 Since GitInspector **does not have a plugin system**, all checks are hardcoded into the main script.
 
 - All metrics and checks (e.g., commit counts, file modifications) are part of the core codebase.  
 - Adding a new check requires modifying the main scripts (`gitinspector.py`, `commits.py`, `output.py`).  
-- No dynamic configuration allows adding checks externally.  
-
-#### Alternative Approaches in Other Tools
-// todo
+- No dynamic configuration allows adding checks externally.
