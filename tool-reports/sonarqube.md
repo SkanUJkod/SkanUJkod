@@ -73,8 +73,6 @@
   - **Server**: Handles web requests, processes analysis data, and serves the GUI.
   - **Database**: Stores configuration settings, analysis results, and historical data.
   - **Scanners**: Tools like SonarScanner perform code analysis and send the results to the server.
-- **Repository Organization**:  
-  The source code is organized into subdirectories corresponding to these core components. Tools like UML diagram generators can help visualize the module relationships.
 
 ### 4.2 Input Representation
 
@@ -103,3 +101,51 @@
   The dynamic plugin architecture is designed to minimize overhead, and performance optimizations are documented in the official SonarQube documentation and community discussions.
 
 ---
+
+## 5: Usefull links
+
+## **Sensors**
+
+In SonarQube, **sensors** are components that collect and convert raw source code into structured data for analysis. They run during code analysis to gather metrics, detect issues, and support language-specific processing, often extended via plugins.
+
+[More info → Optimize Sensors](https://github.com/SonarSource/sonar-plugin-api/blob/master/docs/optimize-sensors.md)
+
+---
+
+### **Skipping Unchanged Files**
+
+When analyzing pull requests, only changed files are sent to the server, allowing analyzers to skip processing unchanged ones.
+
+🔗 [See section in docs](https://github.com/SonarSource/sonar-plugin-api/blob/master/docs/optimize-sensors.md#skipping-unchanged-files)
+
+---
+
+### **Analyzer Cache**
+
+Analyzers can store and retrieve persistent data in a server-side cache for use in future analyses. Each analyzer must ensure unique keys to avoid conflicts.
+
+🔗 [See section in docs](https://github.com/SonarSource/sonar-plugin-api/blob/master/docs/optimize-sensors.md#analyzer-cache)
+
+---
+
+### **Security & Compliance**
+
+Overview of SonarQube’s security rules, vulnerabilities, and OWASP Top 10 support.  
+ 🔗 https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/security/
+
+---
+
+### **Optimization & Best Practices**
+
+Best practices for implementing efficient sensors in custom analyzers.  
+ 🔗 https://github.com/SonarSource/sonar-plugin-api/blob/master/docs/optimize-sensors.md
+
+Guide to writing and deploying your own static analysis rules for Java.  
+ 🔗 https://docs.sonarsource.com/sonarqube/latest/extend/custom-rules-java/
+
+---
+
+### **Community & Ecosystem**
+
+Official discussion forum for help, feedback, and news about SonarQube and SonarCloud.  
+ 🔗 https://community.sonarsource.com/
