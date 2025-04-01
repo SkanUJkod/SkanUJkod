@@ -13,7 +13,7 @@ cyclomatic complexity will be messure on method level.
 Cyclomatic complexity – minimum numer of paths that you need to test to ensure each decision point is executed at least once. 
 Formula C = E – N + 2P 
 
-![example graphs](img1.png)
+![example graphs](controlGraphExample.png)
 
 Higher cyclomatic complexity means that we need cover more paths. More paths can cause higher probability of bugs. 
 Every decision point (loop or condition statement) contribute to a new path. 
