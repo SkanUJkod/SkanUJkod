@@ -61,20 +61,15 @@ GitInspector specializes in **historical analysis of Git repositories**, focusin
 
 #### d) **Commit Message Analysis**  
    - **Most common words in commit messages** – Helps detect patterns or common themes in development.  
-   - **Commit message length distribution** – Can reveal whether commit messages follow best practices.  
-
-#### e) **Churn Rate and Aging Metrics**  
-   - **Files with the longest time since last modification** – Detects abandoned or stable files.  
-   - **Average time between commits** – Shows how actively a repository is being worked on.  
-   - **Stale branches detection** – Highlights branches that have not been updated for a long time.
+   - **Commit message length distribution** – Can reveal whether commit messages follow best practices.
 
 ### Most Useful Metrics 
 
 - **Commit statistics per author** – Essential for understanding contributor activity.  
 - **Code ownership percentage** – Helps track who maintains what.  
 - **Most frequently modified files** – Useful for detecting hotspots in the codebase.  
-- **Churn rate (lines added + lines removed per file)** – Helps identify unstable parts of the project.  
 - **Stale files and branches** – Useful for detecting technical debt.  
+- **Churn rate (lines added + lines removed per file)** – Helps identify unstable parts of the project *(not directly present in the project, but very useful)*.
 
 ## 3: Extensibility  
 
@@ -126,12 +121,12 @@ Since GitInspector does not have a plugin system, new checks must be **hardcoded
 
 ### Key Modules
 
-- **`gitinspector.py`** – The main script that coordinates execution. It parses Git data, processes it, and outputs reports.  
-- **`commits.py`** – Handles extracting commit history and parsing contributor data.  
-- **`output.py`** – Formats the extracted information into readable reports (HTML, text).  
-- **`settings.py`** – Manages command-line arguments and configuration settings.  
-- **`utils.py`** – Contains helper functions for string manipulation, date formatting, etc.  
-- **`tests/`** – A collection of unit tests validating core functionality.  
+- **`gitinspector.py`** – The main script that executes the analysis, gathering statistical data from a Git repository. It coordinates different modules to produce insightful reports on code contributions.
+- **`metrics`** – Analyzes various code quality indicators, such as commit frequency and changes per author. This module helps assess coding activity and patterns over time.
+- **`responsibilities`** – Identifies which authors are responsible for different files in the repository. It provides an overview of contributions to specific sections of the project.
+- **`format`** – Converts output data into different formats, including HTML, JSON, XML, and plain text. This makes results easier to share and visualize in various tools.
+- **`file-types`** – Allows filtering of analysis based on file extensions. Users can narrow down statistics to specific types of code or documents.
+- **`grading`** – Structures collected data into a format useful for grading coding projects. This is particularly helpful in educational settings to evaluate student contributions.
 
 ### Observations
 - Reports are generated in-memory and then output as text or HTML.  
