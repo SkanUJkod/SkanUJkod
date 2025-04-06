@@ -3,4 +3,10 @@ name = "skan-uj-kod"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = [
+    "parser_lib",
+]
+
 [dependencies]
+parser_lib = { path = "parser_lib" }
