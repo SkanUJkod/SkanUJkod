@@ -26,7 +26,6 @@ categories = [
 ]
 license = "BSD-3-Clause"
 repository = "https://github.com/oxfeeefeee/goscript/"
-resolver = "1"
 
 [dependencies.go-parser]
 path = "../go-parser"
@@ -49,3 +48,8 @@ version = "1"
 [features]
 btree_map = ["go-parser/btree_map"]
 default = []
+
+# TODO(kidq330) - figure out how to set this for workspace instead of per-crate
+[lints.clippy]
+pedantic = "warn"
+nursery = "warn"

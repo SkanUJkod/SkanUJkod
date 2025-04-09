@@ -3,6 +3,8 @@ name = "skan-uj-kod"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
-go-parser = { path = "crates/go-parser"}
-go-types = { path = "crates/go-types" }
+[workspace]
+members = [
+    "crates/go-parser",
+    "crates/go-types"
+]
