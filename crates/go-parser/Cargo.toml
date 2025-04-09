@@ -26,7 +26,6 @@ categories = [
 ]
 license = "BSD-3-Clause"
 repository = "https://github.com/oxfeeefeee/goscript/"
-resolver = "1"
 
 [dependencies.borsh]
 version = "0.10.3"
@@ -36,3 +35,8 @@ optional = true
 btree_map = []
 default = []
 serde_borsh = ["dep:borsh"]
+
+# TODO(kidq330) - figure out how to set this for workspace instead of per-crate
+[lints.clippy]
+pedantic = "warn"
+nursery = "warn"
