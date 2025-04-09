@@ -1,0 +1,12 @@
+
+package importdecl1
+
+import _ "./math"
+
+func a() bool {
+	return 0 == 1
+}
+
+func fff() {
+	assert(a())
+}
