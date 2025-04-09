@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 go-parser = { path = "crates/go-parser"}
+go-types = { path = "crates/go-types" }
