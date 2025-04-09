@@ -50,7 +50,9 @@
 
 - **Developer Experience**:
 
-  Building the project went smoothly, and everything is supported by well-written documentation which is a huge advantage. Any problems can be found on the [forum](https://community.sonarsource.com/)
+  I did not encounter any major problems while writing the plugin itself — the documentation is well-structured and clearly explains how to work with the API and define custom rules. Any problems can be found on the [forum](https://community.sonarsource.com/)
+
+  However, I did run into some issues when building the plugin and integrating the scanner with the SonarQube server. These parts were less straightforward, especially when dealing with version compatibility and missing dependencies.
 
 - **Plugin Linking**:  
   Plugins are dynamically loaded as JAR files at runtime. This dynamic linking means you can add or update plugins without recompiling the entire SonarQube server.
