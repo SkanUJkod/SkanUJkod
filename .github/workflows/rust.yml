@@ -17,6 +17,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build (Clippy)
         # Strict linting for now, may be relaxed once we get the hang of Rust
-        run: cargo clippy -- -D warnings -D clippy::pedantic -D clippy::nursery
+        run: cargo clippy --workspace -- -D warnings -D clippy::pedantic -D clippy::nursery
       - name: Run tests
         run: cargo test --verbose
