@@ -14,12 +14,13 @@ Basics
 A few basics to understand:
 Checkstyle's TreeWalker takes a set of objects that extend the AbstractCheck class. A Check provides methods that take an AST as an argument and perform the checking process for that AST. It is important to understand that the individual checks do not drive the AST traversal (it is possible to traverse the tree manually, but not recommended). Instead, the TreeWalker traverses the tree using a tree traversal (depth-first) algorithm. Checkstyle provide DetailAST interface for AST traversals. 
 
-### 4. Architecture 
-plugins are linked dynamically https://checkstyle.sourceforge.io/writingchecks.html#Understanding_the_visitor_pattern
-Checkstyle analize entire project, but we can specify single file to check. 
-### Parsing 
-Checkstyle uses ANTLR4 for parsing 
-Checkstyle is aviable only for Java 
+4. Architecture
+Plugins are linked dynamically: https://checkstyle.sourceforge.io/writingchecks.html#Understanding_the_visitor_pattern
+Checkstyle analyzes the entire project, but we can specify a single file to check.
+
+### Parsing
+Checkstyle uses ANTLR4 for parsing.
+Checkstyle is available only for Java.
 
 
 
