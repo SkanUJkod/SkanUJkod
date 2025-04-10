@@ -1,22 +1,17 @@
 
 ![example graphs](metricslevel.png)
 
-we can messure static metrics on diffrent level 
-
-
-
-
-https://www.sonarsource.com/learn/cyclomatic-complexity/
-
-cyclomatic complexity will be messure on method level.
-
-Cyclomatic complexity – minimum numer of paths that you need to test to ensure each decision point is executed at least once. 
-Formula C = E – N + 2P 
+We can measure static metrics at different levels. <br>
+https://www.sonarsource.com/learn/cyclomatic-complexity/ <br>
+Cyclomatic complexity is measured at the method level.
+Cyclomatic complexity – the minimum number of paths that need to be tested to ensure each decision point is executed at least once.
+Formula: C = E – N + 2P
 
 ![example graphs](controlGraphExample.png)
 
-Higher cyclomatic complexity means that we need cover more paths. More paths can cause higher probability of bugs. 
-Every decision point (loop or condition statement) contribute to a new path. 
+Higher cyclomatic complexity means that more paths need to be covered. More paths can lead to a higher probability of bugs.
+Every decision point (loop or conditional statement) contributes to a new path.
+
 
 
 ```python
@@ -30,18 +25,11 @@ Every decision point (loop or condition statement) contribute to a new path.
 ```
 
 Cyclomatic complexity code analysis involves reviewing your program’s source code to understand its structure and identify areas where the complexity can be reduced.
-
-calculating cyclomatic complexity for each function or module.
-
-
+Calculating cyclomatic complexity for each function or module.
 
 https://github.com/mauricioaniche/ck
 
-
-
 LOC (Lines of code): It counts the lines of count, ignoring empty lines and comments (i.e., it's Source Lines of Code, or SLOC). The number of lines here might be a bit different from the original file, as we use JDT's internal representation of the source code to calculate it
-
-
 
 CBO (Coupling between objects): Counts the number of dependencies a class has. The tools checks for any type used in the entire class (field declaration, method return types, variable declarations, etc). 
 
