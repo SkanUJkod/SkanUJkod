@@ -17,7 +17,7 @@ pub trait ExprVisitor {
 
     fn visit_expr_func_lit(&mut self, this: &Expr, flit: &FuncLit) -> Self::Result;
 
-    fn visit_expr_composit_lit(&mut self, this: &Expr, clit: &CompositeLit) -> Self::Result;
+    fn visit_expr_composite_lit(&mut self, this: &Expr, clit: &CompositeLit) -> Self::Result;
 
     fn visit_expr_paren(&mut self, this: &Expr, expr: &Expr) -> Self::Result;
 
@@ -63,7 +63,7 @@ pub trait ExprVisitor {
 
     fn visit_expr_key_value(&mut self, this: &Expr, key: &Expr, val: &Expr) -> Self::Result;
 
-    /// codegen needs the unwraped expr
+    /// codegen needs the unwrapped expr
     fn visit_expr_array_type(
         &mut self,
         this: &Expr,
@@ -77,7 +77,7 @@ pub trait ExprVisitor {
 
     fn visit_expr_interface_type(&mut self, this: &Expr, s: &InterfaceType) -> Self::Result;
 
-    /// codegen needs the unwraped expr
+    /// codegen needs the unwrapped expr
     fn visit_map_type(&mut self, this: &Expr, key: &Expr, val: &Expr, map: &Expr) -> Self::Result;
 
     fn visit_chan_type(&mut self, this: &Expr, chan: &Expr, dir: &ChanDir) -> Self::Result;
@@ -144,7 +144,7 @@ pub fn walk_expr<R>(v: &mut dyn ExprVisitor<Result = R>, expr: &Expr) -> R {
         Expr::Ellipsis(e) => v.visit_expr_ellipsis(expr, &e.as_ref().elt),
         Expr::BasicLit(e) => v.visit_expr_basic_lit(expr, e.as_ref()),
         Expr::FuncLit(e) => v.visit_expr_func_lit(expr, e.as_ref()),
-        Expr::CompositeLit(e) => v.visit_expr_composit_lit(expr, e.as_ref()),
+        Expr::CompositeLit(e) => v.visit_expr_composite_lit(expr, e.as_ref()),
         Expr::Paren(e) => v.visit_expr_paren(expr, &e.as_ref().expr),
         Expr::Selector(e) => {
             let selexp = e.as_ref();

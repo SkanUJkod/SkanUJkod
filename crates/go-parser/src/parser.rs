@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 //
 //
-// This code is adapted from the offical Go code written in Go
+// This code is adapted from the official Go code written in Go
 // with license as follows:
 // Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style

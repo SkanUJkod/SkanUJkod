@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 //
 //
-// This code is adapted from the offical Go code written in Go
+// This code is adapted from the official Go code written in Go
 // with license as follows:
 // Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -675,7 +675,7 @@ impl<'a> Scanner<'a> {
 
     fn skip_whitespace(&mut self) {
         while let Some(&ch) = self.peek_char() {
-            // skip \n as whitespace only when we don't need to insert semicolum
+            // skip \n as whitespace only when we don't need to insert semicolon
             if ch == ' ' || ch == '\t' || ch == '\n' && !self.semi1 || ch == '\r' {
                 self.read_char();
             } else {
