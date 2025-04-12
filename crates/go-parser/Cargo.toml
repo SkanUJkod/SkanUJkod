@@ -21,8 +21,8 @@ keywords = [
     "goscript",
 ]
 categories = [
-    "compiler",
-    "parser",
+    "compilers",
+    "parsing",
 ]
 license = "BSD-3-Clause"
 repository = "https://github.com/oxfeeefeee/goscript/"
