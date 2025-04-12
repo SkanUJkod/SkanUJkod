@@ -1530,7 +1530,7 @@ impl<'a> Parser<'a> {
             }
             _ => {}
         }
-        return x;
+        x
     }
 
     fn parse_primary_expr(&mut self, mut lhs: bool) -> Expr {
@@ -2027,7 +2027,7 @@ impl<'a> Parser<'a> {
         };
 
         self.expr_level = outer;
-        return (init, cond);
+        (init, cond)
     }
 
     fn parse_if_stmt(&mut self) -> Stmt {
@@ -2803,7 +2803,7 @@ impl<'a> Parser<'a> {
             package: pos,
             name: ident,
             decls,
-            scope: self.pkg_scope.unwrap(),
+            scope: self.pkg_scope?,
             imports: self.imports.clone(),
             unresolved: self.unresolved.clone(),
         })

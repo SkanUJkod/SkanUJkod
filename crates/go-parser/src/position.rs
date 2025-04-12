@@ -54,7 +54,7 @@ impl fmt::Display for FilePos {
             s.push_str(&self.line.to_string());
         }
         if self.column != 0 {
-            write!(&mut s, ":{}", self.column).unwrap();
+            write!(&mut s, ":{}", self.column)?;
         }
         if s.is_empty() {
             s.push('-');

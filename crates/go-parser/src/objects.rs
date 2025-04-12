@@ -48,7 +48,7 @@ where
         &self.vec
     }
 
-    pub fn iter<'a>(&'a self) -> PiggyVecIter<'a, K, V> {
+    pub fn iter(&self) -> PiggyVecIter<K, V> {
         PiggyVecIter {
             vec_iter: self.vec.iter(),
             phantom: PhantomData {},
