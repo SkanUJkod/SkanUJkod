@@ -48,9 +48,9 @@ pub fn parse_file<'a>(
     name: &str,
     src: &'a str,
     trace: bool,
-) -> (parser::Parser<'a>, Option<ast::File>) {
+) -> (Parser<'a>, Option<ast::File>) {
     let f = fs.add_file(name.to_string(), None, src.chars().count());
-    let mut p = parser::Parser::new(o, f, el, src, trace);
+    let mut p = Parser::new(o, f, el, src, trace);
     let file = p.parse_file();
     (p, file)
 }

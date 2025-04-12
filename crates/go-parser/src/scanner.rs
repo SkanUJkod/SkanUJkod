@@ -226,7 +226,7 @@ impl<'a> Scanner<'a> {
         // Handles the 'i' at the end
         match self.peek_char() {
             Some('i') => match tok {
-                Token::INT(mut lit) | Token::FLOAT(mut lit) => {
+                Token::INT(mut lit) | Token::FLOAT(lit) => {
                     self.advance_and_push(lit.as_mut(), 'i');
                     tok = Token::IMAG(lit);
                 }
@@ -398,7 +398,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_string_char_lit(&mut self, lit: &mut String, quote: char) -> Option<String> {
-        lit.push(self.read_char().unwrap());
+        lit.push(self.read_char()?);
         let mut unquoted = String::with_capacity(lit.len());
         loop {
             match self.peek_char() {
@@ -415,7 +415,7 @@ impl<'a> Scanner<'a> {
                     if result.is_none() {
                         return None;
                     } else {
-                        unquoted.push(result.unwrap());
+                        unquoted.push(result?);
                     }
                 }
                 Some(&ch) => {
@@ -428,7 +428,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_escape(&mut self, lit: &mut String, quote: char) -> Option<char> {
-        lit.push(self.read_char().unwrap());
+        lit.push(self.read_char()?);
 
         let mut n: isize;
         let base: u32;
@@ -669,7 +669,7 @@ impl<'a> Scanner<'a> {
         if !previous_is_underscore {
             Ok(count)
         } else {
-            return Err(msg);
+            Err(msg)
         }
     }
 
@@ -749,7 +749,7 @@ impl<'a> Scanner<'a> {
             }
             _ => panic!("should not call into this function"),
         }
-        return false;
+        false
     }
 
     fn advance_and_push(&mut self, literal: &mut String, ch: char) {
