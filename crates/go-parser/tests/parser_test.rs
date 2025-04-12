@@ -1,3 +1,5 @@
+mod common;
+
 extern crate go_parser as fe;
 use std::fs;
 
