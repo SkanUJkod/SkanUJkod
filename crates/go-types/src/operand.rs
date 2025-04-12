@@ -371,7 +371,7 @@ impl<'a, 'b> ExprVisitor for ExprFormater<'a, 'b> {
         self.f.write_str(" literal)")
     }
 
-    fn visit_expr_composit_lit(&mut self, _: &Expr, clit: &CompositeLit) -> Self::Result {
+    fn visit_expr_composite_lit(&mut self, _: &Expr, clit: &CompositeLit) -> Self::Result {
         self.f.write_char('(')?;
         match &clit.typ {
             Some(t) => {
