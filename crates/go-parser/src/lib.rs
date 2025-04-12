@@ -4,7 +4,7 @@
 
 //! This crate is part of the Goscript project. Please refer to <https://goscript.dev> for more information.
 //!
-//! It's a port of the the parser from the Go standard library <https://github.com/golang/go/tree/release-branch.go1.12/src/go/parser>
+//! It's a port of the parser from the Go standard library <https://github.com/golang/go/tree/release-branch.go1.12/src/go/parser>
 //!  
 //! # Usage:
 //! ```

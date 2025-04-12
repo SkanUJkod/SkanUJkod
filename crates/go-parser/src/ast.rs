@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 //
 //
-// This code is adapted from the offical Go code written in Go
+// This code is adapted from the official Go code written in Go
 // with license as follows:
 // Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -1128,26 +1128,26 @@ impl Node for FieldKey {
 
 #[derive(Clone, Debug)]
 pub struct FieldList {
-    pub openning: Option<position::Pos>,
+    pub opening: Option<position::Pos>,
     pub list: Vec<FieldKey>,
     pub closing: Option<position::Pos>,
 }
 
 impl FieldList {
     pub fn new(
-        openning: Option<position::Pos>,
+        opening: Option<position::Pos>,
         list: Vec<FieldKey>,
         closing: Option<position::Pos>,
     ) -> FieldList {
         FieldList {
-            openning,
+            opening,
             list,
             closing,
         }
     }
 
     pub fn pos(&self, objs: &AstObjects) -> position::Pos {
-        match self.openning {
+        match self.opening {
             Some(o) => o,
             None => self.list[0].pos(objs),
         }

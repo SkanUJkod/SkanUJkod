@@ -452,7 +452,7 @@ impl<'a> Parser<'a> {
             if to(&self.token) {
                 // Return only if parser made some progress since last
                 // sync or if it has not reached 10 advance calls without
-                // progress. Otherwise consume at least one token to
+                // progress. Otherwise, consume at least one token to
                 // avoid an endless parser loop (it is possible that
                 // both parseOperand and parseStmt call advance and
                 // correctly do not advance, thus the need for the
@@ -976,7 +976,7 @@ impl<'a> Parser<'a> {
         InterfaceType {
             interface: pos,
             methods: FieldList {
-                openning: Some(lbrace),
+                opening: Some(lbrace),
                 list,
                 closing: Some(rbrace),
             },
@@ -1033,7 +1033,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // Returns a ident or a type
+    // Returns an ident or a type
     // If the result is an identifier, it is not resolved.
     fn try_ident_or_type(&mut self) -> Option<Expr> {
         match self.token {
@@ -1449,7 +1449,7 @@ impl<'a> Parser<'a> {
             // If t.Type == nil we have a type assertion of the form
             // y.(type), which is only allowed in type switch expressions.
             // It's hard to exclude those but for the case where we are in
-            // a type switch. Instead be lenient and test this in the type
+            // a type switch. Instead, be lenient and test this in the type
             // checker.
             Expr::TypeAssert(_) => x,
             Expr::Call(_) => x,
