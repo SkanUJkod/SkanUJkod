@@ -187,9 +187,9 @@ impl File {
 
         FilePos {
             filename: self.name.clone(),
-            line: line,
-            offset: offset,
-            column: column,
+            line,
+            offset,
+            column,
         }
     }
 }

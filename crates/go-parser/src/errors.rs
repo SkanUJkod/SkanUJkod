@@ -73,10 +73,10 @@ impl ErrorList {
         };
         self.errors.borrow_mut().push(Error {
             pos: fp,
-            msg: msg,
-            soft: soft,
-            by_parser: by_parser,
-            order: order,
+            msg,
+            soft,
+            by_parser,
+            order,
         });
     }
 
@@ -102,8 +102,8 @@ pub struct FilePosErrors<'a> {
 impl<'a> FilePosErrors<'a> {
     pub fn new(file: &'a File, elist: &'a ErrorList) -> FilePosErrors<'a> {
         FilePosErrors {
-            file: file,
-            elist: elist,
+            file,
+            elist,
         }
     }
 

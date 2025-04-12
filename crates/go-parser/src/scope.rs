@@ -101,7 +101,7 @@ pub struct Scope {
 impl Scope {
     pub fn new(outer: Option<ScopeKey>) -> Scope {
         Scope {
-            outer: outer,
+            outer,
             entities: Map::new(),
         }
     }

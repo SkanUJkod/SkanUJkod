@@ -91,7 +91,7 @@ impl<'a> Parser<'a> {
             objects: objs,
             scanner: s,
             errors: el,
-            trace: trace,
+            trace,
             indent: 0,
             pos: 0,
             token: Token::NONE,
@@ -506,8 +506,8 @@ impl<'a> Parser<'a> {
             self.expect(&Token::IDENT("".to_owned().into()));
         }
         self.objects.idents.insert(Ident {
-            pos: pos,
-            name: name,
+            pos,
+            name,
             entity: IdentEntity::NoEntity,
         })
     }
@@ -641,8 +641,8 @@ impl<'a> Parser<'a> {
         self.trace_end();
         Expr::Array(Rc::new(ArrayType {
             l_brack: lpos,
-            len: len,
-            elt: elt,
+            len,
+            elt,
         }))
     }
 
@@ -766,7 +766,7 @@ impl<'a> Parser<'a> {
 
         self.trace_end();
         Expr::Star(Rc::new(StarExpr {
-            star: star,
+            star,
             expr: base,
         }))
     }
@@ -977,7 +977,7 @@ impl<'a> Parser<'a> {
             interface: pos,
             methods: FieldList {
                 openning: Some(lbrace),
-                list: list,
+                list,
                 closing: Some(rbrace),
             },
             incomplete: false,
@@ -996,8 +996,8 @@ impl<'a> Parser<'a> {
         self.trace_end();
         MapType {
             map: pos,
-            key: key,
-            val: val,
+            key,
+            val,
         }
     }
 
@@ -1028,8 +1028,8 @@ impl<'a> Parser<'a> {
         ChanType {
             begin: pos,
             arrow: arrow_pos,
-            dir: dir,
-            val: val,
+            dir,
+            val,
         }
     }
 
@@ -1207,7 +1207,7 @@ impl<'a> Parser<'a> {
         self.trace_begin("Selector");
         let sel = self.parse_ident();
         self.trace_end();
-        Expr::Selector(Rc::new(SelectorExpr { expr: x, sel: sel }))
+        Expr::Selector(Rc::new(SelectorExpr { expr: x, sel }))
     }
 
     fn parse_type_assertion(&mut self, x: Expr) -> Expr {
@@ -1227,7 +1227,7 @@ impl<'a> Parser<'a> {
         Expr::TypeAssert(Rc::new(TypeAssertExpr {
             expr: x,
             l_paren: lparen,
-            typ: typ,
+            typ,
             r_paren: rparen,
         }))
     }
@@ -1275,7 +1275,7 @@ impl<'a> Parser<'a> {
                 low: iter.next().unwrap(), // unwrap the first of two Option
                 high: iter.next().unwrap(),
                 max: iter.next().unwrap(),
-                slice3: slice3,
+                slice3,
                 r_brack: rbrack,
             }))
         } else {
@@ -1288,7 +1288,7 @@ impl<'a> Parser<'a> {
             Expr::Index(Rc::new(IndexExpr {
                 expr: x,
                 l_brack: lbrack,
-                index: index,
+                index,
                 r_brack: rbrack,
             }))
         };
@@ -1321,10 +1321,10 @@ impl<'a> Parser<'a> {
 
         self.trace_end();
         Expr::Call(Rc::new(CallExpr {
-            func: func,
+            func,
             l_paren: lparen,
             args: list,
-            ellipsis: ellipsis,
+            ellipsis,
             r_paren: rparen,
         }))
     }
@@ -1381,7 +1381,7 @@ impl<'a> Parser<'a> {
             self.next();
             Expr::KeyValue(Rc::new(KeyValueExpr {
                 key: x,
-                colon: colon,
+                colon,
                 val: self.parse_value(false),
             }))
         } else {
@@ -1423,9 +1423,9 @@ impl<'a> Parser<'a> {
 
         self.trace_end();
         Expr::CompositeLit(Rc::new(CompositeLit {
-            typ: typ,
+            typ,
             l_brace: lbrace,
-            elts: elts,
+            elts,
             r_brace: rbrace,
             incomplete: false,
         }))
@@ -1704,7 +1704,7 @@ impl<'a> Parser<'a> {
             x = Expr::Binary(Rc::new(BinaryExpr {
                 expr_a: x,
                 op_pos: pos,
-                op: op,
+                op,
                 expr_b: y,
             }))
         }
@@ -1837,7 +1837,7 @@ impl<'a> Parser<'a> {
                         let y = self.parse_rhs();
                         Stmt::Send(Rc::new(SendStmt {
                             chan: x0,
-                            arrow: arrow,
+                            arrow,
                             val: y,
                         }))
                     }
@@ -1946,8 +1946,8 @@ impl<'a> Parser<'a> {
         self.trace_end();
         Stmt::Branch(Rc::new(BranchStmt {
             token_pos: pos,
-            token: token,
-            label: label,
+            token,
+            label,
         }))
     }
 
@@ -2060,10 +2060,10 @@ impl<'a> Parser<'a> {
         self.trace_end();
         Stmt::If(Rc::new(IfStmt {
             if_pos: pos,
-            init: init,
-            cond: cond,
+            init,
+            cond,
             body: Rc::new(body),
-            els: els,
+            els,
         }))
     }
 
@@ -2107,9 +2107,9 @@ impl<'a> Parser<'a> {
         self.trace_end();
         CaseClause {
             case: pos,
-            list: list,
-            colon: colon,
-            body: body,
+            list,
+            colon,
+            body,
         }
     }
 
@@ -2192,7 +2192,7 @@ impl<'a> Parser<'a> {
         self.expect_semi();
         let body = BlockStmt {
             l_brace: lbrace,
-            list: list,
+            list,
             r_brace: rbrace,
         };
         let ret = if type_switch {
@@ -2236,7 +2236,7 @@ impl<'a> Parser<'a> {
                 let rhs = self.parse_rhs();
                 Some(Stmt::Send(Rc::new(SendStmt {
                     chan: lhs.into_iter().nth(0).unwrap(),
-                    arrow: arrow,
+                    arrow,
                     val: rhs,
                 })))
             } else {
@@ -2274,9 +2274,9 @@ impl<'a> Parser<'a> {
         self.trace_end();
         CommClause {
             case: pos,
-            comm: comm,
-            colon: colon,
-            body: body,
+            comm,
+            colon,
+            body,
         }
     }
 
@@ -2293,7 +2293,7 @@ impl<'a> Parser<'a> {
         self.expect_semi();
         let body = BlockStmt {
             l_brace: lbrace,
-            list: list,
+            list,
             r_brace: rbrace,
         };
 
@@ -2378,8 +2378,8 @@ impl<'a> Parser<'a> {
                 if let Expr::Unary(unary) = ass.rhs[0].clone() {
                     Stmt::Range(Rc::new(RangeStmt {
                         for_pos: pos,
-                        key: key,
-                        val: val,
+                        key,
+                        val,
                         token_pos: ass.token_pos,
                         token: ass.token.clone(),
                         expr: unary.expr.clone(),
@@ -2513,7 +2513,7 @@ impl<'a> Parser<'a> {
         let index = self.objects.specs.insert(Spec::Import(Rc::new(ImportSpec {
             name: ident,
             path: BasicLit {
-                pos: pos,
+                pos,
                 token: path_token,
             },
             end_pos: None,
@@ -2680,14 +2680,14 @@ impl<'a> Parser<'a> {
         let recv_is_none = recv.is_none();
         let typ = self.objects.ftypes.insert(FuncType {
             func: Some(pos),
-            params: params,
-            results: results,
+            params,
+            results,
         });
         let decl = self.objects.fdecls.insert(FuncDecl {
-            recv: recv,
+            recv,
             name: ident,
-            typ: typ,
-            body: body,
+            typ,
+            body,
         });
         if recv_is_none {
             // Go spec: The scope of an identifier denoting a constant, type,
@@ -2802,7 +2802,7 @@ impl<'a> Parser<'a> {
         Some(File {
             package: pos,
             name: ident,
-            decls: decls,
+            decls,
             scope: self.pkg_scope.unwrap(),
             imports: self.imports.clone(),
             unresolved: self.unresolved.clone(),
