@@ -226,7 +226,7 @@ impl<'a> Scanner<'a> {
         // Handles the 'i' at the end
         match self.peek_char() {
             Some('i') => match tok {
-                Token::INT(mut lit) | Token::FLOAT(lit) => {
+                Token::INT(mut lit) | Token::FLOAT(mut lit) => {
                     self.advance_and_push(lit.as_mut(), 'i');
                     tok = Token::IMAG(lit);
                 }
