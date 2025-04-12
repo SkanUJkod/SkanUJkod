@@ -33,7 +33,7 @@ impl<'a> Scanner<'a> {
         err: &'a errors::ErrorList,
     ) -> Scanner<'a> {
         Scanner {
-            file: file,
+            file,
             src: src.chars().peekable(),
             errors: err,
             offset: 0,
