@@ -2542,12 +2542,12 @@ impl<'a> Parser<'a> {
 
         match keyword {
             Token::VAR => {
-                if typ.is_none() && values.len() == 0 {
+                if typ.is_none() && values.is_empty() {
                     self_.error_str(pos, "missing variable type or initialization");
                 }
             }
             Token::CONST => {
-                if values.len() == 0 && (iota == 0 || typ.is_some()) {
+                if values.is_empty() && (iota == 0 || typ.is_some()) {
                     self_.error_str(pos, "missing constant value");
                 }
             }
