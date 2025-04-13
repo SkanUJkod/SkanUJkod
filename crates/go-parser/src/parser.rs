@@ -1860,7 +1860,7 @@ impl<'a> Parser<'a> {
                         self.next();
                         s
                     }
-                    _ => Stmt::Expr(Box::new(x0)),
+                    _ => Stmt::Expr(Rc::from(Box::new(x0))),
                 }
             }
         }
@@ -1964,7 +1964,7 @@ impl<'a> Parser<'a> {
     fn make_expr(&self, s: Option<Stmt>, want: &str) -> Option<Expr> {
         match s {
             Some(stmt) => match stmt {
-                Stmt::Expr(x) => Some(self.check_expr(*x)),
+                Stmt::Expr(x) => Some(self.check_expr(x.as_ref().clone())),
                 _ => {
                     let found = if let Stmt::Assign(_) = stmt {
                         "assignment"
@@ -2270,7 +2270,7 @@ impl<'a> Parser<'a> {
                         self.error_expected(lhs[0].pos(&self.objects), "1 expression");
                         // continue with first expression
                     }
-                    Some(Stmt::Expr(Box::new(lhs.into_iter().nth(0).unwrap())))
+                    Some(Stmt::Expr(Rc::from(Box::new(lhs.into_iter().nth(0).unwrap()))))
                 }
             }
         } else {

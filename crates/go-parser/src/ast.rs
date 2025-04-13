@@ -73,7 +73,7 @@ pub enum Stmt {
     Decl(Rc<Decl>),
     Empty(Rc<EmptyStmt>),
     Labeled(LabeledStmtKey),
-    Expr(Box<Expr>), // Doesn't need to be Rc since Expr is Rc
+    Expr(Rc<Expr>),
     Send(Rc<SendStmt>),
     IncDec(Rc<IncDecStmt>),
     Assign(AssignStmtKey),
@@ -249,28 +249,28 @@ impl Node for Expr {
 
     fn id(&self) -> NodeId {
         match &self {
-            Expr::Bad(e) => NodeId::Address(&**e as *const BadExpr as usize),
+            Expr::Bad(e) => NodeId::Address(Rc::as_ptr(e) as usize),
             Expr::Ident(e) => NodeId::IdentExpr(*e),
-            Expr::Ellipsis(e) => NodeId::Address(&**e as *const Ellipsis as usize),
-            Expr::BasicLit(e) => NodeId::Address(&**e as *const BasicLit as usize),
-            Expr::FuncLit(e) => NodeId::Address(&**e as *const FuncLit as usize),
-            Expr::CompositeLit(e) => NodeId::Address(&**e as *const CompositeLit as usize),
-            Expr::Paren(e) => NodeId::Address(&**e as *const ParenExpr as usize),
+            Expr::Ellipsis(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::BasicLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::FuncLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::CompositeLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::Paren(e) => NodeId::Address(Rc::as_ptr(e) as usize),
             Expr::Selector(e) => e.id(),
-            Expr::Index(e) => NodeId::Address(&**e as *const IndexExpr as usize),
-            Expr::Slice(e) => NodeId::Address(&**e as *const SliceExpr as usize),
-            Expr::TypeAssert(e) => NodeId::Address(&**e as *const TypeAssertExpr as usize),
+            Expr::Index(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::Slice(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::TypeAssert(e) => NodeId::Address(Rc::as_ptr(e) as usize),
             Expr::Call(e) => e.id(),
-            Expr::Star(e) => NodeId::Address(&**e as *const StarExpr as usize),
-            Expr::Unary(e) => NodeId::Address(&**e as *const UnaryExpr as usize),
-            Expr::Binary(e) => NodeId::Address(&**e as *const BinaryExpr as usize),
-            Expr::KeyValue(e) => NodeId::Address(&**e as *const KeyValueExpr as usize),
-            Expr::Array(e) => NodeId::Address(&**e as *const ArrayType as usize),
-            Expr::Struct(e) => NodeId::Address(&**e as *const StructType as usize),
+            Expr::Star(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::Unary(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::Binary(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::KeyValue(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::Array(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::Struct(e) => NodeId::Address(Rc::as_ptr(e) as usize),
             Expr::Func(e) => NodeId::FuncTypeExpr(*e),
-            Expr::Interface(e) => NodeId::Address(&**e as *const InterfaceType as usize),
-            Expr::Map(e) => NodeId::Address(&**e as *const MapType as usize),
-            Expr::Chan(e) => NodeId::Address(&**e as *const ChanType as usize),
+            Expr::Interface(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::Map(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Expr::Chan(e) => NodeId::Address(Rc::as_ptr(e) as usize),
         }
     }
 }
@@ -396,27 +396,27 @@ impl Node for Stmt {
 
     fn id(&self) -> NodeId {
         match &self {
-            Stmt::Bad(s) => NodeId::Address(&**s as *const BadStmt as usize),
-            Stmt::Decl(d) => NodeId::Address(&**d as *const Decl as usize),
-            Stmt::Empty(e) => NodeId::Address(&**e as *const EmptyStmt as usize),
+            Stmt::Bad(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Decl(d) => NodeId::Address(Rc::as_ptr(d) as usize),
+            Stmt::Empty(e) => NodeId::Address(Rc::as_ptr(e) as usize),
             Stmt::Labeled(s) => NodeId::LabeledStmt(*s),
-            Stmt::Expr(e) => NodeId::Address(&**e as *const Expr as usize),
-            Stmt::Send(s) => NodeId::Address(&**s as *const SendStmt as usize),
-            Stmt::IncDec(s) => NodeId::Address(&**s as *const IncDecStmt as usize),
+            Stmt::Expr(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Stmt::Send(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::IncDec(s) => NodeId::Address(Rc::as_ptr(s) as usize),
             Stmt::Assign(s) => NodeId::AssignStmt(*s),
-            Stmt::Go(s) => NodeId::Address(&**s as *const GoStmt as usize),
-            Stmt::Defer(s) => NodeId::Address(&**s as *const DeferStmt as usize),
-            Stmt::Return(s) => NodeId::Address(&**s as *const ReturnStmt as usize),
-            Stmt::Branch(s) => NodeId::Address(&**s as *const BranchStmt as usize),
-            Stmt::Block(s) => NodeId::Address(&**s as *const BlockStmt as usize),
-            Stmt::If(s) => NodeId::Address(&**s as *const IfStmt as usize),
-            Stmt::Case(s) => NodeId::Address(&**s as *const CaseClause as usize),
-            Stmt::Switch(s) => NodeId::Address(&**s as *const SwitchStmt as usize),
-            Stmt::TypeSwitch(s) => NodeId::Address(&**s as *const TypeSwitchStmt as usize),
-            Stmt::Comm(s) => NodeId::Address(&**s as *const CommClause as usize),
-            Stmt::Select(s) => NodeId::Address(&**s as *const SelectStmt as usize),
-            Stmt::For(s) => NodeId::Address(&**s as *const ForStmt as usize),
-            Stmt::Range(s) => NodeId::Address(&**s as *const RangeStmt as usize),
+            Stmt::Go(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Defer(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Return(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Branch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Block(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::If(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Case(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Switch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::TypeSwitch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Comm(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Select(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::For(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Stmt::Range(s) => NodeId::Address(Rc::as_ptr(s) as usize),
         }
     }
 }
@@ -455,10 +455,10 @@ impl Node for Spec {
     }
 
     fn id(&self) -> NodeId {
-        match &self {
-            Spec::Import(s) => NodeId::Address(&**s as *const ImportSpec as usize),
-            Spec::Value(s) => NodeId::Address(&**s as *const ValueSpec as usize),
-            Spec::Type(s) => NodeId::Address(&**s as *const TypeSpec as usize),
+        match self {
+            Spec::Import(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Spec::Value(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Spec::Type(s) => NodeId::Address(Rc::as_ptr(s) as usize),
         }
     }
 }
@@ -491,8 +491,8 @@ impl Node for Decl {
 
     fn id(&self) -> NodeId {
         match self {
-            Decl::Bad(d) => NodeId::Address(&**d as *const BadDecl as usize),
-            Decl::Gen(d) => NodeId::Address(&**d as *const GenDecl as usize),
+            Decl::Bad(d) => NodeId::Address(Rc::as_ptr(d) as usize),
+            Decl::Gen(d) => NodeId::Address(Rc::as_ptr(d) as usize),
             Decl::Func(d) => NodeId::FuncDecl(*d),
         }
     }
