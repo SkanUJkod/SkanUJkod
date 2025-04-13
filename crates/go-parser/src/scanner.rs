@@ -718,7 +718,7 @@ impl<'a> Scanner<'a> {
             Some('*') => {
                 loop {
                     match iter.next() {
-                        Some('\n') => return true,
+                        Some('\n') | None => return true,
                         Some('*') => {
                             match iter.peek() {
                                 Some(&'/') => {
@@ -729,7 +729,6 @@ impl<'a> Scanner<'a> {
                             };
                         }
                         Some(_) => {}
-                        None => return true,
                     }
                 }
                 loop {

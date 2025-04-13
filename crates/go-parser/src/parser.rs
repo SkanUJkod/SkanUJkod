@@ -559,7 +559,7 @@ impl<'a> Parser<'a> {
             // but doesn't enter scope until later:
             // caller must call self.short_var_decl(list)
             // at appropriate time.
-            Token::DEFINE => {}
+            //
             // lhs of a label declaration or a communication clause of a select
             // statement (parse_lhs_list is not called when parsing the case clause
             // of a switch statement):
@@ -567,7 +567,7 @@ impl<'a> Parser<'a> {
             // - for communication clauses, if there is a stand-alone identifier
             //   followed by a colon, we have a syntax error; there is no need
             //   to resolve the identifier in that case
-            Token::COLON => {}
+            Token::DEFINE | Token::COLON => {}
             _ => {
                 // identifiers must be declared elsewhere
                 for x in list.iter() {
@@ -1443,27 +1443,18 @@ impl<'a> Parser<'a> {
     fn check_expr(&self, x: Expr) -> Expr {
         let unparenx = Parser::unparen(&x);
         match unparenx {
-            Expr::Bad(_) => x,
-            Expr::Ident(_) => x,
-            Expr::BasicLit(_) => x,
-            Expr::FuncLit(_) => x,
-            Expr::CompositeLit(_) => x,
-            Expr::Paren(_) => {
-                unreachable!();
+            Expr::Bad(_) => {
+                self.error_expected(self.pos, "expression");
+                Expr::new_bad(x.pos(&self.objects), self.safe_pos(x.end(&self.objects)))
             }
-            Expr::Selector(_) => x,
-            Expr::Index(_) => x,
-            Expr::Slice(_) => x,
             // If t.Type == nil we have a type assertion of the form
             // y.(type), which is only allowed in type switch expressions.
             // It's hard to exclude those but for the case where we are in
             // a type switch. Instead, be lenient and test this in the type
-            // checker.
-            Expr::TypeAssert(_) => x,
-            Expr::Call(_) => x,
-            Expr::Star(_) => x,
-            Expr::Unary(_) => x,
-            Expr::Binary(_) => x,
+            Expr::Ident(_) | Expr::BasicLit(_) | Expr::FuncLit(_) | Expr::CompositeLit(_) |
+            Expr::Selector(_) | Expr::Index(_) | Expr::Slice(_) | Expr::TypeAssert(_) |
+            Expr::Call(_) | Expr::Star(_) | Expr::Unary(_) | Expr::Binary(_) => x,
+            Expr::Paren(_) => unreachable!(),
             _ => {
                 self.error_expected(self.pos, "expression");
                 Expr::new_bad(x.pos(&self.objects), self.safe_pos(x.end(&self.objects)))
