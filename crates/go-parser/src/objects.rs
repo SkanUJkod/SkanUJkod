@@ -224,3 +224,9 @@ impl AstObjects {
         }
     }
 }
+
+impl Default for AstObjects {
+    fn default() -> Self {
+        Self::new()
+    }
+}
