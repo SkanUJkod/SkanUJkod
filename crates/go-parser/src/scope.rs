@@ -11,7 +11,9 @@
 
 use super::ast::Node;
 use super::map::Map;
-use super::objects::*;
+use super::objects::{
+    AssignStmtKey, AstObjects, EntityKey, FieldKey, FuncDeclKey, LabeledStmtKey,
+    ScopeKey, SpecKey};
 use super::position;
 use std::fmt;
 
