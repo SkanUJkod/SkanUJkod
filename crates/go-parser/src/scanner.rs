@@ -630,8 +630,8 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn scan_digits<'s, 'r>(
-        &'s mut self,
+    fn scan_digits<'r>(
+        &mut self,
         digits: &mut String,
         ch_valid: fn(char) -> bool,
         allow_pre_underscore: bool,
