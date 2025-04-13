@@ -128,7 +128,7 @@ impl Scope {
                 return Err(e);
             }
             Ok(()) => {}
-        };
+        }
         for (k, _) in self.entities.iter() {
             match writeln!(f, "\t{k}") {
                 Err(e) => {
