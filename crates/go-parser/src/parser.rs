@@ -489,7 +489,7 @@ impl<'a> Parser<'a> {
             name.clone_from(lit.as_str());
             self.next();
         } else {
-            self.expect(&Token::IDENT("".to_owned().into()));
+            self.expect(&Token::IDENT(String::new().into()));
         }
         self.objects.idents.insert(Ident {
             pos,
