@@ -814,11 +814,11 @@ impl IntPrefix {
         }
     }
 
-    fn is_bare(&self) -> bool {
+    const fn is_bare(&self) -> bool {
         matches!(self, Self::Octal(true))
     }
 
-    fn err_msg(&self) -> &str {
+    const fn err_msg(&self) -> &str {
         match self {
             Self::Binary => "illegal binary number",
             Self::Octal(_) => "illegal octal number",

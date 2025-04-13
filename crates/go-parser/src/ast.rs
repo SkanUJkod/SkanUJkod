@@ -143,7 +143,7 @@ impl Expr {
         }
     }
 
-    pub fn try_as_ident(&self) -> Option<&IdentKey> {
+    pub const fn try_as_ident(&self) -> Option<&IdentKey> {
         if let Expr::Ident(ident) = self {
             Some(ident)
         } else {
@@ -151,7 +151,7 @@ impl Expr {
         }
     }
 
-    pub fn is_bad(&self) -> bool {
+    pub const fn is_bad(&self) -> bool {
         if let Expr::Bad(_) = self {
             true
         } else {
@@ -159,7 +159,7 @@ impl Expr {
         }
     }
 
-    pub fn is_type_switch_assert(&self) -> bool {
+    pub const fn is_type_switch_assert(&self) -> bool {
         if let Expr::TypeAssert(t) = self {
             t.typ.is_none()
         } else {
@@ -537,7 +537,7 @@ pub enum IdentEntity {
 }
 
 impl IdentEntity {
-    pub fn is_none(&self) -> bool {
+    pub const fn is_none(&self) -> bool {
         match self {
             IdentEntity::NoEntity => true,
             _ => false,
@@ -755,7 +755,7 @@ pub struct FuncType {
 }
 
 impl FuncType {
-    pub fn new(
+    pub const fn new(
         func: Option<position::Pos>,
         params: FieldList,
         results: Option<FieldList>,
@@ -1009,7 +1009,7 @@ pub struct BlockStmt {
 }
 
 impl BlockStmt {
-    pub fn new(l: position::Pos, list: Vec<Stmt>, r: position::Pos) -> BlockStmt {
+    pub const fn new(l: position::Pos, list: Vec<Stmt>, r: position::Pos) -> BlockStmt {
         BlockStmt {
             l_brace: l,
             list,
@@ -1017,11 +1017,11 @@ impl BlockStmt {
         }
     }
 
-    pub fn pos(&self) -> position::Pos {
+    pub const fn pos(&self) -> position::Pos {
         self.l_brace
     }
 
-    pub fn end(&self) -> position::Pos {
+    pub const fn end(&self) -> position::Pos {
         self.r_brace + 1
     }
 }
@@ -1134,7 +1134,7 @@ pub struct FieldList {
 }
 
 impl FieldList {
-    pub fn new(
+    pub const fn new(
         opening: Option<position::Pos>,
         list: Vec<FieldKey>,
         closing: Option<position::Pos>,

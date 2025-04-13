@@ -129,7 +129,7 @@ pub enum TokenType {
 }
 
 impl Token {
-    pub fn token_property(&self) -> (TokenType, &str) {
+    pub const fn token_property(&self) -> (TokenType, &str) {
         match self {
             Token::NONE => (TokenType::Other, "NONE"),
             Token::ILLEGAL(_) => (TokenType::Other, "ILLEGAL"),
@@ -251,7 +251,7 @@ impl Token {
         Token::INT("1".to_owned().into())
     }
 
-    pub fn precedence(&self) -> usize {
+    pub const fn precedence(&self) -> usize {
         match self {
             Token::LOR => 1,
             Token::LAND => 2,
@@ -305,7 +305,7 @@ impl Token {
         }
     }
 
-    pub fn is_stmt_start(&self) -> bool {
+    pub const fn is_stmt_start(&self) -> bool {
         match self {
             Token::BREAK => true,
             Token::CONST => true,
@@ -325,7 +325,7 @@ impl Token {
         }
     }
 
-    pub fn is_decl_start(&self) -> bool {
+    pub const fn is_decl_start(&self) -> bool {
         match self {
             Token::CONST => true,
             Token::TYPE => true,
@@ -334,7 +334,7 @@ impl Token {
         }
     }
 
-    pub fn is_expr_end(&self) -> bool {
+    pub const fn is_expr_end(&self) -> bool {
         match self {
             Token::COMMA => true,
             Token::COLON => true,
