@@ -702,7 +702,7 @@ impl<'a> Scanner<'a> {
         self.src.peek()
     }
 
-    fn get_char2nd(&mut self) -> Option<char> {
+    fn get_char2nd(&self) -> Option<char> {
         let mut iter = self.src.clone();
         iter.next();
         iter.next()
