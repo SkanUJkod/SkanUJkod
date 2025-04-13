@@ -108,45 +108,45 @@ pub enum Decl {
 
 impl Expr {
     #[must_use]
-    pub fn new_bad(from: position::Pos, to: position::Pos) -> Expr {
-        Expr::Bad(Rc::new(BadExpr { from, to }))
+    pub fn new_bad(from: position::Pos, to: position::Pos) -> Self {
+        Self::Bad(Rc::new(BadExpr { from, to }))
     }
 
     #[must_use]
-    pub fn new_selector(x: Expr, sel: IdentKey) -> Expr {
-        Expr::Selector(Rc::new(SelectorExpr { expr: x, sel }))
+    pub fn new_selector(x: Self, sel: IdentKey) -> Self {
+        Self::Selector(Rc::new(SelectorExpr { expr: x, sel }))
     }
 
     #[must_use]
-    pub fn new_ellipsis(pos: position::Pos, x: Option<Expr>) -> Expr {
-        Expr::Ellipsis(Rc::new(Ellipsis { pos, elt: x }))
+    pub fn new_ellipsis(pos: position::Pos, x: Option<Self>) -> Self {
+        Self::Ellipsis(Rc::new(Ellipsis { pos, elt: x }))
     }
 
     #[must_use]
-    pub fn new_basic_lit(pos: position::Pos, token: token::Token) -> Expr {
-        Expr::BasicLit(Rc::new(BasicLit {
+    pub fn new_basic_lit(pos: position::Pos, token: token::Token) -> Self {
+        Self::BasicLit(Rc::new(BasicLit {
             pos,
             token,
         }))
     }
 
     #[must_use]
-    pub fn new_unary_expr(pos: position::Pos, op: token::Token, expr: Expr) -> Expr {
-        Expr::Unary(Rc::new(UnaryExpr {
+    pub fn new_unary_expr(pos: position::Pos, op: token::Token, expr: Self) -> Self {
+        Self::Unary(Rc::new(UnaryExpr {
             op_pos: pos,
             op,
             expr,
         }))
     }
 
-    pub fn box_func_type(ft: FuncType, objs: &mut AstObjects) -> Expr {
-        Expr::Func(objs.ftypes.insert(ft))
+    pub fn box_func_type(ft: FuncType, objs: &mut AstObjects) -> Self {
+        Self::Func(objs.ftypes.insert(ft))
     }
 
     #[must_use]
-    pub fn clone_ident(&self) -> Option<Expr> {
-        if let Expr::Ident(i) = self {
-            Some(Expr::Ident(*i))
+    pub const fn clone_ident(&self) -> Option<Self> {
+        if let Self::Ident(i) = self {
+            Some(Self::Ident(*i))
         } else {
             None
         }
@@ -154,7 +154,7 @@ impl Expr {
 
     #[must_use]
     pub const fn try_as_ident(&self) -> Option<&IdentKey> {
-        if let Expr::Ident(ident) = self {
+        if let Self::Ident(ident) = self {
             Some(ident)
         } else {
             None
@@ -163,12 +163,13 @@ impl Expr {
 
     #[must_use]
     pub const fn is_bad(&self) -> bool {
-        matches!(self, Expr::Bad(_))
+        matches!(self, Self::Bad(_))
     }
 
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn is_type_switch_assert(&self) -> bool {
-        if let Expr::TypeAssert(t) = self {
+        if let Self::TypeAssert(t) = self {
             t.typ.is_none()
         } else {
             false
@@ -179,102 +180,102 @@ impl Expr {
 impl Node for Expr {
     fn pos(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Expr::Bad(e) => e.from,
-            Expr::Ident(e) => objs.idents[*e].pos,
-            Expr::Ellipsis(e) => e.pos,
-            Expr::BasicLit(e) => e.pos,
-            Expr::FuncLit(e) => {
+            Self::Bad(e) => e.from,
+            Self::Ident(e) => objs.idents[*e].pos,
+            Self::Ellipsis(e) => e.pos,
+            Self::BasicLit(e) => e.pos,
+            Self::FuncLit(e) => {
                 let typ = &objs.ftypes[e.typ];
                 typ.func.map_or_else(
                     || typ.params.pos(objs),
                     |p| p,
                 )
             }
-            Expr::CompositeLit(e) => e.typ.as_ref().map_or_else(
+            Self::CompositeLit(e) => e.typ.as_ref().map_or_else(
                 || e.l_brace,
                 |expr| expr.pos(objs),
             ),
-            Expr::Paren(e) => e.l_paren,
-            Expr::Selector(e) => e.expr.pos(objs),
-            Expr::Index(e) => e.expr.pos(objs),
-            Expr::Slice(e) => e.expr.pos(objs),
-            Expr::TypeAssert(e) => e.expr.pos(objs),
-            Expr::Call(e) => e.func.pos(objs),
-            Expr::Star(e) => e.star,
-            Expr::Unary(e) => e.op_pos,
-            Expr::Binary(e) => e.expr_a.pos(objs),
-            Expr::KeyValue(e) => e.key.pos(objs),
-            Expr::Array(e) => e.l_brack,
-            Expr::Struct(e) => e.struct_pos,
-            Expr::Func(e) => e.pos(objs),
-            Expr::Interface(e) => e.interface,
-            Expr::Map(e) => e.map,
-            Expr::Chan(e) => e.begin,
+            Self::Paren(e) => e.l_paren,
+            Self::Selector(e) => e.expr.pos(objs),
+            Self::Index(e) => e.expr.pos(objs),
+            Self::Slice(e) => e.expr.pos(objs),
+            Self::TypeAssert(e) => e.expr.pos(objs),
+            Self::Call(e) => e.func.pos(objs),
+            Self::Star(e) => e.star,
+            Self::Unary(e) => e.op_pos,
+            Self::Binary(e) => e.expr_a.pos(objs),
+            Self::KeyValue(e) => e.key.pos(objs),
+            Self::Array(e) => e.l_brack,
+            Self::Struct(e) => e.struct_pos,
+            Self::Func(e) => e.pos(objs),
+            Self::Interface(e) => e.interface,
+            Self::Map(e) => e.map,
+            Self::Chan(e) => e.begin,
         }
     }
 
     fn end(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Expr::Bad(e) => e.to,
-            Expr::Ident(e) => objs.idents[*e].end(),
-            Expr::Ellipsis(e) => e.elt.as_ref().map_or_else(
+            Self::Bad(e) => e.to,
+            Self::Ident(e) => objs.idents[*e].end(),
+            Self::Ellipsis(e) => e.elt.as_ref().map_or_else(
                 || e.pos + 3,
                 |expr| expr.end(objs),
             ),
-            Expr::BasicLit(e) => e.pos + e.token.get_literal().len(),
-            Expr::FuncLit(e) => e.body.end(),
-            Expr::CompositeLit(e) => e.r_brace + 1,
-            Expr::Paren(e) => e.r_paren + 1,
-            Expr::Selector(e) => objs.idents[e.sel].end(),
-            Expr::Index(e) => e.r_brack + 1,
-            Expr::Slice(e) => e.r_brack + 1,
-            Expr::TypeAssert(e) => e.r_paren + 1,
-            Expr::Call(e) => e.r_paren + 1,
-            Expr::Star(e) => e.expr.end(objs),
-            Expr::Unary(e) => e.expr.end(objs),
-            Expr::Binary(e) => e.expr_b.end(objs),
-            Expr::KeyValue(e) => e.val.end(objs),
-            Expr::Array(e) => e.elt.end(objs),
-            Expr::Struct(e) => e.fields.end(objs),
-            Expr::Func(e) => e.end(objs),
-            Expr::Interface(e) => e.methods.end(objs),
-            Expr::Map(e) => e.val.end(objs),
-            Expr::Chan(e) => e.val.end(objs),
+            Self::BasicLit(e) => e.pos + e.token.get_literal().len(),
+            Self::FuncLit(e) => e.body.end(),
+            Self::CompositeLit(e) => e.r_brace + 1,
+            Self::Paren(e) => e.r_paren + 1,
+            Self::Selector(e) => objs.idents[e.sel].end(),
+            Self::Index(e) => e.r_brack + 1,
+            Self::Slice(e) => e.r_brack + 1,
+            Self::TypeAssert(e) => e.r_paren + 1,
+            Self::Call(e) => e.r_paren + 1,
+            Self::Star(e) => e.expr.end(objs),
+            Self::Unary(e) => e.expr.end(objs),
+            Self::Binary(e) => e.expr_b.end(objs),
+            Self::KeyValue(e) => e.val.end(objs),
+            Self::Array(e) => e.elt.end(objs),
+            Self::Struct(e) => e.fields.end(objs),
+            Self::Func(e) => e.end(objs),
+            Self::Interface(e) => e.methods.end(objs),
+            Self::Map(e) => e.val.end(objs),
+            Self::Chan(e) => e.val.end(objs),
         }
     }
 
     fn id(&self) -> NodeId {
         match &self {
-            Expr::Bad(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Ident(e) => NodeId::IdentExpr(*e),
-            Expr::Ellipsis(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::BasicLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::FuncLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::CompositeLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Paren(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Selector(e) => e.id(),
-            Expr::Index(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Slice(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::TypeAssert(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Call(e) => e.id(),
-            Expr::Star(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Unary(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Binary(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::KeyValue(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Array(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Struct(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Func(e) => NodeId::FuncTypeExpr(*e),
-            Expr::Interface(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Map(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Expr::Chan(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Bad(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Ident(e) => NodeId::IdentExpr(*e),
+            Self::Ellipsis(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::BasicLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::FuncLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::CompositeLit(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Paren(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Selector(e) => e.id(),
+            Self::Index(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Slice(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::TypeAssert(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Call(e) => e.id(),
+            Self::Star(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Unary(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Binary(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::KeyValue(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Array(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Struct(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Func(e) => NodeId::FuncTypeExpr(*e),
+            Self::Interface(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Map(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Chan(e) => NodeId::Address(Rc::as_ptr(e) as usize),
         }
     }
 }
 
 impl Stmt {
     #[must_use]
-    pub fn new_bad(from: position::Pos, to: position::Pos) -> Stmt {
-        Stmt::Bad(Rc::new(BadStmt { from, to }))
+    pub fn new_bad(from: position::Pos, to: position::Pos) -> Self {
+        Self::Bad(Rc::new(BadStmt { from, to }))
     }
 
     pub fn new_assign(
@@ -283,73 +284,73 @@ impl Stmt {
         tpos: position::Pos,
         tok: token::Token,
         rhs: Vec<Expr>,
-    ) -> Stmt {
-        Stmt::Assign(AssignStmt::arena_new(objs, lhs, tpos, tok, rhs))
+    ) -> Self {
+        Self::Assign(AssignStmt::arena_new(objs, lhs, tpos, tok, rhs))
     }
 
     #[must_use]
-    pub fn box_block(block: BlockStmt) -> Stmt {
-        Stmt::Block(Rc::new(block))
+    pub fn box_block(block: BlockStmt) -> Self {
+        Self::Block(Rc::new(block))
     }
 }
 
 impl Node for Stmt {
     fn pos(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Stmt::Bad(s) => s.from,
-            Stmt::Decl(d) => d.pos(objs),
-            Stmt::Empty(s) => s.semi,
-            Stmt::Labeled(s) => {
+            Self::Bad(s) => s.from,
+            Self::Decl(d) => d.pos(objs),
+            Self::Empty(s) => s.semi,
+            Self::Labeled(s) => {
                 let label = objs.l_stmts[*s].label;
                 objs.idents[label].pos
             }
-            Stmt::Expr(e) => e.pos(objs),
-            Stmt::Send(s) => s.chan.pos(objs),
-            Stmt::IncDec(s) => s.expr.pos(objs),
-            Stmt::Assign(s) => {
+            Self::Expr(e) => e.pos(objs),
+            Self::Send(s) => s.chan.pos(objs),
+            Self::IncDec(s) => s.expr.pos(objs),
+            Self::Assign(s) => {
                 let assign = &objs.a_stmts[*s];
                 assign.pos(objs)
             }
-            Stmt::Go(s) => s.go,
-            Stmt::Defer(s) => s.defer,
-            Stmt::Return(s) => s.ret,
-            Stmt::Branch(s) => s.token_pos,
-            Stmt::Block(s) => s.pos(),
-            Stmt::If(s) => s.if_pos,
-            Stmt::Case(s) => s.case,
-            Stmt::Switch(s) => s.switch,
-            Stmt::TypeSwitch(s) => s.switch,
-            Stmt::Comm(s) => s.case,
-            Stmt::Select(s) => s.select,
-            Stmt::For(s) => s.for_pos,
-            Stmt::Range(s) => s.for_pos,
+            Self::Go(s) => s.go,
+            Self::Defer(s) => s.defer,
+            Self::Return(s) => s.ret,
+            Self::Branch(s) => s.token_pos,
+            Self::Block(s) => s.pos(),
+            Self::If(s) => s.if_pos,
+            Self::Case(s) => s.case,
+            Self::Switch(s) => s.switch,
+            Self::TypeSwitch(s) => s.switch,
+            Self::Comm(s) => s.case,
+            Self::Select(s) => s.select,
+            Self::For(s) => s.for_pos,
+            Self::Range(s) => s.for_pos,
         }
     }
     fn end(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Stmt::Bad(s) => s.to,
-            Stmt::Decl(d) => d.end(objs),
-            Stmt::Empty(s) => {
+            Self::Bad(s) => s.to,
+            Self::Decl(d) => d.end(objs),
+            Self::Empty(s) => {
                 if s.implicit {
                     s.semi
                 } else {
                     s.semi + 1
                 }
             }
-            Stmt::Labeled(s) => {
+            Self::Labeled(s) => {
                 let ls = &objs.l_stmts[*s];
                 ls.stmt.end(objs)
             }
-            Stmt::Expr(e) => e.end(objs),
-            Stmt::Send(s) => s.val.end(objs),
-            Stmt::IncDec(s) => s.token_pos + 2,
-            Stmt::Assign(s) => {
+            Self::Expr(e) => e.end(objs),
+            Self::Send(s) => s.val.end(objs),
+            Self::IncDec(s) => s.token_pos + 2,
+            Self::Assign(s) => {
                 let assign = &objs.a_stmts[*s];
                 assign.rhs[assign.rhs.len() - 1].end(objs)
             }
-            Stmt::Go(s) => s.call.end(objs),
-            Stmt::Defer(s) => s.call.end(objs),
-            Stmt::Return(s) => {
+            Self::Go(s) => s.call.end(objs),
+            Self::Defer(s) => s.call.end(objs),
+            Self::Return(s) => {
                 let n = s.results.len();
                 if n > 0 {
                     s.results[n - 1].end(objs)
@@ -357,16 +358,16 @@ impl Node for Stmt {
                     s.ret + 6
                 }
             }
-            Stmt::Branch(s) => s.label.as_ref().map_or_else(
+            Self::Branch(s) => s.label.as_ref().map_or_else(
                 || s.token_pos + s.token.text().len(),
                 |l| objs.idents[*l].end(),
             ),
-            Stmt::Block(s) => s.end(),
-            Stmt::If(s) => s.els.as_ref().map_or_else(
+            Self::Block(s) => s.end(),
+            Self::If(s) => s.els.as_ref().map_or_else(
                 || s.body.end(),
                 |e| e.end(objs),
             ),
-            Stmt::Case(s) => {
+            Self::Case(s) => {
                 let n = s.body.len();
                 if n > 0 {
                     s.body[n - 1].end(objs)
@@ -374,9 +375,9 @@ impl Node for Stmt {
                     s.colon + 1
                 }
             }
-            Stmt::Switch(s) => s.body.end(),
-            Stmt::TypeSwitch(s) => s.body.end(),
-            Stmt::Comm(s) => {
+            Self::Switch(s) => s.body.end(),
+            Self::TypeSwitch(s) => s.body.end(),
+            Self::Comm(s) => {
                 let n = s.body.len();
                 if n > 0 {
                     s.body[n - 1].end(objs)
@@ -384,35 +385,35 @@ impl Node for Stmt {
                     s.colon + 1
                 }
             }
-            Stmt::Select(s) => s.body.end(),
-            Stmt::For(s) => s.body.end(),
-            Stmt::Range(s) => s.body.end(),
+            Self::Select(s) => s.body.end(),
+            Self::For(s) => s.body.end(),
+            Self::Range(s) => s.body.end(),
         }
     }
 
     fn id(&self) -> NodeId {
         match &self {
-            Stmt::Bad(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Decl(d) => NodeId::Address(Rc::as_ptr(d) as usize),
-            Stmt::Empty(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Stmt::Labeled(s) => NodeId::LabeledStmt(*s),
-            Stmt::Expr(e) => NodeId::Address(Rc::as_ptr(e) as usize),
-            Stmt::Send(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::IncDec(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Assign(s) => NodeId::AssignStmt(*s),
-            Stmt::Go(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Defer(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Return(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Branch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Block(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::If(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Case(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Switch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::TypeSwitch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Comm(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Select(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::For(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Stmt::Range(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Bad(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Decl(d) => NodeId::Address(Rc::as_ptr(d) as usize),
+            Self::Empty(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Labeled(s) => NodeId::LabeledStmt(*s),
+            Self::Expr(e) => NodeId::Address(Rc::as_ptr(e) as usize),
+            Self::Send(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::IncDec(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Assign(s) => NodeId::AssignStmt(*s),
+            Self::Go(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Defer(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Return(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Branch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Block(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::If(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Case(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Switch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::TypeSwitch(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Comm(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Select(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::For(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Range(s) => NodeId::Address(Rc::as_ptr(s) as usize),
         }
     }
 }
@@ -420,22 +421,22 @@ impl Node for Stmt {
 impl Node for Spec {
     fn pos(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Spec::Import(s) => s.name.as_ref().map_or_else(
+            Self::Import(s) => s.name.as_ref().map_or_else(
                 || s.path.pos,
                 |i| objs.idents[*i].pos,
             ),
-            Spec::Value(s) => objs.idents[s.names[0]].pos,
-            Spec::Type(s) => objs.idents[s.name].pos,
+            Self::Value(s) => objs.idents[s.names[0]].pos,
+            Self::Type(s) => objs.idents[s.name].pos,
         }
     }
 
     fn end(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Spec::Import(s) => s.end_pos.map_or_else(
+            Self::Import(s) => s.end_pos.map_or_else(
                 || s.path.pos,
                 |p| p,
             ),
-            Spec::Value(s) => {
+            Self::Value(s) => {
                 let n = s.values.len();
                 if n > 0 {
                     s.values[n - 1].end(objs)
@@ -446,15 +447,15 @@ impl Node for Spec {
                     )
                 }
             }
-            Spec::Type(t) => t.typ.end(objs),
+            Self::Type(t) => t.typ.end(objs),
         }
     }
 
     fn id(&self) -> NodeId {
         match self {
-            Spec::Import(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Spec::Value(s) => NodeId::Address(Rc::as_ptr(s) as usize),
-            Spec::Type(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Import(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Value(s) => NodeId::Address(Rc::as_ptr(s) as usize),
+            Self::Type(s) => NodeId::Address(Rc::as_ptr(s) as usize),
         }
     }
 }
@@ -462,20 +463,20 @@ impl Node for Spec {
 impl Node for Decl {
     fn pos(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Decl::Bad(d) => d.from,
-            Decl::Gen(d) => d.token_pos,
-            Decl::Func(d) => objs.fdecls[*d].pos(objs),
+            Self::Bad(d) => d.from,
+            Self::Gen(d) => d.token_pos,
+            Self::Func(d) => objs.fdecls[*d].pos(objs),
         }
     }
 
     fn end(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Decl::Bad(d) => d.to,
-            Decl::Gen(d) => d.r_paren.as_ref().map_or_else(
+            Self::Bad(d) => d.to,
+            Self::Gen(d) => d.r_paren.as_ref().map_or_else(
                 || objs.specs[d.specs[0]].end(objs),
                 |p| p + 1,
             ),
-            Decl::Func(d) => {
+            Self::Func(d) => {
                 let fd = &objs.fdecls[*d];
                 fd.body.as_ref().map_or_else(
                     || fd.typ.end(objs),
@@ -487,9 +488,9 @@ impl Node for Decl {
 
     fn id(&self) -> NodeId {
         match self {
-            Decl::Bad(d) => NodeId::Address(Rc::as_ptr(d) as usize),
-            Decl::Gen(d) => NodeId::Address(Rc::as_ptr(d) as usize),
-            Decl::Func(d) => NodeId::FuncDecl(*d),
+            Self::Bad(d) => NodeId::Address(Rc::as_ptr(d) as usize),
+            Self::Gen(d) => NodeId::Address(Rc::as_ptr(d) as usize),
+            Self::Func(d) => NodeId::FuncDecl(*d),
         }
     }
 }
@@ -549,7 +550,7 @@ pub enum IdentEntity {
 impl IdentEntity {
     #[must_use]
     pub const fn is_none(&self) -> bool {
-        matches!(self, IdentEntity::NoEntity)
+        matches!(self, Self::NoEntity)
     }
 }
 
@@ -558,7 +559,7 @@ impl IdentEntity {
 /// # Panics
 ///
 /// This function panics if the input string `s` is empty, as calling `unwrap()` on an empty iterator will panic.
-pub fn is_exported(s: &str) -> bool {
+#[must_use] pub fn is_exported(s: &str) -> bool {
     s.chars().next().unwrap().is_uppercase()
 }
 
@@ -572,18 +573,18 @@ pub struct Ident {
 
 impl Ident {
     #[must_use]
-    pub fn blank(pos: position::Pos) -> Ident {
-        Ident::with_str(pos, "_")
+    pub fn blank(pos: position::Pos) -> Self {
+        Self::with_str(pos, "_")
     }
 
     #[must_use]
-    pub fn true_(pos: position::Pos) -> Ident {
-        Ident::with_str(pos, "true")
+    pub fn true_(pos: position::Pos) -> Self {
+        Self::with_str(pos, "true")
     }
 
     #[must_use]
-    pub fn with_str(pos: position::Pos, s: &str) -> Ident {
-        Ident {
+    pub fn with_str(pos: position::Pos, s: &str) -> Self {
+        Self {
             pos,
             name: s.to_owned(),
             entity: IdentEntity::NoEntity,
@@ -663,7 +664,7 @@ pub struct SelectorExpr {
 impl SelectorExpr {
     #[must_use]
     pub fn id(&self) -> NodeId {
-        NodeId::Address(ptr::from_ref::<SelectorExpr>(self) as usize)
+        NodeId::Address(ptr::from_ref::<Self>(self) as usize)
     }
 }
 
@@ -711,7 +712,7 @@ pub struct CallExpr {
 impl CallExpr {
     #[must_use]
     pub fn id(&self) -> NodeId {
-         NodeId::Address(ptr::from_ref::<CallExpr>(self) as usize)
+         NodeId::Address(ptr::from_ref::<Self>(self) as usize)
     }
 }
 
@@ -782,8 +783,8 @@ impl FuncType {
         func: Option<position::Pos>,
         params: FieldList,
         results: Option<FieldList>,
-    ) -> FuncType {
-        FuncType {
+    ) -> Self {
+        Self {
             func,
             params,
             results,
@@ -938,7 +939,7 @@ impl LabeledStmt {
         colon: position::Pos,
         stmt: Stmt,
     ) -> LabeledStmtKey {
-        let l = LabeledStmt {
+        let l = Self {
             label,
             colon,
             stmt,
@@ -986,7 +987,7 @@ impl AssignStmt {
         tok: token::Token,
         rhs: Vec<Expr>,
     ) -> AssignStmtKey {
-        let ass = AssignStmt {
+        let ass = Self {
             lhs,
             token_pos: tpos,
             token: tok,
@@ -1036,8 +1037,8 @@ pub struct BlockStmt {
 
 impl BlockStmt {
     #[must_use]
-    pub const fn new(l: position::Pos, list: Vec<Stmt>, r: position::Pos) -> BlockStmt {
-        BlockStmt {
+    pub const fn new(l: position::Pos, list: Vec<Stmt>, r: position::Pos) -> Self {
+        Self {
             l_brace: l,
             list,
             r_brace: r,
@@ -1168,8 +1169,8 @@ impl FieldList {
         opening: Option<position::Pos>,
         list: Vec<FieldKey>,
         closing: Option<position::Pos>,
-    ) -> FieldList {
-        FieldList {
+    ) -> Self {
+        Self {
             opening,
             list,
             closing,

@@ -31,13 +31,13 @@ pub struct FilePos {
 
 impl FilePos {
     #[must_use]
-    pub fn is_valid(&self) -> bool {
+    pub const fn is_valid(&self) -> bool {
         self.line > 0
     }
 
     #[must_use]
-    pub fn null() -> FilePos {
-        FilePos {
+    pub fn null() -> Self {
+        Self {
             filename: Rc::new("[null_file]".to_owned()),
             line: 0,
             offset: 0,
@@ -50,7 +50,7 @@ impl fmt::Display for FilePos {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut s = String::clone(&*self.filename);
         if self.is_valid() {
-            if s != "" {
+            if !s.is_empty() {
                 s.push(':');
             }
             s.push_str(&self.line.to_string());
@@ -75,8 +75,8 @@ pub struct File {
 
 impl File {
     #[must_use]
-    pub fn new(name: String) -> File {
-        File {
+    pub fn new(name: String) -> Self {
+        Self {
             name: Rc::new(name),
             base: 0,
             size: 0,
@@ -85,16 +85,19 @@ impl File {
     }
 
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn name(&self) -> &str {
         &self.name
     }
 
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn base(&self) -> usize {
         self.base
     }
 
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn size(&self) -> usize {
         self.size
     }
@@ -119,12 +122,8 @@ impl File {
     /// Panics if `line` is greater than or equal to the number of lines,
     /// indicating an invalid line index.
     pub fn merge_line(&mut self, line: usize) {
-        if line < 1 {
-            panic!("illegal line number (line numbering starts at 1)");
-        }
-        if line >= self.line_count() {
-            panic!("illegal line number");
-        }
+        assert!((line >= 1), "illegal line number (line numbering starts at 1)");
+        assert!((line < self.line_count()), "illegal line number");
         /*
         let mut shalf = self.lines.split_off(line);
         self.lines.pop().unwrap();
@@ -132,7 +131,7 @@ impl File {
         */
         let lines = &self.lines;
         self.lines = lines
-            .into_iter()
+            .iter()
             .enumerate()
             .filter(|&(i, _)| i != line)
             .map(|(_, l)| *l)
@@ -172,12 +171,8 @@ impl File {
     /// Panics if `line` is greater than or equal to the number of lines.
     #[must_use]
     pub fn line_start(&self, line: usize) -> usize {
-        if line < 1 {
-            panic!("illegal line number (line numbering starts at 1)");
-        }
-        if line >= self.line_count() {
-            panic!("illegal line number");
-        }
+        assert!((line >= 1), "illegal line number (line numbering starts at 1)");
+        assert!((line < self.line_count()), "illegal line number");
         self.base + self.lines[line - 1]
     }
 
@@ -188,9 +183,7 @@ impl File {
     /// Panics if `offset` is greater than the file size.
     #[must_use]
     pub fn pos(&self, offset: usize) -> Pos {
-        if offset > self.size() {
-            panic!("illegal file offset")
-        }
+        assert!((offset <= self.size()), "illegal file offset");
         self.base() + offset
     }
 
@@ -201,9 +194,7 @@ impl File {
     /// Panics if `p` is not within the range of valid positions for this file,
     #[must_use]
     pub fn position(&self, p: Pos) -> FilePos {
-        if p < self.base || p > self.base + self.size {
-            panic!("illegal Pos value");
-        }
+        assert!(!(p < self.base || p > self.base + self.size), "illegal Pos value");
 
         let line_count = self.line_count();
         let offset = p - self.base;
@@ -271,31 +262,26 @@ impl Default for FileSet {
 
 impl FileSet {
     #[must_use]
-    pub fn new() -> FileSet {
-        FileSet {
+    pub const fn new() -> Self {
+        Self {
             base: 0,
             files: vec![],
         }
     }
 
     #[must_use]
-    pub fn base(&self) -> usize {
+    pub const fn base(&self) -> usize {
         self.base
     }
 
     #[must_use]
-    pub fn iter(&self) -> FileSetIter {
+    pub const fn iter(&self) -> FileSetIter {
         FileSetIter { fs: self, cur: 0 }
     }
 
     #[must_use]
     pub fn file(&self, p: Pos) -> Option<&File> {
-        for f in self.files.iter() {
-            if f.base <= p && f.base + f.size >= p {
-                return Some(f);
-            }
-        }
-        None
+        self.files.iter().find(|&f| f.base <= p && f.base + f.size >= p)
     }
 
     #[must_use]
@@ -328,17 +314,13 @@ impl FileSet {
     /// the file causes an overflow in the base offset.
     pub fn add_file(&mut self, name: String, base: Option<usize>, size: usize) -> &mut File {
         let real_base = if let Some(b) = base { b } else { self.base };
-        if real_base < self.base {
-            panic!("illegal base");
-        }
+        assert!((real_base >= self.base), "illegal base");
 
         let mut f = File::new(name);
         f.base = real_base;
         f.size = size;
         let set_base = self.base + size + 1; // +1 because EOF also has a position
-        if set_base < self.base {
-            panic!("token.Pos offset overflow (> 2G of source code in file set)");
-        }
+        assert!((set_base >= self.base), "token.Pos offset overflow (> 2G of source code in file set)");
         self.base = set_base;
         self.files.push(f);
         self.recent_file().unwrap()

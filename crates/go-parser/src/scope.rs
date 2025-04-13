@@ -32,13 +32,13 @@ impl EntityKind {
     #[must_use]
     pub const fn kind_text(&self) -> &str {
         match self {
-            EntityKind::Bad => "bad",
-            EntityKind::Pkg => "package",
-            EntityKind::Con => "const",
-            EntityKind::Typ => "type",
-            EntityKind::Var => "var",
-            EntityKind::Fun => "func",
-            EntityKind::Lbl => "label",
+            Self::Bad => "bad",
+            Self::Pkg => "package",
+            Self::Con => "const",
+            Self::Typ => "type",
+            Self::Var => "var",
+            Self::Fun => "func",
+            Self::Lbl => "label",
         }
     }
 }
@@ -72,8 +72,8 @@ pub struct Entity {
 
 impl Entity {
     #[must_use]
-    pub const fn new(kind: EntityKind, name: String, decl: DeclObj, data: EntityData) -> Entity {
-        Entity {
+    pub const fn new(kind: EntityKind, name: String, decl: DeclObj, data: EntityData) -> Self {
+        Self {
             kind,
             name,
             decl,
@@ -82,8 +82,8 @@ impl Entity {
     }
 
     #[must_use]
-    pub fn with_no_data(kind: EntityKind, name: String, decl: DeclObj) -> Entity {
-        Entity::new(kind, name, decl, EntityData::NoData)
+    pub const fn with_no_data(kind: EntityKind, name: String, decl: DeclObj) -> Self {
+        Self::new(kind, name, decl, EntityData::NoData)
     }
 
     #[must_use]
@@ -106,8 +106,8 @@ pub struct Scope {
 
 impl Scope {
     #[must_use]
-    pub fn new(outer: Option<ScopeKey>) -> Scope {
-        Scope {
+    pub fn new(outer: Option<ScopeKey>) -> Self {
+        Self {
             outer,
             entities: Map::new(),
         }
@@ -129,7 +129,7 @@ impl Scope {
     /// This function can return an error if there is an issue writing to the formatter.
     pub fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "scope {self:p} {{")?;
-        for (k, _) in &self.entities {
+        for k in self.entities.keys() {
             writeln!(f, "\t{k}")?;
         }
         writeln!(f, "}}")

@@ -58,8 +58,8 @@ impl Default for ErrorList {
 
 impl ErrorList {
     #[must_use]
-    pub fn new() -> ErrorList {
-        ErrorList {
+    pub fn new() -> Self {
+        Self {
             errors: Rc::new(RefCell::new(vec![])),
         }
     }
@@ -123,7 +123,7 @@ pub struct FilePosErrors<'a> {
 
 impl<'a> FilePosErrors<'a> {
     #[must_use]
-    pub fn new(file: &'a File, elist: &'a ErrorList) -> FilePosErrors<'a> {
+    pub const fn new(file: &'a File, elist: &'a ErrorList) -> Self {
         FilePosErrors {
             file,
             elist,

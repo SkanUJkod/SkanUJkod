@@ -92,7 +92,7 @@ impl<'a> Parser<'a> {
         el: &'a ErrorList,
         src: &'a str,
         trace: bool,
-    ) -> Parser<'a> {
+    ) -> Self {
         let s = scanner::Scanner::new(file, src, el);
         let mut p = Parser {
             objects: objs,
@@ -121,7 +121,7 @@ impl<'a> Parser<'a> {
     // Getters
 
     #[must_use]
-    pub fn get_errors(&self) -> &ErrorList {
+    pub const fn get_errors(&self) -> &ErrorList {
         self.errors
     }
 
@@ -186,7 +186,7 @@ impl<'a> Parser<'a> {
             }
             DeclObj::NoDecl => &names,
         };
-        for id in idents.iter() {
+        for id in idents {
             let mut_ident = &mut self.objects.idents[*id];
             let entity_obj = Entity::new(
                 kind.clone(),
@@ -316,7 +316,7 @@ impl<'a> Parser<'a> {
         for _ in 0..self.indent {
             buf.push_str("..");
         }
-        print!("{buf}{msg}\n");
+        println!("{buf}{msg}");
     }
 
     fn trace_begin(&mut self, msg: &str) {
@@ -548,7 +548,7 @@ impl<'a> Parser<'a> {
             Token::DEFINE | Token::COLON => {}
             _ => {
                 // identifiers must be declared elsewhere
-                for x in list.iter() {
+                for x in &list {
                     self.resolve(x);
                 }
             }
@@ -751,19 +751,17 @@ impl<'a> Parser<'a> {
 
     // If the result is an identifier, it is not resolved.
     fn try_var_type(&mut self, is_param: bool) -> Option<Expr> {
-        if is_param {
-            if self.token == Token::ELLIPSIS {
-                let pos = self.pos;
-                self.next();
-                let typ = if let Some(t) = self.try_ident_or_type() {
-                    self.resolve(&t);
-                    t
-                } else {
-                    self.error_str(pos, "'...' parameter is missing type");
-                    Expr::new_bad(pos, self.pos)
-                };
-                return Some(Expr::new_ellipsis(pos, Some(typ)));
-            }
+        if is_param && self.token == Token::ELLIPSIS {
+            let pos = self.pos;
+            self.next();
+            let typ = if let Some(t) = self.try_ident_or_type() {
+                self.resolve(&t);
+                t
+            } else {
+                self.error_str(pos, "'...' parameter is missing type");
+                Expr::new_bad(pos, self.pos)
+            };
+            return Some(Expr::new_ellipsis(pos, Some(typ)));
         }
         self.try_ident_or_type()
     }
@@ -1037,9 +1035,8 @@ impl<'a> Parser<'a> {
     }
 
     fn try_type(&mut self) -> Option<Expr> {
-        self.try_ident_or_type().map_or(None, |typ| {
-            self.resolve(&typ);
-            Some(typ)
+        self.try_ident_or_type().inspect(|typ| {
+            self.resolve(typ);
         })
     }
 
@@ -1426,6 +1423,7 @@ impl<'a> Parser<'a> {
     }
 
     // isTypeName reports whether x is a (qualified) TypeName.
+    #[allow(clippy::missing_const_for_fn)]
     fn is_type_name(x: &Expr) -> bool {
         match x {
             Expr::Bad(_) | Expr::Ident(_) => true,
@@ -1435,6 +1433,7 @@ impl<'a> Parser<'a> {
     }
 
     // isLiteralType reports whether x is a legal composite literal type.
+    #[allow(clippy::missing_const_for_fn)]
     fn is_literal_type(x: &Expr) -> bool {
         match x {
             Expr::Bad(_) | Expr::Ident(_) | Expr::Array(_) | Expr::Struct(_) | Expr::Map(_) => true,
@@ -1444,6 +1443,7 @@ impl<'a> Parser<'a> {
     }
 
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn deref(x: &Expr) -> &Expr {
         if let Expr::Star(s) = x {
             &s.expr
@@ -1897,9 +1897,9 @@ impl<'a> Parser<'a> {
     }
 
     fn make_expr(&self, s: Option<Stmt>, want: &str) -> Option<Expr> {
-        s.map_or(None, |stmt| {
+        s.map(|stmt| {
             if let Stmt::Expr(x) = stmt {
-                Some(self.check_expr(x.as_ref().clone()))
+                self.check_expr(x.as_ref().clone())
             } else {
                 let found = if let Stmt::Assign(_) = stmt {
                     "assignment"
@@ -1910,7 +1910,7 @@ impl<'a> Parser<'a> {
                 let stri = format!("expected {want}, found {found} {extra}");
                 let pos = stmt.pos(self.objects);
                 self.error(pos, stri);
-                Some(Expr::new_bad(pos, self.safe_pos(stmt.end(self.objects))))
+                Expr::new_bad(pos, self.safe_pos(stmt.end(self.objects)))
             }
         })
     }
@@ -1954,7 +1954,7 @@ impl<'a> Parser<'a> {
             }
         };
 
-        let cond = if let Some(_) = &cond_stmt {
+        let cond = if cond_stmt.is_some() {
             self.make_expr(cond_stmt, "boolean expression").unwrap()
         } else {
             if let Some(pos) = semi_pos {
@@ -2026,19 +2026,16 @@ impl<'a> Parser<'a> {
         self.trace_begin("CaseClause");
 
         let pos = self.pos;
-        let list = match self.token {
-            Token::CASE => {
-                self.next();
-                if type_switch {
-                    Some(self.parse_type_list())
-                } else {
-                    Some(self.parse_rhs_list())
-                }
+        let list = if self.token == Token::CASE {
+            self.next();
+            if type_switch {
+                Some(self.parse_type_list())
+            } else {
+                Some(self.parse_rhs_list())
             }
-            _ => {
-                self.expect(&Token::DEFAULT);
-                None
-            }
+        } else {
+            self.expect(&Token::DEFAULT);
+            None
         };
 
         let colon = self.expect(&Token::COLON);
@@ -2457,9 +2454,9 @@ impl<'a> Parser<'a> {
         index
     }
 
-    fn parse_value_spec<'p, 'k>(
-        self_: &'p mut Parser<'a>,
-        keyword: &'k Token,
+    fn parse_value_spec(
+        self_: &mut Self,
+        keyword: &Token,
         iota: isize,
     ) -> SpecKey {
         self_.trace_begin(&format!("{}{}", keyword.text(), "Spec"));
@@ -2499,7 +2496,7 @@ impl<'a> Parser<'a> {
             typ,
             values,
         })));
-        let kind = if let Token::VAR = keyword {
+        let kind = if matches!(keyword, Token::VAR) {
             EntityKind::Var
         } else {
             EntityKind::Con
@@ -2560,7 +2557,7 @@ impl<'a> Parser<'a> {
     fn parse_gen_decl(
         &mut self,
         keyword: &Token,
-        f: fn(&mut Parser<'a>, &Token, isize) -> SpecKey,
+        f: fn(&mut Self, &Token, isize) -> SpecKey,
     ) -> Decl {
         self.trace_begin(&format!("GenDecl({})", keyword.text()));
 
@@ -2719,8 +2716,7 @@ impl<'a> Parser<'a> {
 
         // resolve global identifiers within the same file
         self.unresolved = self
-            .unresolved
-            .to_owned()
+            .unresolved.clone()
             .into_iter()
             .filter_map(|x| {
                 let ident = &mut self.objects.idents[x];
