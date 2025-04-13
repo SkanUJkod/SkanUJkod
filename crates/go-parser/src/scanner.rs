@@ -743,7 +743,7 @@ impl<'a> Scanner<'a> {
 
 fn digit_val(ch: char) -> u32 {
     match ch {
-        c if ('0'..='9').contains(&c) => ch as u32 - '0' as u32,
+        c if c.is_ascii_digit() => ch as u32 - '0' as u32,
         c if ('a'..='f').contains(&c) => ch as u32 - 'a' as u32 + 10,
         c if ('A'..='F').contains(&c) => ch as u32 - 'A' as u32 + 10,
         _ => 16,
@@ -755,7 +755,7 @@ fn is_letter(ch: char) -> bool {
 }
 
 fn is_decimal(ch: char) -> bool {
-    ('0'..='9').contains(&ch)
+    ch.is_ascii_digit()
 }
 
 fn is_octal(ch: char) -> bool {
@@ -767,7 +767,7 @@ fn is_binary(ch: char) -> bool {
 }
 
 fn is_hex(ch: char) -> bool {
-    ('0'..='9').contains(&ch) || ('a'..='f').contains(&ch.to_ascii_lowercase())
+    ch.is_ascii_digit() || ('a'..='f').contains(&ch.to_ascii_lowercase())
 }
 
 enum IntPrefix {
