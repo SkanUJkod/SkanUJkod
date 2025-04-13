@@ -365,7 +365,6 @@ impl<'a> Scanner<'a> {
                 }
             }
             lit.push('\n');
-            Token::COMMENT(lit.into())
         } else {
             // /*
             loop {
@@ -389,8 +388,8 @@ impl<'a> Scanner<'a> {
                     }
                 }
             }
-            Token::COMMENT(lit.into())
         }
+        Token::COMMENT(lit.into())
     }
 
     fn scan_string_char_lit(&mut self, lit: &mut String, quote: char) -> Option<String> {
