@@ -553,10 +553,7 @@ pub enum IdentEntity {
 impl IdentEntity {
     #[must_use]
     pub const fn is_none(&self) -> bool {
-        match self {
-            IdentEntity::NoEntity => true,
-            _ => false,
-        }
+        matches!(self, IdentEntity::NoEntity)
     }
 }
 
