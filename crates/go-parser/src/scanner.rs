@@ -703,9 +703,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn get_char2nd(&self) -> Option<char> {
-        let mut iter = self.src.clone();
-        iter.next();
-        iter.next()
+        self.src.clone().nth(1)
     }
 
     // returns true if line ends with comment:
