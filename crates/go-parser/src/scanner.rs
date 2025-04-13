@@ -256,6 +256,7 @@ impl<'a> Scanner<'a> {
         }
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     fn prefixed_int(&mut self, mut literal: String, prefix: IntPrefix) -> Token {
         if prefix.is_bare() {
             literal.push(prefix.char());

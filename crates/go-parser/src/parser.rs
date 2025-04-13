@@ -160,6 +160,7 @@ impl<'a> Parser<'a> {
         self.label_scope = self.objects.scopes[self.label_scope.unwrap()].outer;
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     fn declare(&mut self, decl: DeclObj, data: EntityData, kind: EntityKind, scope_ind: ScopeKey) {
         let mut names: Vec<IdentKey> = vec![];
         let idents = match decl {
@@ -1691,6 +1692,7 @@ impl<'a> Parser<'a> {
     // of a range clause (with mode == rangeOk). The returned statement is an
     // assignment with a right-hand side that is a single unary expression of
     // the form "range x". No guarantees are given for the left-hand side.
+    #[allow(clippy::needless_pass_by_value)]
     fn parse_simple_stmt(&mut self, mode: ParseSimpleMode) -> (Stmt, bool) {
         self.trace_begin("SimpleStmt");
         let ret: Stmt;
