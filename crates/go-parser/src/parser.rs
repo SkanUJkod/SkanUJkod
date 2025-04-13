@@ -1403,10 +1403,6 @@ impl<'a> Parser<'a> {
     fn check_expr(&self, x: Expr) -> Expr {
         let unparenx = Parser::unparen(&x);
         match unparenx {
-            Expr::Bad(_) => {
-                self.error_expected(self.pos, "expression");
-                Expr::new_bad(x.pos(self.objects), self.safe_pos(x.end(self.objects)))
-            }
             // If t.Type == nil we have a type assertion of the form
             // y.(type), which is only allowed in type switch expressions.
             // It's hard to exclude those but for the case where we are in
