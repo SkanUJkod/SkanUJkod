@@ -129,6 +129,7 @@ pub enum TokenType {
 }
 
 impl Token {
+    #[must_use]
     pub const fn token_property(&self) -> (TokenType, &str) {
         match self {
             Token::NONE => (TokenType::Other, "NONE"),
@@ -216,6 +217,7 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub fn ident_token(ident: String) -> Token {
         match ident.as_str() {
             "break" => Token::BREAK,
@@ -247,10 +249,12 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub fn int1() -> Token {
         Token::INT("1".to_owned().into())
     }
 
+    #[must_use]
     pub const fn precedence(&self) -> usize {
         match self {
             Token::LOR => 1,
@@ -268,11 +272,13 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub fn text(&self) -> &str {
         let (_, t) = self.token_property();
         t
     }
 
+    #[must_use]
     pub fn is_literal(&self) -> bool {
         match self.token_property().0 {
             TokenType::Literal => true,
@@ -280,6 +286,7 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub fn is_operator(&self) -> bool {
         match self.token_property().0 {
             TokenType::Operator => true,
@@ -287,6 +294,7 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub fn is_keyword(&self) -> bool {
         match self.token_property().0 {
             TokenType::Keyword => true,
@@ -294,6 +302,7 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub fn get_literal(&self) -> &str {
         match self {
             Token::INT(l) => l.as_str(),
@@ -305,6 +314,7 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub const fn is_stmt_start(&self) -> bool {
         match self {
             Token::BREAK => true,
@@ -325,6 +335,7 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub const fn is_decl_start(&self) -> bool {
         match self {
             Token::CONST => true,
@@ -334,6 +345,7 @@ impl Token {
         }
     }
 
+    #[must_use]
     pub const fn is_expr_end(&self) -> bool {
         match self {
             Token::COMMA => true,
@@ -433,6 +445,7 @@ impl AsMut<String> for TokenData {
 }
 
 impl TokenData {
+    #[must_use]
     pub fn as_bool(&self) -> &bool {
         match self.0.as_ref() {
             RawTokenData::Bool(b) => b,
@@ -440,6 +453,7 @@ impl TokenData {
         }
     }
 
+    #[must_use]
     pub fn as_str(&self) -> &String {
         match self.0.as_ref() {
             RawTokenData::Str(s) => s,
@@ -458,6 +472,7 @@ impl TokenData {
         }
     }
 
+    #[must_use]
     pub fn as_str_str(&self) -> (&String, &String) {
         match self.0.as_ref() {
             RawTokenData::StrStr(s1, s2) => (s1, s2),
@@ -465,6 +480,7 @@ impl TokenData {
         }
     }
 
+    #[must_use]
     pub fn as_str_char(&self) -> (&String, &char) {
         match self.0.as_ref() {
             RawTokenData::StrChar(s, c) => (s, c),

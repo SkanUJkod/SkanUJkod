@@ -30,10 +30,12 @@ pub struct FilePos {
 }
 
 impl FilePos {
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.line > 0
     }
 
+    #[must_use]
     pub fn null() -> FilePos {
         FilePos {
             filename: Rc::new("[null_file]".to_owned()),
@@ -72,6 +74,7 @@ pub struct File {
 }
 
 impl File {
+    #[must_use]
     pub fn new(name: String) -> File {
         File {
             name: Rc::new(name),
@@ -81,18 +84,22 @@ impl File {
         }
     }
 
+    #[must_use]
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    #[must_use]
     pub fn base(&self) -> usize {
         self.base
     }
 
+    #[must_use]
     pub fn size(&self) -> usize {
         self.size
     }
 
+    #[must_use]
     pub fn line_count(&self) -> usize {
         self.lines.len()
     }
@@ -150,6 +157,7 @@ impl File {
         }
     }
 
+    #[must_use]
     pub fn line_start(&self, line: usize) -> usize {
         if line < 1 {
             panic!("illegal line number (line numbering starts at 1)");
@@ -160,6 +168,7 @@ impl File {
         self.base + self.lines[line - 1]
     }
 
+    #[must_use]
     pub fn pos(&self, offset: usize) -> Pos {
         if offset > self.size() {
             panic!("illegal file offset")
@@ -167,6 +176,7 @@ impl File {
         self.base() + offset
     }
 
+    #[must_use]
     pub fn position(&self, p: Pos) -> FilePos {
         if p < self.base || p > self.base + self.size {
             panic!("illegal Pos value");
@@ -231,6 +241,7 @@ pub struct FileSet {
 }
 
 impl FileSet {
+    #[must_use]
     pub fn new() -> FileSet {
         FileSet {
             base: 0,
@@ -238,14 +249,17 @@ impl FileSet {
         }
     }
 
+    #[must_use]
     pub fn base(&self) -> usize {
         self.base
     }
 
+    #[must_use]
     pub fn iter(&self) -> FileSetIter {
         FileSetIter { fs: self, cur: 0 }
     }
 
+    #[must_use]
     pub fn file(&self, p: Pos) -> Option<&File> {
         for f in self.files.iter() {
             if f.base <= p && f.base + f.size >= p {
@@ -255,6 +269,7 @@ impl FileSet {
         None
     }
 
+    #[must_use]
     pub fn position(&self, p: Pos) -> Option<FilePos> {
         self.file(p).map(|f| f.position(p))
     }

@@ -30,6 +30,7 @@ impl<K, V> PiggyVec<K, V>
 where
     K: PiggyVecKey + From<usize>,
 {
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             vec: Vec::with_capacity(capacity),
@@ -43,11 +44,13 @@ where
         (self.vec.len() - 1).into()
     }
 
+    #[must_use]
     #[inline]
     pub fn vec(&self) -> &Vec<V> {
         &self.vec
     }
 
+    #[must_use]
     pub fn iter(&self) -> PiggyVecIter<K, V> {
         PiggyVecIter {
             vec_iter: self.vec.iter(),
@@ -143,6 +146,7 @@ macro_rules! piggy_key_type {
         $vis struct $name(usize);
 
         impl $name {
+            #[must_use]
             #[inline]
             pub fn null() -> Self {
                 $name(std::usize::MAX)
@@ -204,6 +208,7 @@ pub struct AstObjects {
 }
 
 impl AstObjects {
+    #[must_use]
     pub fn new() -> AstObjects {
         const CAP: usize = 16;
         AstObjects {

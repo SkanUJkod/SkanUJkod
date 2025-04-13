@@ -120,6 +120,7 @@ impl<'a> Parser<'a> {
     // ----------------------------------------------------------------------------
     // Getters
 
+    #[must_use]
     pub fn get_errors(&self) -> &ErrorList {
         self.errors
     }
@@ -1500,6 +1501,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    #[must_use]
     pub fn deref(x: &Expr) -> &Expr {
         if let Expr::Star(s) = x {
             &s.expr
@@ -1508,6 +1510,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    #[must_use]
     pub fn unparen(x: &Expr) -> &Expr {
         if let Expr::Paren(p) = x {
             Parser::unparen(&p.expr)

@@ -106,18 +106,22 @@ pub enum Decl {
 }
 
 impl Expr {
+    #[must_use]
     pub fn new_bad(from: position::Pos, to: position::Pos) -> Expr {
         Expr::Bad(Rc::new(BadExpr { from, to }))
     }
 
+    #[must_use]
     pub fn new_selector(x: Expr, sel: IdentKey) -> Expr {
         Expr::Selector(Rc::new(SelectorExpr { expr: x, sel }))
     }
 
+    #[must_use]
     pub fn new_ellipsis(pos: position::Pos, x: Option<Expr>) -> Expr {
         Expr::Ellipsis(Rc::new(Ellipsis { pos, elt: x }))
     }
 
+    #[must_use]
     pub fn new_basic_lit(pos: position::Pos, token: token::Token) -> Expr {
         Expr::BasicLit(Rc::new(BasicLit {
             pos,
@@ -125,6 +129,7 @@ impl Expr {
         }))
     }
 
+    #[must_use]
     pub fn new_unary_expr(pos: position::Pos, op: token::Token, expr: Expr) -> Expr {
         Expr::Unary(Rc::new(UnaryExpr {
             op_pos: pos,
@@ -137,6 +142,7 @@ impl Expr {
         Expr::Func(objs.ftypes.insert(ft))
     }
 
+    #[must_use]
     pub fn clone_ident(&self) -> Option<Expr> {
         if let Expr::Ident(i) = self {
             Some(Expr::Ident(i.clone()))
@@ -145,6 +151,7 @@ impl Expr {
         }
     }
 
+    #[must_use]
     pub const fn try_as_ident(&self) -> Option<&IdentKey> {
         if let Expr::Ident(ident) = self {
             Some(ident)
@@ -153,6 +160,7 @@ impl Expr {
         }
     }
 
+    #[must_use]
     pub const fn is_bad(&self) -> bool {
         if let Expr::Bad(_) = self {
             true
@@ -161,6 +169,7 @@ impl Expr {
         }
     }
 
+    #[must_use]
     pub fn is_type_switch_assert(&self) -> bool {
         if let Expr::TypeAssert(t) = self {
             t.typ.is_none()
@@ -266,6 +275,7 @@ impl Node for Expr {
 }
 
 impl Stmt {
+    #[must_use]
     pub fn new_bad(from: position::Pos, to: position::Pos) -> Stmt {
         Stmt::Bad(Rc::new(BadStmt { from, to }))
     }
@@ -280,6 +290,7 @@ impl Stmt {
         Stmt::Assign(AssignStmt::arena_new(objs, lhs, tpos, tok, rhs))
     }
 
+    #[must_use]
     pub fn box_block(block: BlockStmt) -> Stmt {
         Stmt::Block(Rc::new(block))
     }
@@ -539,6 +550,7 @@ pub enum IdentEntity {
 }
 
 impl IdentEntity {
+    #[must_use]
     pub const fn is_none(&self) -> bool {
         match self {
             IdentEntity::NoEntity => true,
@@ -560,14 +572,17 @@ pub struct Ident {
 }
 
 impl Ident {
+    #[must_use]
     pub fn blank(pos: position::Pos) -> Ident {
         Ident::with_str(pos, "_")
     }
 
+    #[must_use]
     pub fn true_(pos: position::Pos) -> Ident {
         Ident::with_str(pos, "true")
     }
 
+    #[must_use]
     pub fn with_str(pos: position::Pos, s: &str) -> Ident {
         Ident {
             pos,
@@ -576,10 +591,12 @@ impl Ident {
         }
     }
 
+    #[must_use]
     pub fn end(&self) -> position::Pos {
         self.pos + self.name.len()
     }
 
+    #[must_use]
     pub fn entity_obj<'a>(&self, objs: &'a AstObjects) -> Option<&'a scope::Entity> {
         match self.entity {
             IdentEntity::Entity(i) => Some(&objs.entities[i]),
@@ -587,10 +604,12 @@ impl Ident {
         }
     }
 
+    #[must_use]
     pub fn is_blank(&self) -> bool {
         &self.name == "_"
     }
 
+    #[must_use]
     pub fn is_exported(&self) -> bool {
         is_exported(&self.name)
     }
@@ -643,6 +662,7 @@ pub struct SelectorExpr {
 }
 
 impl SelectorExpr {
+    #[must_use]
     pub fn id(&self) -> NodeId {
         NodeId::Address(self as *const SelectorExpr as usize)
     }
@@ -690,6 +710,7 @@ pub struct CallExpr {
 }
 
 impl CallExpr {
+    #[must_use]
     pub fn id(&self) -> NodeId {
         NodeId::Address(self as *const CallExpr as usize)
     }
@@ -757,6 +778,7 @@ pub struct FuncType {
 }
 
 impl FuncType {
+    #[must_use]
     pub const fn new(
         func: Option<position::Pos>,
         params: FieldList,
@@ -884,6 +906,7 @@ pub struct FuncDecl {
 }
 
 impl FuncDecl {
+    #[must_use]
     pub fn pos(&self, objs: &AstObjects) -> position::Pos {
         self.typ.pos(objs)
     }
@@ -924,6 +947,7 @@ impl LabeledStmt {
         objs.l_stmts.insert(l)
     }
 
+    #[must_use]
     pub fn pos(&self, objs: &AstObjects) -> position::Pos {
         objs.idents[self.label].pos
     }
@@ -972,6 +996,7 @@ impl AssignStmt {
         objs.a_stmts.insert(ass)
     }
 
+    #[must_use]
     pub fn pos(&self, objs: &AstObjects) -> position::Pos {
         self.lhs[0].pos(objs)
     }
@@ -1011,6 +1036,7 @@ pub struct BlockStmt {
 }
 
 impl BlockStmt {
+    #[must_use]
     pub const fn new(l: position::Pos, list: Vec<Stmt>, r: position::Pos) -> BlockStmt {
         BlockStmt {
             l_brace: l,
@@ -1019,10 +1045,12 @@ impl BlockStmt {
         }
     }
 
+    #[must_use]
     pub const fn pos(&self) -> position::Pos {
         self.l_brace
     }
 
+    #[must_use]
     pub const fn end(&self) -> position::Pos {
         self.r_brace + 1
     }
@@ -1136,6 +1164,7 @@ pub struct FieldList {
 }
 
 impl FieldList {
+    #[must_use]
     pub const fn new(
         opening: Option<position::Pos>,
         list: Vec<FieldKey>,
@@ -1148,6 +1177,7 @@ impl FieldList {
         }
     }
 
+    #[must_use]
     pub fn pos(&self, objs: &AstObjects) -> position::Pos {
         match self.opening {
             Some(o) => o,
@@ -1155,6 +1185,7 @@ impl FieldList {
         }
     }
 
+    #[must_use]
     pub fn end(&self, objs: &AstObjects) -> position::Pos {
         match self.closing {
             Some(c) => c,

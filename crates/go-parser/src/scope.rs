@@ -29,6 +29,7 @@ pub enum EntityKind {
 }
 
 impl EntityKind {
+    #[must_use]
     pub const fn kind_text(&self) -> &str {
         match self {
             EntityKind::Bad => "bad",
@@ -70,6 +71,7 @@ pub struct Entity {
 }
 
 impl Entity {
+    #[must_use]
     pub const fn new(kind: EntityKind, name: String, decl: DeclObj, data: EntityData) -> Entity {
         Entity {
             kind,
@@ -79,10 +81,12 @@ impl Entity {
         }
     }
 
+    #[must_use]
     pub fn with_no_data(kind: EntityKind, name: String, decl: DeclObj) -> Entity {
         Entity::new(kind, name, decl, EntityData::NoData)
     }
 
+    #[must_use]
     pub fn pos(&self, objs: &AstObjects) -> position::Pos {
         match &self.decl {
             DeclObj::Field(i) => i.pos(objs),
@@ -101,6 +105,7 @@ pub struct Scope {
 }
 
 impl Scope {
+    #[must_use]
     pub fn new(outer: Option<ScopeKey>) -> Scope {
         Scope {
             outer,
@@ -108,6 +113,7 @@ impl Scope {
         }
     }
 
+    #[must_use]
     pub fn look_up(&self, name: &String) -> Option<&EntityKey> {
         self.entities.get(name)
     }
