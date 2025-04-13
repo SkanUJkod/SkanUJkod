@@ -414,9 +414,8 @@ impl<'a> Scanner<'a> {
                     let result = self.scan_escape(lit, quote);
                     if result.is_none() {
                         return None;
-                    } else {
-                        unquoted.push(result?);
                     }
+                    unquoted.push(result?);
                 }
                 Some(&ch) => {
                     self.advance_and_push(lit, ch);
