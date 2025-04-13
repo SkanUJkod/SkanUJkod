@@ -668,7 +668,7 @@ impl<'a> Parser<'a> {
         let mut idents = vec![];
         let typ = match self.try_var_type(false) {
             Some(t) => {
-                idents = self.make_ident_list(&mut list);
+                idents = self.make_ident_list(&list);
                 t
             }
             // ["*"] TypeName (AnonymousField)
@@ -798,7 +798,7 @@ impl<'a> Parser<'a> {
         let typ = self.try_var_type(ellipsis_ok);
         if let Some(t) = typ {
             // IdentifierList Type
-            let idents = self.make_ident_list(&mut list);
+            let idents = self.make_ident_list(&list);
             let to_resolve = t.clone_ident();
             let field = new_field!(self, idents, t, None);
             params.push(field);
