@@ -1093,7 +1093,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
                 _ => {}
-            };
+            }
             list.push(self.parse_stmt());
         }
 

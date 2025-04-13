@@ -347,7 +347,7 @@ impl<'a> Scanner<'a> {
                     self.error("raw string literal not terminated");
                     break;
                 }
-            };
+            }
         }
         Token::STRING((lit, unquoted).into())
     }
@@ -724,7 +724,7 @@ impl<'a> Scanner<'a> {
                                     break;
                                 }
                                 _ => {}
-                            };
+                            }
                         }
                         Some(_) => {}
                     }
