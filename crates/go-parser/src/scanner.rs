@@ -138,7 +138,7 @@ impl<'a> Scanner<'a> {
             Some('/') => {
                 let ch = self.get_char2nd();
                 match ch {
-                    Some('/') | Some('*') => {
+                    Some('/' | '*') => {
                         if self.semi1 && self.comment_to_end() {
                             self.semi1 = false;
                             Token::SEMICOLON(false.into())
@@ -246,11 +246,11 @@ impl<'a> Scanner<'a> {
             self.advance_and_push(&mut literal, '0');
             match self.peek_char() {
                 // hexadecimal int
-                Some('x') | Some('X') => self.prefixed_int(literal, IntPrefix::Hex),
+                Some('x' | 'X') => self.prefixed_int(literal, IntPrefix::Hex),
                 // octal int (explicit)
-                Some('o') | Some('O') => self.prefixed_int(literal, IntPrefix::Octal(false)),
+                Some('o' | 'O') => self.prefixed_int(literal, IntPrefix::Octal(false)),
                 // binary int
-                Some('b') | Some('B') => self.prefixed_int(literal, IntPrefix::Binary),
+                Some('b' | 'B') => self.prefixed_int(literal, IntPrefix::Binary),
                 // octal int (bare)
                 Some(ch) if is_decimal(*ch) => self.prefixed_int(literal, IntPrefix::Octal(true)),
                 _ => self.decimal_int_or_float(literal),
@@ -296,7 +296,7 @@ impl<'a> Scanner<'a> {
             return Token::ILLEGAL(literal.into());
         }
         match self.peek_char() {
-            Some('e') | Some('E') => self.scan_exponent_and_finish(literal),
+            Some('e' | 'E') => self.scan_exponent_and_finish(literal),
             Some('.') => self.scan_fraction_and_finish(literal),
             _ => Token::INT(literal.into()),
         }
@@ -602,7 +602,7 @@ impl<'a> Scanner<'a> {
             return Token::ILLEGAL(lit.into());
         }
         match self.peek_char() {
-            Some('e') | Some('E') => self.scan_exponent_and_finish(lit),
+            Some('e' | 'E') => self.scan_exponent_and_finish(lit),
             _ => Token::FLOAT(lit.into()),
         }
     }
@@ -736,7 +736,7 @@ impl<'a> Scanner<'a> {
                 loop {
                     //skip whitespaces
                     match iter.peek() {
-                        Some(' ') | Some('\t') | Some('r') => {
+                        Some(' ' | '\t' | 'r') => {
                             iter.next();
                         }
                         _ => break,
