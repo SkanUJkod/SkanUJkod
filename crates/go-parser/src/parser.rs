@@ -1447,13 +1447,7 @@ impl<'a> Parser<'a> {
     fn is_type_name(x: &Expr) -> bool {
         match x {
             Expr::Bad(_) | Expr::Ident(_) => true,
-            Expr::Selector(s) => {
-                if let Expr::Ident(_) = s.expr {
-                    true
-                } else {
-                    false
-                }
-            }
+            Expr::Selector(s) => matches!(s.expr, Expr::Ident(_)),
             _ => false,
         }
     }
@@ -1462,13 +1456,7 @@ impl<'a> Parser<'a> {
     fn is_literal_type(x: &Expr) -> bool {
         match x {
             Expr::Bad(_) | Expr::Ident(_) | Expr::Array(_) | Expr::Struct(_) | Expr::Map(_) => true,
-            Expr::Selector(s) => {
-                if let Expr::Ident(_) = s.expr {
-                    true
-                } else {
-                    false
-                }
-            }
+            Expr::Selector(s) => matches!(s.expr, Expr::Ident(_)),
             _ => false,
         }
     }

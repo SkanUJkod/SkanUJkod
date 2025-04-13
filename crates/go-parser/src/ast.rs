@@ -163,11 +163,7 @@ impl Expr {
 
     #[must_use]
     pub const fn is_bad(&self) -> bool {
-        if let Expr::Bad(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Expr::Bad(_))
     }
 
     #[must_use]
