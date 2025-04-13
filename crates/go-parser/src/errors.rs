@@ -26,7 +26,7 @@ pub struct Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let p = if self.by_parser { "[Parser]" } else { "[TC]" };
-        write!(f, "{} {}  {}\n", p, self.pos, self.msg)?;
+        writeln!(f, "{} {}  {}", p, self.pos, self.msg)?;
         Ok(())
     }
 }
@@ -40,7 +40,7 @@ pub struct ErrorList {
 
 impl fmt::Display for ErrorList {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Result: {} errors\n", self.errors.borrow().len())?;
+        writeln!(f, "Result: {} errors", self.errors.borrow().len())?;
         for e in self.errors.borrow().iter() {
             e.fmt(f)?;
         }
