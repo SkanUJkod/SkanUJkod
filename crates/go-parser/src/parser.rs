@@ -1118,9 +1118,7 @@ impl<'a> Parser<'a> {
 
         let (typ, scope) = self.parse_func_type();
         let typ_key = self.objects.ftypes.insert(typ);
-        let ret = if self.token != Token::LBRACE {
-            Expr::Func(typ_key)
-        } else {
+        let ret = if self.token == Token::LBRACE {
             self.expr_level += 1;
             let body = self.parse_body(scope);
             self.expr_level -= 1;
@@ -1128,6 +1126,8 @@ impl<'a> Parser<'a> {
                 typ: typ_key,
                 body: Rc::new(body),
             }))
+        } else {
+            Expr::Func(typ_key)
         };
 
         self.trace_end();
@@ -1402,10 +1402,10 @@ impl<'a> Parser<'a> {
 
         let lbrace = self.expect(&Token::LBRACE);
         self.expr_level += 1;
-        let elts = if self.token != Token::RBRACE {
-            self.parse_element_list()
-        } else {
+        let elts = if self.token == Token::RBRACE {
             vec![]
+        } else {
+            self.parse_element_list()
         };
         self.expr_level -= 1;
         let rbrace = self.expect_closing(&Token::RBRACE, "composite literal");
@@ -1967,7 +1967,9 @@ impl<'a> Parser<'a> {
 
         let mut semi_real = false;
         let mut semi_pos = None;
-        let cond_stmt = if self.token != Token::LBRACE {
+        let cond_stmt = if self.token == Token::LBRACE {
+            init.take()
+        } else {
             if let Token::SEMICOLON(real) = &self.token {
                 semi_real = *real.as_ref();
                 semi_pos = Some(self.pos);
@@ -1975,13 +1977,11 @@ impl<'a> Parser<'a> {
             } else {
                 self.expect(&Token::SEMICOLON(true.into()));
             }
-            if self.token != Token::LBRACE {
-                Some(self.parse_simple_stmt(ParseSimpleMode::Basic).0)
-            } else {
+            if self.token == Token::LBRACE {
                 None
+            } else {
+                Some(self.parse_simple_stmt(ParseSimpleMode::Basic).0)
             }
-        } else {
-            init.take()
         };
 
         let cond = if let Some(_) = &cond_stmt {
