@@ -51,6 +51,7 @@ impl fmt::Display for ErrorList {
 impl std::error::Error for ErrorList {}
 
 impl ErrorList {
+    #[must_use]
     pub fn new() -> ErrorList {
         ErrorList {
             errors: Rc::new(RefCell::new(vec![])),
@@ -80,6 +81,7 @@ impl ErrorList {
         });
     }
 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.errors.borrow().len()
     }
@@ -88,6 +90,7 @@ impl ErrorList {
         self.errors.borrow_mut().sort_by_key(|e| e.order);
     }
 
+    #[must_use]
     pub fn borrow(&self) -> Ref<Vec<Error>> {
         self.errors.borrow()
     }
@@ -100,6 +103,7 @@ pub struct FilePosErrors<'a> {
 }
 
 impl<'a> FilePosErrors<'a> {
+    #[must_use]
     pub fn new(file: &'a File, elist: &'a ErrorList) -> FilePosErrors<'a> {
         FilePosErrors {
             file,
