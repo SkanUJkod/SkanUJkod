@@ -654,21 +654,21 @@ impl<'a> Scanner<'a> {
                     previous_is_underscore = false;
                 }
                 Some('_') => {
-                    if !previous_is_underscore {
+                    if previous_is_underscore {
+                        return Err(msg);
+                    } else {
                         // accept '_' but do not increase count
                         self.advance_and_push(digits, '_');
                         previous_is_underscore = true;
-                    } else {
-                        return Err(msg);
                     }
                 }
                 _ => break,
             }
         }
-        if !previous_is_underscore {
-            Ok(count)
-        } else {
+        if previous_is_underscore {
             Err(msg)
+        } else {
+            Ok(count)
         }
     }
 
