@@ -2441,10 +2441,7 @@ impl<'a> Parser<'a> {
         let result = &path[1..path.len() - 1];
         let mut illegal_chars: Vec<char> = r##"!"#$%&'()*,:;<=>?[\]^{|}`"##.chars().collect();
         illegal_chars.push('\u{FFFD}');
-        result
-            .chars()
-            .find(|&x| !x.is_ascii_graphic() || x.is_whitespace() || illegal_chars.contains(&x))
-            .is_none()
+        !result.chars().any(|x| !x.is_ascii_graphic() || x.is_whitespace() || illegal_chars.contains(&x))
     }
 
     fn parse_import_spec(&mut self, _: &Token, _: isize) -> SpecKey {
