@@ -50,6 +50,12 @@ impl fmt::Display for ErrorList {
 
 impl std::error::Error for ErrorList {}
 
+impl Default for ErrorList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ErrorList {
     #[must_use]
     pub fn new() -> ErrorList {

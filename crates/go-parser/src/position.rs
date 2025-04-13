@@ -263,6 +263,12 @@ pub struct FileSet {
     files: Vec<File>,
 }
 
+impl Default for FileSet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileSet {
     #[must_use]
     pub fn new() -> FileSet {
