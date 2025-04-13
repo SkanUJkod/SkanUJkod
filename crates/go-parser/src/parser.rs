@@ -160,7 +160,7 @@ impl<'a> Parser<'a> {
         self.label_scope = self.objects.scopes[self.label_scope.unwrap()].outer;
     }
 
-    fn declare(&mut self, decl: DeclObj, data: EntityData, kind: EntityKind, scope_ind: &ScopeKey) {
+    fn declare(&mut self, decl: DeclObj, data: EntityData, kind: EntityKind, scope_ind: ScopeKey) {
         let mut names: Vec<IdentKey> = vec![];
         let idents = match decl {
             DeclObj::Field(id) => &(self.objects.fields[id].names),
@@ -198,7 +198,7 @@ impl<'a> Parser<'a> {
             mut_ident.entity = IdentEntity::Entity(entity);
             let ident = &self.objects.idents[*id];
             if ident.name != "_" {
-                let scope = &mut self.objects.scopes[*scope_ind];
+                let scope = &mut self.objects.scopes[scope_ind];
                 if let Some(prev_decl) = scope.insert(ident.name.clone(), entity) {
                     let p = self.objects.entities[prev_decl].pos(self.objects);
                     self.error(
@@ -706,7 +706,7 @@ impl<'a> Parser<'a> {
             DeclObj::Field(field),
             EntityData::NoData,
             EntityKind::Var,
-            &scope,
+            scope,
         );
         if let Some(ident) = to_resolve {
             self.resolve(&ident);
@@ -807,7 +807,7 @@ impl<'a> Parser<'a> {
                 DeclObj::Field(field),
                 EntityData::NoData,
                 EntityKind::Var,
-                &scope,
+                scope,
             );
             if let Some(ident) = to_resolve {
                 self.resolve(&ident);
@@ -830,7 +830,7 @@ impl<'a> Parser<'a> {
                     DeclObj::Field(field),
                     EntityData::NoData,
                     EntityKind::Var,
-                    &scope,
+                    scope,
                 );
                 if let Some(ident) = to_resolve {
                     self.resolve(&ident);
@@ -924,7 +924,7 @@ impl<'a> Parser<'a> {
             DeclObj::Field(field),
             EntityData::NoData,
             EntityKind::Fun,
-            &scope,
+            scope,
         );
 
         self.trace_end();
@@ -1766,7 +1766,7 @@ impl<'a> Parser<'a> {
                                 DeclObj::LabeledStmt(ls),
                                 EntityData::NoData,
                                 EntityKind::Lbl,
-                                &self.label_scope.unwrap(),
+                                self.label_scope.unwrap(),
                             );
                             Stmt::Labeled(ls)
                         } else {
@@ -2499,7 +2499,7 @@ impl<'a> Parser<'a> {
             DeclObj::Spec(spec),
             EntityData::ConIota(iota),
             kind,
-            &self_.top_scope.unwrap(),
+            self_.top_scope.unwrap(),
         );
 
         self_.trace_end();
@@ -2526,7 +2526,7 @@ impl<'a> Parser<'a> {
             DeclObj::Spec(index),
             EntityData::NoData,
             EntityKind::Typ,
-            &scope,
+            scope,
         );
         let assign = if self.token == Token::ASSIGN {
             self.next();
@@ -2625,7 +2625,7 @@ impl<'a> Parser<'a> {
                     DeclObj::FuncDecl(decl),
                     EntityData::NoData,
                     EntityKind::Fun,
-                    &self.pkg_scope.unwrap(),
+                    self.pkg_scope.unwrap(),
                 );
             }
         }
