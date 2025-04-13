@@ -59,7 +59,7 @@ impl<'a> Scanner<'a> {
                 let t = self.scan_identifier();
                 match t {
                     Token::BREAK | Token::CONTINUE | Token::FALLTHROUGH | Token::RETURN => {
-                        self.semi2 = true
+                        self.semi2 = true;
                     }
                     Token::IDENT(_) => self.semi2 = true,
                     _ => {}
