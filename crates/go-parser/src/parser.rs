@@ -1891,12 +1891,10 @@ impl<'a> Parser<'a> {
         let pos = self.expect(&Token::GO);
         let call = self.parse_call_expr("go");
         self.expect_semi();
-        let ret = match call {
-            Some(c) => Stmt::Go(Rc::new(GoStmt { go: pos, call: c })),
-            None => {
-                Stmt::new_bad(pos, pos + 2) // "go".len() == 2
-            }
-        };
+        let ret = call.map_or_else(
+            || Stmt::new_bad(pos, pos + 2),
+            |c| Stmt::Go(Rc::new(GoStmt { go: pos, call: c }))
+        );
 
         self.trace_end();
         ret
@@ -1908,15 +1906,13 @@ impl<'a> Parser<'a> {
         let pos = self.expect(&Token::DEFER);
         let call = self.parse_call_expr("defer");
         self.expect_semi();
-        let ret = match call {
-            Some(c) => Stmt::Defer(Rc::new(DeferStmt {
+        let ret = call.map_or_else(
+            || Stmt::new_bad(pos, pos + 5),
+            |c| Stmt::Defer(Rc::new(DeferStmt {
                 defer: pos,
                 call: c,
-            })),
-            None => {
-                Stmt::new_bad(pos, pos + 5) // "defer".len() == 5
-            }
-        };
+            }))
+        );
 
         self.trace_end();
         ret

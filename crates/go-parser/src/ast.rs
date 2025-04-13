@@ -189,15 +189,15 @@ impl Node for Expr {
             Expr::BasicLit(e) => e.pos,
             Expr::FuncLit(e) => {
                 let typ = &objs.ftypes[e.typ];
-                match typ.func {
-                    Some(p) => p,
-                    None => typ.params.pos(objs),
-                }
+                typ.func.map_or_else(
+                    || typ.params.pos(objs),
+                    |p| p,
+                )
             }
-            Expr::CompositeLit(e) => match &e.typ {
-                Some(expr) => expr.pos(objs),
-                None => e.l_brace,
-            },
+            Expr::CompositeLit(e) => e.typ.as_ref().map_or_else(
+                || e.l_brace,
+                |expr| expr.pos(objs),
+            ),
             Expr::Paren(e) => e.l_paren,
             Expr::Selector(e) => e.expr.pos(objs),
             Expr::Index(e) => e.expr.pos(objs),
@@ -221,10 +221,10 @@ impl Node for Expr {
         match &self {
             Expr::Bad(e) => e.to,
             Expr::Ident(e) => objs.idents[*e].end(),
-            Expr::Ellipsis(e) => match &e.elt {
-                Some(expr) => expr.end(objs),
-                None => e.pos + 3,
-            },
+            Expr::Ellipsis(e) => e.elt.as_ref().map_or_else(
+                || e.pos + 3,
+                |expr| expr.end(objs),
+            ),
             Expr::BasicLit(e) => e.pos + e.token.get_literal().len(),
             Expr::FuncLit(e) => e.body.end(),
             Expr::CompositeLit(e) => e.r_brace + 1,
@@ -361,15 +361,15 @@ impl Node for Stmt {
                     s.ret + 6
                 }
             }
-            Stmt::Branch(s) => match &s.label {
-                Some(l) => objs.idents[*l].end(),
-                None => s.token_pos + s.token.text().len(),
-            },
+            Stmt::Branch(s) => s.label.as_ref().map_or_else(
+                || s.token_pos + s.token.text().len(),
+                |l| objs.idents[*l].end(),
+            ),
             Stmt::Block(s) => s.end(),
-            Stmt::If(s) => match &s.els {
-                Some(e) => e.end(objs),
-                None => s.body.end(),
-            },
+            Stmt::If(s) => s.els.as_ref().map_or_else(
+                || s.body.end(),
+                |e| e.end(objs),
+            ),
             Stmt::Case(s) => {
                 let n = s.body.len();
                 if n > 0 {
@@ -424,10 +424,10 @@ impl Node for Stmt {
 impl Node for Spec {
     fn pos(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Spec::Import(s) => match &s.name {
-                Some(i) => objs.idents[*i].pos,
-                None => s.path.pos,
-            },
+            Spec::Import(s) => s.name.as_ref().map_or_else(
+                || s.path.pos,
+                |i| objs.idents[*i].pos,
+            ),
             Spec::Value(s) => objs.idents[s.names[0]].pos,
             Spec::Type(s) => objs.idents[s.name].pos,
         }
@@ -435,19 +435,19 @@ impl Node for Spec {
 
     fn end(&self, objs: &AstObjects) -> position::Pos {
         match &self {
-            Spec::Import(s) => match s.end_pos {
-                Some(p) => p,
-                None => s.path.pos,
-            },
+            Spec::Import(s) => s.end_pos.map_or_else(
+                || s.path.pos,
+                |p| p,
+            ),
             Spec::Value(s) => {
                 let n = s.values.len();
                 if n > 0 {
                     s.values[n - 1].end(objs)
                 } else {
-                    match &s.typ {
-                        Some(t) => t.end(objs),
-                        None => objs.idents[s.names[s.names.len() - 1]].end(),
-                    }
+                    s.typ.as_ref().map_or_else(
+                        || objs.idents[s.names[s.names.len() - 1]].end(),
+                        |t| t.end(objs),
+                    )
                 }
             }
             Spec::Type(t) => t.typ.end(objs),
@@ -475,16 +475,16 @@ impl Node for Decl {
     fn end(&self, objs: &AstObjects) -> position::Pos {
         match &self {
             Decl::Bad(d) => d.to,
-            Decl::Gen(d) => match &d.r_paren {
-                Some(p) => p + 1,
-                None => objs.specs[d.specs[0]].end(objs),
-            },
+            Decl::Gen(d) => d.r_paren.as_ref().map_or_else(
+                || objs.specs[d.specs[0]].end(objs),
+                |p| p + 1,
+            ),
             Decl::Func(d) => {
                 let fd = &objs.fdecls[*d];
-                match &fd.body {
-                    Some(b) => b.end(),
-                    None => fd.typ.end(objs),
-                }
+                fd.body.as_ref().map_or_else(
+                    || fd.typ.end(objs),
+                    |b| b.end(),
+                )
             }
         }
     }
@@ -801,18 +801,18 @@ impl FuncType {
 impl Node for FuncTypeKey {
     fn pos(&self, objs: &AstObjects) -> position::Pos {
         let self_ = &objs.ftypes[*self];
-        match self_.func {
-            Some(p) => p,
-            None => self_.params.pos(objs),
-        }
+        self_.func.map_or_else(
+            || self_.params.pos(objs),
+            |p| p,
+        )
     }
 
     fn end(&self, objs: &AstObjects) -> position::Pos {
         let self_ = &objs.ftypes[*self];
-        match &self_.results {
-            Some(r) => (*r).end(objs),
-            None => self_.params.end(objs),
-        }
+        self_.results.as_ref().map_or_else(
+            || self_.params.end(objs),
+            |r| (*r).end(objs),
+        )
     }
 
     fn id(&self) -> NodeId {
@@ -1151,10 +1151,10 @@ impl Node for FieldKey {
 
     fn end(&self, objs: &AstObjects) -> position::Pos {
         let self_ = &objs.fields[*self];
-        match &self_.tag {
-            Some(t) => t.end(objs),
-            None => self_.typ.end(objs),
-        }
+        self_.tag.as_ref().map_or_else(
+            || self_.typ.end(objs),
+            |t| t.end(objs),
+        )
     }
 
     fn id(&self) -> NodeId {
@@ -1185,17 +1185,17 @@ impl FieldList {
 
     #[must_use]
     pub fn pos(&self, objs: &AstObjects) -> position::Pos {
-        match self.opening {
-            Some(o) => o,
-            None => self.list[0].pos(objs),
-        }
+        self.opening.map_or_else(
+            || self.list[0].pos(objs),
+            |o| o,
+        )
     }
 
     #[must_use]
     pub fn end(&self, objs: &AstObjects) -> position::Pos {
-        match self.closing {
-            Some(c) => c,
-            None => self.list[self.list.len() - 1].pos(objs),
-        }
+        self.closing.map_or_else(
+            || self.list[self.list.len() - 1].pos(objs),
+            |c| c,
+        )
     }
 }
