@@ -2106,7 +2106,7 @@ impl<'a> Parser<'a> {
     }
 
     fn is_type_switch_guard(&self, s: &Option<Stmt>) -> bool {
-        s.as_ref().map_or(false, |stmt| match stmt {
+        s.as_ref().is_some_and(|stmt| match stmt {
             Stmt::Expr(x) => x.is_type_switch_assert(),
             Stmt::Assign(idx) => {
                 let ass = &self.objects.a_stmts[*idx];
