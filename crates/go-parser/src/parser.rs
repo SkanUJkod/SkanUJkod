@@ -1156,7 +1156,7 @@ impl<'a> Parser<'a> {
                 if let Some(typ) = self.try_ident_or_type() {
                     if let Expr::Ident(_) = typ {
                         // unreachable but would work, so don't panic
-                        assert!(false, "should only get idents here");
+                        unreachable!("should only get idents here");
                     }
                     typ
                 } else {
