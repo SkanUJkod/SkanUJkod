@@ -1142,10 +1142,10 @@ pub struct Field {
 impl Node for FieldKey {
     fn pos(&self, objs: &AstObjects) -> position::Pos {
         let self_ = &objs.fields[*self];
-        if !self_.names.is_empty() {
-            objs.idents[self_.names[0]].pos
-        } else {
+        if self_.names.is_empty() {
             self_.typ.pos(objs)
+        } else {
+            objs.idents[self_.names[0]].pos
         }
     }
 
