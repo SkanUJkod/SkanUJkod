@@ -276,20 +276,13 @@ impl<'a> Parser<'a> {
             }
             // try to resolve the identifier
             let mut s = self.top_scope;
-            loop {
-                match s {
-                    Some(sidx) => {
-                        let scope = &self.objects.scopes[sidx];
-                        if let Some(entity) = scope.look_up(&ident.name) {
-                            ident.entity = IdentEntity::Entity(*entity);
-                            return;
-                        }
-                        s = scope.outer;
-                    }
-                    None => {
-                        break;
-                    }
+            while let Some(sidx) = s {
+                let scope = &self.objects.scopes[sidx];
+                if let Some(entity) = scope.look_up(&ident.name) {
+                    ident.entity = IdentEntity::Entity(*entity);
+                    return;
                 }
+                s = scope.outer;
             }
             // all local scopes are known, so any unresolved identifier
             // must be found either in the file scope, package scope
@@ -730,15 +723,8 @@ impl<'a> Parser<'a> {
         let lbrace = self.expect(&Token::LBRACE);
         let scope = new_scope!(self, None);
         let mut list = vec![];
-        loop {
-            match &self.token {
-                Token::IDENT(_) | Token::MUL | Token::LPAREN => {
-                    list.push(self.parse_field_decl(scope));
-                }
-                _ => {
-                    break;
-                }
-            }
+        while let Token::IDENT(_) | Token::MUL | Token::LPAREN = &self.token {
+            list.push(self.parse_field_decl(scope));
         }
         let rbrace = self.expect(&Token::RBRACE);
 
@@ -954,11 +940,7 @@ impl<'a> Parser<'a> {
         let lbrace = self.expect(&Token::LBRACE);
         let scope = new_scope!(self, None);
         let mut list = vec![];
-        loop {
-            if let Token::IDENT(_) = self.token {
-            } else {
-                break;
-            }
+        while let Token::IDENT(_) = self.token {
             list.push(self.parse_method_spec(scope));
         }
         let rbrace = self.expect(&Token::RBRACE);

@@ -712,14 +712,9 @@ impl<'a> Scanner<'a> {
                         Some(_) => {}
                     }
                 }
-                loop {
+                while let Some(' ' | '\t' | 'r') = iter.peek() {
                     //skip whitespaces
-                    match iter.peek() {
-                        Some(' ' | '\t' | 'r') => {
-                            iter.next();
-                        }
-                        _ => break,
-                    }
+                    iter.next();
                 }
                 match iter.peek() {
                     Some('\n') | None => return true,
