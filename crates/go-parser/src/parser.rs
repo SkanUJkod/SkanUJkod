@@ -265,7 +265,7 @@ impl<'a> Parser<'a> {
             self.error_str(
                 list[0].pos(&self.objects),
                 "no new variables on left side of :=",
-            )
+            );
         }
     }
 
@@ -312,7 +312,7 @@ impl<'a> Parser<'a> {
     }
 
     fn resolve(&mut self, x: &Expr) {
-        self.try_resolve(x, true)
+        self.try_resolve(x, true);
     }
 
     // ----------------------------------------------------------------------------
@@ -664,7 +664,7 @@ impl<'a> Parser<'a> {
                         let pos = x.pos(&self.objects);
                         if let Expr::Bad(_) = x {
                             // only report error if it's a new one
-                            self.error_expected(pos, "identifier")
+                            self.error_expected(pos, "identifier");
                         }
                         new_ident!(self, pos, "_".to_owned(), IdentEntity::NoEntity)
                     }
@@ -1269,11 +1269,11 @@ impl<'a> Parser<'a> {
                 // 3-index slices
                 if indices[1].is_none() {
                     self.error_str(colons[0], "2nd index required in 3-index slice");
-                    indices[1] = Some(Expr::new_bad(colons[0] + 1, colons[1]))
+                    indices[1] = Some(Expr::new_bad(colons[0] + 1, colons[1]));
                 }
                 if indices[2].is_none() {
                     self.error_str(colons[1], "3rd index required in 3-index slice");
-                    indices[2] = Some(Expr::new_bad(colons[1] + 1, colons[2]))
+                    indices[2] = Some(Expr::new_bad(colons[1] + 1, colons[2]));
                 }
             }
             let mut iter = indices.into_iter();
@@ -1367,10 +1367,10 @@ impl<'a> Parser<'a> {
                     // as unresolved identifier if it fails so that
                     // we don't get (possibly false) errors about
                     // undeclared names.
-                    self.try_resolve(&x, false)
+                    self.try_resolve(&x, false);
                 } else {
                     // not a key
-                    self.resolve(&x)
+                    self.resolve(&x);
                 }
             }
             x
@@ -1639,7 +1639,7 @@ impl<'a> Parser<'a> {
                     while dir == ChanDir::Send {
                         if ctype.dir == ChanDir::Recv {
                             // error: (<-type) is (<-(<-chan T))
-                            self.error_expected(ctype.arrow, "'chan'")
+                            self.error_expected(ctype.arrow, "'chan'");
                         }
                         let new_arrow = ctype.arrow;
                         ctype.begin = arrow;
@@ -1707,7 +1707,7 @@ impl<'a> Parser<'a> {
                 op_pos: pos,
                 op,
                 expr_b: y,
-            }))
+            }));
         }
 
         self.trace_end();
@@ -1870,7 +1870,7 @@ impl<'a> Parser<'a> {
                 self.error(
                     self.safe_pos(x.end(&self.objects)),
                     format!("function must be invoked in {call_type} statement"),
-                )
+                );
             }
             None
         }
@@ -2775,7 +2775,7 @@ impl<'a> Parser<'a> {
         }
         // rest of package body
         while self.token != Token::EOF {
-            decls.push(self.parse_decl(Token::is_decl_start))
+            decls.push(self.parse_decl(Token::is_decl_start));
         }
         self.close_scope();
         assert!(self.top_scope.is_none(), "unbalanced scopes");
