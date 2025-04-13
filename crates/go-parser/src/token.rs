@@ -12,7 +12,7 @@
 #![allow(non_camel_case_types)]
 use std::fmt;
 
-pub(crate) const LOWEST_PREC: usize = 0; // non-operators
+pub const LOWEST_PREC: usize = 0; // non-operators
 
 //pub(crate) const UNARY_PREC: usize = 6;
 //pub(crate) const HIGHEST_PREC: usize = 7;
@@ -132,188 +132,188 @@ impl Token {
     #[must_use]
     pub const fn token_property(&self) -> (TokenType, &str) {
         match self {
-            Token::NONE => (TokenType::Other, "NONE"),
-            Token::ILLEGAL(_) => (TokenType::Other, "ILLEGAL"),
-            Token::EOF => (TokenType::Other, "EOF"),
-            Token::COMMENT(_) => (TokenType::Other, "COMMENT"),
-            Token::IDENT(_) => (TokenType::Literal, "IDENT"),
-            Token::INT(_) => (TokenType::Literal, "INT"),
-            Token::FLOAT(_) => (TokenType::Literal, "FLOAT"),
-            Token::IMAG(_) => (TokenType::Literal, "IMAG"),
-            Token::CHAR(_) => (TokenType::Literal, "CHAR"),
-            Token::STRING(_) => (TokenType::Literal, "STRING"),
-            Token::ADD => (TokenType::Operator, "+"),
-            Token::SUB => (TokenType::Operator, "-"),
-            Token::MUL => (TokenType::Operator, "*"),
-            Token::QUO => (TokenType::Operator, "/"),
-            Token::REM => (TokenType::Operator, "%"),
-            Token::AND => (TokenType::Operator, "&"),
-            Token::OR => (TokenType::Operator, "|"),
-            Token::XOR => (TokenType::Operator, "^"),
-            Token::SHL => (TokenType::Operator, "<<"),
-            Token::SHR => (TokenType::Operator, ">>"),
-            Token::AND_NOT => (TokenType::Operator, "&^"),
-            Token::ADD_ASSIGN => (TokenType::Operator, "+="),
-            Token::SUB_ASSIGN => (TokenType::Operator, "-="),
-            Token::MUL_ASSIGN => (TokenType::Operator, "*="),
-            Token::QUO_ASSIGN => (TokenType::Operator, "/="),
-            Token::REM_ASSIGN => (TokenType::Operator, "%="),
-            Token::AND_ASSIGN => (TokenType::Operator, "&="),
-            Token::OR_ASSIGN => (TokenType::Operator, "|="),
-            Token::XOR_ASSIGN => (TokenType::Operator, "^="),
-            Token::SHL_ASSIGN => (TokenType::Operator, "<<="),
-            Token::SHR_ASSIGN => (TokenType::Operator, ">>="),
-            Token::AND_NOT_ASSIGN => (TokenType::Operator, "&^="),
-            Token::LAND => (TokenType::Operator, "&&"),
-            Token::LOR => (TokenType::Operator, "||"),
-            Token::ARROW => (TokenType::Operator, "<-"),
-            Token::INC => (TokenType::Operator, "++"),
-            Token::DEC => (TokenType::Operator, "--"),
-            Token::EQL => (TokenType::Operator, "=="),
-            Token::LSS => (TokenType::Operator, "<"),
-            Token::GTR => (TokenType::Operator, ">"),
-            Token::ASSIGN => (TokenType::Operator, "="),
-            Token::NOT => (TokenType::Operator, "!"),
-            Token::NEQ => (TokenType::Operator, "!="),
-            Token::LEQ => (TokenType::Operator, "<="),
-            Token::GEQ => (TokenType::Operator, ">="),
-            Token::DEFINE => (TokenType::Operator, ":="),
-            Token::ELLIPSIS => (TokenType::Operator, "..."),
-            Token::LPAREN => (TokenType::Operator, "("),
-            Token::LBRACK => (TokenType::Operator, "["),
-            Token::LBRACE => (TokenType::Operator, "{"),
-            Token::COMMA => (TokenType::Operator, ","),
-            Token::PERIOD => (TokenType::Operator, "."),
-            Token::RPAREN => (TokenType::Operator, ")"),
-            Token::RBRACK => (TokenType::Operator, "]"),
-            Token::RBRACE => (TokenType::Operator, "}"),
-            Token::SEMICOLON(_) => (TokenType::Operator, ";"),
-            Token::COLON => (TokenType::Operator, ":"),
-            Token::BREAK => (TokenType::Keyword, "break"),
-            Token::CASE => (TokenType::Keyword, "case"),
-            Token::CHAN => (TokenType::Keyword, "chan"),
-            Token::CONST => (TokenType::Keyword, "const"),
-            Token::CONTINUE => (TokenType::Keyword, "continue"),
-            Token::DEFAULT => (TokenType::Keyword, "default"),
-            Token::DEFER => (TokenType::Keyword, "defer"),
-            Token::ELSE => (TokenType::Keyword, "else"),
-            Token::FALLTHROUGH => (TokenType::Keyword, "fallthrough"),
-            Token::FOR => (TokenType::Keyword, "for"),
-            Token::FUNC => (TokenType::Keyword, "func"),
-            Token::GO => (TokenType::Keyword, "go"),
-            Token::GOTO => (TokenType::Keyword, "goto"),
-            Token::IF => (TokenType::Keyword, "if"),
-            Token::IMPORT => (TokenType::Keyword, "import"),
-            Token::INTERFACE => (TokenType::Keyword, "interface"),
-            Token::MAP => (TokenType::Keyword, "map"),
-            Token::PACKAGE => (TokenType::Keyword, "package"),
-            Token::RANGE => (TokenType::Keyword, "range"),
-            Token::RETURN => (TokenType::Keyword, "return"),
-            Token::SELECT => (TokenType::Keyword, "select"),
-            Token::STRUCT => (TokenType::Keyword, "struct"),
-            Token::SWITCH => (TokenType::Keyword, "switch"),
-            Token::TYPE => (TokenType::Keyword, "type"),
-            Token::VAR => (TokenType::Keyword, "var"),
+            Self::NONE => (TokenType::Other, "NONE"),
+            Self::ILLEGAL(_) => (TokenType::Other, "ILLEGAL"),
+            Self::EOF => (TokenType::Other, "EOF"),
+            Self::COMMENT(_) => (TokenType::Other, "COMMENT"),
+            Self::IDENT(_) => (TokenType::Literal, "IDENT"),
+            Self::INT(_) => (TokenType::Literal, "INT"),
+            Self::FLOAT(_) => (TokenType::Literal, "FLOAT"),
+            Self::IMAG(_) => (TokenType::Literal, "IMAG"),
+            Self::CHAR(_) => (TokenType::Literal, "CHAR"),
+            Self::STRING(_) => (TokenType::Literal, "STRING"),
+            Self::ADD => (TokenType::Operator, "+"),
+            Self::SUB => (TokenType::Operator, "-"),
+            Self::MUL => (TokenType::Operator, "*"),
+            Self::QUO => (TokenType::Operator, "/"),
+            Self::REM => (TokenType::Operator, "%"),
+            Self::AND => (TokenType::Operator, "&"),
+            Self::OR => (TokenType::Operator, "|"),
+            Self::XOR => (TokenType::Operator, "^"),
+            Self::SHL => (TokenType::Operator, "<<"),
+            Self::SHR => (TokenType::Operator, ">>"),
+            Self::AND_NOT => (TokenType::Operator, "&^"),
+            Self::ADD_ASSIGN => (TokenType::Operator, "+="),
+            Self::SUB_ASSIGN => (TokenType::Operator, "-="),
+            Self::MUL_ASSIGN => (TokenType::Operator, "*="),
+            Self::QUO_ASSIGN => (TokenType::Operator, "/="),
+            Self::REM_ASSIGN => (TokenType::Operator, "%="),
+            Self::AND_ASSIGN => (TokenType::Operator, "&="),
+            Self::OR_ASSIGN => (TokenType::Operator, "|="),
+            Self::XOR_ASSIGN => (TokenType::Operator, "^="),
+            Self::SHL_ASSIGN => (TokenType::Operator, "<<="),
+            Self::SHR_ASSIGN => (TokenType::Operator, ">>="),
+            Self::AND_NOT_ASSIGN => (TokenType::Operator, "&^="),
+            Self::LAND => (TokenType::Operator, "&&"),
+            Self::LOR => (TokenType::Operator, "||"),
+            Self::ARROW => (TokenType::Operator, "<-"),
+            Self::INC => (TokenType::Operator, "++"),
+            Self::DEC => (TokenType::Operator, "--"),
+            Self::EQL => (TokenType::Operator, "=="),
+            Self::LSS => (TokenType::Operator, "<"),
+            Self::GTR => (TokenType::Operator, ">"),
+            Self::ASSIGN => (TokenType::Operator, "="),
+            Self::NOT => (TokenType::Operator, "!"),
+            Self::NEQ => (TokenType::Operator, "!="),
+            Self::LEQ => (TokenType::Operator, "<="),
+            Self::GEQ => (TokenType::Operator, ">="),
+            Self::DEFINE => (TokenType::Operator, ":="),
+            Self::ELLIPSIS => (TokenType::Operator, "..."),
+            Self::LPAREN => (TokenType::Operator, "("),
+            Self::LBRACK => (TokenType::Operator, "["),
+            Self::LBRACE => (TokenType::Operator, "{"),
+            Self::COMMA => (TokenType::Operator, ","),
+            Self::PERIOD => (TokenType::Operator, "."),
+            Self::RPAREN => (TokenType::Operator, ")"),
+            Self::RBRACK => (TokenType::Operator, "]"),
+            Self::RBRACE => (TokenType::Operator, "}"),
+            Self::SEMICOLON(_) => (TokenType::Operator, ";"),
+            Self::COLON => (TokenType::Operator, ":"),
+            Self::BREAK => (TokenType::Keyword, "break"),
+            Self::CASE => (TokenType::Keyword, "case"),
+            Self::CHAN => (TokenType::Keyword, "chan"),
+            Self::CONST => (TokenType::Keyword, "const"),
+            Self::CONTINUE => (TokenType::Keyword, "continue"),
+            Self::DEFAULT => (TokenType::Keyword, "default"),
+            Self::DEFER => (TokenType::Keyword, "defer"),
+            Self::ELSE => (TokenType::Keyword, "else"),
+            Self::FALLTHROUGH => (TokenType::Keyword, "fallthrough"),
+            Self::FOR => (TokenType::Keyword, "for"),
+            Self::FUNC => (TokenType::Keyword, "func"),
+            Self::GO => (TokenType::Keyword, "go"),
+            Self::GOTO => (TokenType::Keyword, "goto"),
+            Self::IF => (TokenType::Keyword, "if"),
+            Self::IMPORT => (TokenType::Keyword, "import"),
+            Self::INTERFACE => (TokenType::Keyword, "interface"),
+            Self::MAP => (TokenType::Keyword, "map"),
+            Self::PACKAGE => (TokenType::Keyword, "package"),
+            Self::RANGE => (TokenType::Keyword, "range"),
+            Self::RETURN => (TokenType::Keyword, "return"),
+            Self::SELECT => (TokenType::Keyword, "select"),
+            Self::STRUCT => (TokenType::Keyword, "struct"),
+            Self::SWITCH => (TokenType::Keyword, "switch"),
+            Self::TYPE => (TokenType::Keyword, "type"),
+            Self::VAR => (TokenType::Keyword, "var"),
         }
     }
 
     #[must_use]
-    pub fn ident_token(ident: String) -> Token {
+    pub fn ident_token(ident: String) -> Self {
         match ident.as_str() {
-            "break" => Token::BREAK,
-            "case" => Token::CASE,
-            "chan" => Token::CHAN,
-            "const" => Token::CONST,
-            "continue" => Token::CONTINUE,
-            "default" => Token::DEFAULT,
-            "defer" => Token::DEFER,
-            "else" => Token::ELSE,
-            "fallthrough" => Token::FALLTHROUGH,
-            "for" => Token::FOR,
-            "func" => Token::FUNC,
-            "go" => Token::GO,
-            "goto" => Token::GOTO,
-            "if" => Token::IF,
-            "import" => Token::IMPORT,
-            "interface" => Token::INTERFACE,
-            "map" => Token::MAP,
-            "package" => Token::PACKAGE,
-            "range" => Token::RANGE,
-            "return" => Token::RETURN,
-            "select" => Token::SELECT,
-            "struct" => Token::STRUCT,
-            "switch" => Token::SWITCH,
-            "type" => Token::TYPE,
-            "var" => Token::VAR,
-            _ => Token::IDENT(ident.into()),
+            "break" => Self::BREAK,
+            "case" => Self::CASE,
+            "chan" => Self::CHAN,
+            "const" => Self::CONST,
+            "continue" => Self::CONTINUE,
+            "default" => Self::DEFAULT,
+            "defer" => Self::DEFER,
+            "else" => Self::ELSE,
+            "fallthrough" => Self::FALLTHROUGH,
+            "for" => Self::FOR,
+            "func" => Self::FUNC,
+            "go" => Self::GO,
+            "goto" => Self::GOTO,
+            "if" => Self::IF,
+            "import" => Self::IMPORT,
+            "interface" => Self::INTERFACE,
+            "map" => Self::MAP,
+            "package" => Self::PACKAGE,
+            "range" => Self::RANGE,
+            "return" => Self::RETURN,
+            "select" => Self::SELECT,
+            "struct" => Self::STRUCT,
+            "switch" => Self::SWITCH,
+            "type" => Self::TYPE,
+            "var" => Self::VAR,
+            _ => Self::IDENT(ident.into()),
         }
     }
 
     #[must_use]
-    pub fn int1() -> Token {
-        Token::INT("1".to_owned().into())
+    pub fn int1() -> Self {
+        Self::INT("1".to_owned().into())
     }
 
     #[must_use]
     pub const fn precedence(&self) -> usize {
         match self {
-            Token::LOR => 1,
-            Token::LAND => 2,
-            Token::EQL | Token::NEQ | Token::LSS | Token::LEQ | Token::GTR | Token::GEQ => 3,
-            Token::ADD | Token::SUB | Token::OR | Token::XOR => 4,
-            Token::MUL
-            | Token::QUO
-            | Token::REM
-            | Token::SHL
-            | Token::SHR
-            | Token::AND
-            | Token::AND_NOT => 5,
+            Self::LOR => 1,
+            Self::LAND => 2,
+            Self::EQL | Self::NEQ | Self::LSS | Self::LEQ | Self::GTR | Self::GEQ => 3,
+            Self::ADD | Self::SUB | Self::OR | Self::XOR => 4,
+            Self::MUL
+            | Self::QUO
+            | Self::REM
+            | Self::SHL
+            | Self::SHR
+            | Self::AND
+            | Self::AND_NOT => 5,
             _ => LOWEST_PREC,
         }
     }
 
     #[must_use]
-    pub fn text(&self) -> &str {
+    pub const fn text(&self) -> &str {
         let (_, t) = self.token_property();
         t
     }
 
     #[must_use]
-    pub fn is_literal(&self) -> bool {
+    pub const fn is_literal(&self) -> bool {
         matches!(self.token_property().0, TokenType::Literal)
     }
 
     #[must_use]
-    pub fn is_operator(&self) -> bool {
+    pub const fn is_operator(&self) -> bool {
         matches!(self.token_property().0, TokenType::Operator)
     }
 
     #[must_use]
-    pub fn is_keyword(&self) -> bool {
+    pub const fn is_keyword(&self) -> bool {
         matches!(self.token_property().0, TokenType::Keyword)
     }
 
     #[must_use]
     pub fn get_literal(&self) -> &str {
         match self {
-            Token::INT(l) | Token::FLOAT(l) | Token::IMAG(l) | Token::CHAR(l) | Token::STRING(l) => l.as_str(),
+            Self::INT(l) | Self::FLOAT(l) | Self::IMAG(l) | Self::CHAR(l) | Self::STRING(l) => l.as_str(),
             _ => "",
         }
     }
 
     #[must_use]
     pub const fn is_stmt_start(&self) -> bool {
-        matches!(self, Token::BREAK | Token::CONST | Token::CONTINUE | Token::DEFER | Token::FALLTHROUGH | Token::FOR | Token::GO | Token::GOTO | Token::IF | Token::RETURN | Token::SELECT | Token::SWITCH | Token::TYPE | Token::VAR)
+        matches!(self, Self::BREAK | Self::CONST | Self::CONTINUE | Self::DEFER | Self::FALLTHROUGH | Self::FOR | Self::GO | Self::GOTO | Self::IF | Self::RETURN | Self::SELECT | Self::SWITCH | Self::TYPE | Self::VAR)
     }
 
     #[must_use]
     pub const fn is_decl_start(&self) -> bool {
-        matches!(self, Token::CONST | Token::TYPE | Token::VAR)
+        matches!(self, Self::CONST | Self::TYPE | Self::VAR)
     }
 
     #[must_use]
     pub const fn is_expr_end(&self) -> bool {
-        matches!(self, Token::COMMA | Token::COLON | Token::SEMICOLON(_) | Token::RPAREN | Token::RBRACK | Token::RBRACE)
+        matches!(self, Self::COMMA | Self::COLON | Self::SEMICOLON(_) | Self::RPAREN | Self::RBRACK | Self::RBRACE)
     }
 }
 
@@ -321,12 +321,12 @@ impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let text = self.text();
         match self {
-            Token::IDENT(l)
-            | Token::INT(l)
-            | Token::FLOAT(l)
-            | Token::IMAG(l)
-            | Token::CHAR(l)
-            | Token::STRING(l) => f.write_str(l.as_str()),
+            Self::IDENT(l)
+            | Self::INT(l)
+            | Self::FLOAT(l)
+            | Self::IMAG(l)
+            | Self::CHAR(l)
+            | Self::STRING(l) => f.write_str(l.as_str()),
             _ => write!(f, "{text}"),
         }
     }
@@ -336,13 +336,13 @@ impl fmt::Debug for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let text = self.text();
         match self {
-            Token::IDENT(l)
-            | Token::INT(l)
-            | Token::FLOAT(l)
-            | Token::IMAG(l)
-            | Token::CHAR(l)
-            | Token::STRING(l) => write!(f, "{} {}", text, l.as_str()),
-            Token::SEMICOLON(real) if !*real.as_bool() => write!(f, "\"{text}(inserted)\""),
+            Self::IDENT(l)
+            | Self::INT(l)
+            | Self::FLOAT(l)
+            | Self::IMAG(l)
+            | Self::CHAR(l)
+            | Self::STRING(l) => write!(f, "{} {}", text, l.as_str()),
+            Self::SEMICOLON(real) if !*real.as_bool() => write!(f, "\"{text}(inserted)\""),
             token if token.is_operator() || token.is_keyword() => write!(f, "\"{text}\""),
             _ => write!(f, "{text}"),
         }
@@ -362,25 +362,25 @@ pub struct TokenData(Box<RawTokenData>);
 
 impl From<bool> for TokenData {
     fn from(b: bool) -> Self {
-        TokenData(Box::new(RawTokenData::Bool(b)))
+        Self(Box::new(RawTokenData::Bool(b)))
     }
 }
 
 impl From<String> for TokenData {
     fn from(s: String) -> Self {
-        TokenData(Box::new(RawTokenData::Str(s)))
+        Self(Box::new(RawTokenData::Str(s)))
     }
 }
 
 impl From<(String, String)> for TokenData {
     fn from(ss: (String, String)) -> Self {
-        TokenData(Box::new(RawTokenData::StrStr(ss.0, ss.1)))
+        Self(Box::new(RawTokenData::StrStr(ss.0, ss.1)))
     }
 }
 
 impl From<(String, char)> for TokenData {
     fn from(ss: (String, char)) -> Self {
-        TokenData(Box::new(RawTokenData::StrChar(ss.0, ss.1)))
+        Self(Box::new(RawTokenData::StrChar(ss.0, ss.1)))
     }
 }
 

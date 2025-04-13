@@ -46,7 +46,7 @@ where
 
     #[must_use]
     #[inline]
-    pub fn vec(&self) -> &Vec<V> {
+    pub const fn vec(&self) -> &Vec<V> {
         &self.vec
     }
 
@@ -87,7 +87,7 @@ where
 {
     #[inline]
     fn from(vec: Vec<V>) -> Self {
-        PiggyVec {
+        Self {
             vec,
             phantom: PhantomData {},
         }
@@ -148,7 +148,7 @@ macro_rules! piggy_key_type {
         impl $name {
             #[must_use]
             #[inline]
-            pub fn null() -> Self {
+            pub const fn null() -> Self {
                 $name(std::usize::MAX)
             }
         }
@@ -209,9 +209,9 @@ pub struct AstObjects {
 
 impl AstObjects {
     #[must_use]
-    pub fn new() -> AstObjects {
+    pub fn new() -> Self {
         const CAP: usize = 16;
-        AstObjects {
+        Self {
             l_stmts: PiggyVec::with_capacity(CAP),
             a_stmts: PiggyVec::with_capacity(CAP),
             specs: PiggyVec::with_capacity(CAP),

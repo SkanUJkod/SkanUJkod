@@ -31,7 +31,7 @@ impl<'a> Scanner<'a> {
         file: &'a mut position::File,
         src: &'a str,
         err: &'a errors::ErrorList,
-    ) -> Scanner<'a> {
+    ) -> Self {
         Scanner {
             file,
             src: src.chars().peekable(),
@@ -645,11 +645,10 @@ impl<'a> Scanner<'a> {
                 Some('_') => {
                     if previous_is_underscore {
                         return Err(msg);
-                    } else {
-                        // accept '_' but do not increase count
-                        self.advance_and_push(digits, '_');
-                        previous_is_underscore = true;
                     }
+                    // accept '_' but do not increase count
+                    self.advance_and_push(digits, '_');
+                    previous_is_underscore = true;
                 }
                 _ => break,
             }
@@ -731,6 +730,7 @@ impl<'a> Scanner<'a> {
         literal.push(ch);
     }
 
+    #[allow(clippy::missing_const_for_fn)]
     pub fn file(&self) -> &position::File {
         self.file
     }
@@ -749,7 +749,7 @@ fn is_letter(ch: char) -> bool {
     ch.is_alphabetic() || ch == '_'
 }
 
-fn is_decimal(ch: char) -> bool {
+const fn is_decimal(ch: char) -> bool {
     ch.is_ascii_digit()
 }
 
@@ -757,7 +757,7 @@ fn is_octal(ch: char) -> bool {
     ('0'..='7').contains(&ch)
 }
 
-fn is_binary(ch: char) -> bool {
+const fn is_binary(ch: char) -> bool {
     ch == '0' || ch == '1'
 }
 
@@ -780,7 +780,7 @@ impl IntPrefix {
         }
     }
 
-    fn char(&self) -> char {
+    const fn char(&self) -> char {
         match self {
             Self::Binary => 'b',
             Self::Octal(_) => 'o',
