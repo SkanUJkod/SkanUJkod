@@ -1247,7 +1247,7 @@ impl<'a> Parser<'a> {
         let lbrack = self.expect(&Token::LBRACK);
         self.expr_level += 1;
         let mut indices = vec![None, None, None];
-        let mut colons = vec![0, 0, 0];
+        let mut colons = [0, 0, 0];
         let mut ncolons = 0;
         if self.token != Token::COLON {
             indices[0] = Some(self.parse_rhs());
