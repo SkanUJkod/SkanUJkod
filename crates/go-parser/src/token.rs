@@ -305,11 +305,7 @@ impl Token {
     #[must_use]
     pub fn get_literal(&self) -> &str {
         match self {
-            Token::INT(l) => l.as_str(),
-            Token::FLOAT(l) => l.as_str(),
-            Token::IMAG(l) => l.as_str(),
-            Token::CHAR(l) => l.as_str(),
-            Token::STRING(l) => l.as_str(),
+            Token::INT(l) | Token::FLOAT(l) | Token::IMAG(l) | Token::CHAR(l) | Token::STRING(l) => l.as_str(),
             _ => "",
         }
     }
@@ -456,18 +452,14 @@ impl TokenData {
     #[must_use]
     pub fn as_str(&self) -> &String {
         match self.0.as_ref() {
-            RawTokenData::Str(s) => s,
-            RawTokenData::StrStr(s, _) => s,
-            RawTokenData::StrChar(s, _) => s,
+            RawTokenData::Str(s) | RawTokenData::StrStr(s, _) | RawTokenData::StrChar(s, _) => s,
             _ => unreachable!(),
         }
     }
 
     pub fn as_str_mut(&mut self) -> &mut String {
         match self.0.as_mut() {
-            RawTokenData::Str(s) => s,
-            RawTokenData::StrStr(s, _) => s,
-            RawTokenData::StrChar(s, _) => s,
+            RawTokenData::Str(s) | RawTokenData::StrStr(s, _) | RawTokenData::StrChar(s, _) => s,
             _ => unreachable!(),
         }
     }
