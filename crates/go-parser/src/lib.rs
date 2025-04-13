@@ -19,7 +19,7 @@
 //! ```
 //!
 //! # Feature
-//! - `btree_map`: Make it use BTreeMap instead of HashMap
+//! - `btree_map`: Make it use `BTreeMap` instead of `HashMap`
 //!
 
 mod errors;

@@ -19,7 +19,7 @@ use std::hash::Hash;
 use std::rc::Rc;
 use std::ptr;
 
-/// NodeId can be used as key of HashMaps
+/// `NodeId` can be used as key of `HashMaps`
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug)]
 pub enum NodeId {
     Address(usize),
