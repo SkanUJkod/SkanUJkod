@@ -122,6 +122,11 @@ impl Scope {
         self.entities.insert(name, entity)
     }
 
+    /// Formats the scope for debugging purposes.
+    ///
+    /// # Errors
+    ///
+    /// This function can return an error if there is an issue writing to the formatter.
     pub fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Err(e) = writeln!(f, "scope {self:p} {{") {
             return Err(e);
