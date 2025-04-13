@@ -73,7 +73,7 @@ impl ErrorList {
     /// This happens when trying to determine the insertion order based on
     /// previous non-indented messages.
     pub fn add(&self, p: Option<FilePos>, msg: String, soft: bool, by_parser: bool) {
-        let fp = p.unwrap_or(FilePos::null());
+        let fp = p.unwrap_or_else(FilePos::null);
         let order = if msg.starts_with('\t') {
             self.errors
                 .borrow()
