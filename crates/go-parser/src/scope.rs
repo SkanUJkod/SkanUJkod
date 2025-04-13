@@ -27,7 +27,7 @@ pub enum EntityKind {
 }
 
 impl EntityKind {
-    pub fn kind_text(&self) -> &str {
+    pub const fn kind_text(&self) -> &str {
         match self {
             EntityKind::Bad => "bad",
             EntityKind::Pkg => "package",
@@ -68,7 +68,7 @@ pub struct Entity {
 }
 
 impl Entity {
-    pub fn new(kind: EntityKind, name: String, decl: DeclObj, data: EntityData) -> Entity {
+    pub const fn new(kind: EntityKind, name: String, decl: DeclObj, data: EntityData) -> Entity {
         Entity {
             kind,
             name,
