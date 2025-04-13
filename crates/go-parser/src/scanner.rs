@@ -99,7 +99,7 @@ impl<'a> Scanner<'a> {
                     Some('.') => {
                         self.read_char();
                         self.read_char();
-                        if let Some('.') = self.peek_char() {
+                        if self.peek_char() == Some(&'.') {
                             self.read_char();
                             Token::ELLIPSIS
                         } else {
@@ -221,7 +221,7 @@ impl<'a> Scanner<'a> {
     fn scan_number(&mut self, ch: char) -> Token {
         let mut tok = self.scan_number_without_i(ch);
         // Handles the 'i' at the end
-        if let Some('i') = self.peek_char() {
+        if self.peek_char() == Some(&'i') {
             match tok {
                 Token::INT(mut lit) | Token::FLOAT(mut lit) => {
                     self.advance_and_push(lit.as_mut(), 'i');
@@ -704,7 +704,7 @@ impl<'a> Scanner<'a> {
                     match iter.next() {
                         Some('\n') | None => return true,
                         Some('*') => {
-                            if let Some(&'/') = iter.peek() {
+                            if iter.peek() == Some(&'/') {
                                 iter.next();
                                 break;
                             }

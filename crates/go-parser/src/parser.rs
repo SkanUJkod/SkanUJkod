@@ -408,7 +408,7 @@ impl<'a> Parser<'a> {
                 self.next();
             }
             _ => {
-                if let Token::COMMA = self.token {
+                if self.token == Token::COMMA {
                     // permit a ',' instead of a ';' but complain
                     self.error_expected(self.pos, "';'");
                     self.next();
@@ -598,7 +598,7 @@ impl<'a> Parser<'a> {
         let ident = self.parse_ident();
         let x_ident = Expr::Ident(ident);
         // don't resolve ident yet - it may be a parameter or field name
-        let ret = if let Token::PERIOD = self.token {
+        let ret = if self.token == Token::PERIOD {
             // ident is a package name
             self.next();
             self.resolve(&x_ident);
@@ -766,7 +766,7 @@ impl<'a> Parser<'a> {
     // If the result is an identifier, it is not resolved.
     fn try_var_type(&mut self, is_param: bool) -> Option<Expr> {
         if is_param {
-            if let Token::ELLIPSIS = self.token {
+            if self.token == Token::ELLIPSIS {
                 let pos = self.pos;
                 self.next();
                 let typ = if let Some(t) = self.try_ident_or_type() {
@@ -998,9 +998,9 @@ impl<'a> Parser<'a> {
         let pos = self.pos;
         let arrow_pos: position::Pos;
         let dir: ChanDir;
-        if let Token::CHAN = self.token {
+        if self.token == Token::CHAN {
             self.next();
-            if let Token::ARROW = self.token {
+            if self.token == Token::ARROW {
                 arrow_pos = self.pos;
                 self.next();
                 dir = ChanDir::Send;
