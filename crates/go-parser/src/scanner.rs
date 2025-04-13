@@ -90,29 +90,7 @@ impl<'a> Scanner<'a> {
                 self.scan_raw_string()
             }
             Some(':') => self.scan_switch2(&Token::COLON, &Token::DEFINE).clone(),
-            Some('.') => {
-                match self.get_char2nd() {
-                    Some(ch) if is_decimal(ch) => {
-                        self.semi2 = true;
-                        self.scan_number('.')
-                    }
-                    Some('.') => {
-                        self.read_char();
-                        self.read_char();
-                        if self.peek_char() == Some(&'.') {
-                            self.read_char();
-                            Token::ELLIPSIS
-                        } else {
-                            self.semi2 = self.semi1; // preserve insert semi info
-                            Token::ILLEGAL("..".to_owned().into())
-                        }
-                    }
-                    _ => {
-                        self.read_char();
-                        Token::PERIOD
-                    }
-                }
-            }
+            Some('.') => self.scan_period(),
             Some(',') => self.scan_token(Token::COMMA, false),
             Some(';') => self.scan_token(Token::SEMICOLON(true.into()), false),
             Some('(') => self.scan_token(Token::LPAREN, false),
@@ -132,38 +110,10 @@ impl<'a> Scanner<'a> {
                 t.clone()
             }
             Some('*') => self.scan_switch2(&Token::MUL, &Token::MUL_ASSIGN).clone(),
-            Some('/') => {
-                let ch = self.get_char2nd();
-                match ch {
-                    Some('/' | '*') => {
-                        if self.semi1 && self.comment_to_end() {
-                            self.semi1 = false;
-                            Token::SEMICOLON(false.into())
-                        } else {
-                            self.semi2 = self.semi1; // preserve insert semi info
-                            self.scan_comment(ch.unwrap())
-                        }
-                    }
-                    _ => self.scan_switch2(&Token::QUO, &Token::QUO_ASSIGN).clone(),
-                }
-            }
+            Some('/') => self.handle_slash(),
             Some('%') => self.scan_switch2(&Token::REM, &Token::REM_ASSIGN).clone(),
             Some('^') => self.scan_switch2(&Token::XOR, &Token::XOR_ASSIGN).clone(),
-            Some('<') => match self.get_char2nd() {
-                Some('-') => {
-                    self.read_char();
-                    self.scan_token(Token::ARROW, false)
-                }
-                _ => self
-                    .scan_switch4(
-                        &Token::LSS,
-                        &Token::LEQ,
-                        '<',
-                        &Token::SHL,
-                        &Token::SHL_ASSIGN,
-                    )
-                    .clone(),
-            },
+            Some('<') => self.handle_less_than(),
             Some('>') => self
                 .scan_switch4(
                     &Token::GTR,
@@ -203,6 +153,64 @@ impl<'a> Scanner<'a> {
             }
         };
         (token, pos)
+    }
+
+    fn scan_period(&mut self) -> Token {
+        match self.get_char2nd() {
+            Some(ch) if is_decimal(ch) => {
+                self.semi2 = true;
+                self.scan_number('.')
+            }
+            Some('.') => {
+                self.read_char();
+                self.read_char();
+                if self.peek_char() == Some(&'.') {
+                    self.read_char();
+                    Token::ELLIPSIS
+                } else {
+                    self.semi2 = self.semi1; // preserve insert semi info
+                    Token::ILLEGAL("..".to_owned().into())
+                }
+            }
+            _ => {
+                self.read_char();
+                Token::PERIOD
+            }
+        }
+    }
+
+    fn handle_slash(&mut self) -> Token {
+        let ch = self.get_char2nd();
+        match ch {
+            Some('/' | '*') => {
+                if self.semi1 && self.comment_to_end() {
+                    self.semi1 = false;
+                    Token::SEMICOLON(false.into())
+                } else {
+                    self.semi2 = self.semi1; // preserve insert semi info
+                    self.scan_comment(ch.unwrap())
+                }
+            }
+            _ => self.scan_switch2(&Token::QUO, &Token::QUO_ASSIGN).clone(),
+        }
+    }
+
+    fn handle_less_than(&mut self) -> Token {
+        match self.get_char2nd() {
+            Some('-') => {
+                self.read_char();
+                self.scan_token(Token::ARROW, false)
+            }
+            _ => self
+                .scan_switch4(
+                    &Token::LSS,
+                    &Token::LEQ,
+                    '<',
+                    &Token::SHL,
+                    &Token::SHL_ASSIGN,
+                )
+                .clone(),
+        }
     }
 
     fn scan_identifier(&mut self) -> Token {
