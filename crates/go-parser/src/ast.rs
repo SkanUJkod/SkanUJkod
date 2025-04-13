@@ -146,7 +146,7 @@ impl Expr {
     #[must_use]
     pub fn clone_ident(&self) -> Option<Expr> {
         if let Expr::Ident(i) = self {
-            Some(Expr::Ident(i.clone()))
+            Some(Expr::Ident(*i))
         } else {
             None
         }

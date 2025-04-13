@@ -1912,7 +1912,7 @@ impl<'a> Parser<'a> {
         if let Token::IDENT(_) = self.token {
             if token != Token::FALLTHROUGH {
                 let ident = self.parse_ident();
-                label = Some(ident.clone());
+                label = Some(ident);
                 self.target_stack.last_mut().unwrap().push(ident);
             }
         }
