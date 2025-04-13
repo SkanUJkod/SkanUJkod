@@ -9,12 +9,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-use super::ast::*;
+use super::ast::{
+    ArrayType, BadDecl, BasicLit, BinaryExpr, BlockStmt, BranchStmt, CallExpr, CaseClause,
+    ChanDir, ChanType, CommClause, CompositeLit, Decl, DeferStmt, EmptyStmt, Expr, Field,
+    FieldList, File, ForStmt, FuncDecl, FuncLit, FuncType, GenDecl, GoStmt, Ident,
+    IdentEntity, IfStmt, ImportSpec, IncDecStmt, IndexExpr, InterfaceType, KeyValueExpr,
+    LabeledStmt, MapType, Node, ParenExpr, RangeStmt, ReturnStmt, SelectStmt,
+    SelectorExpr, SendStmt, SliceExpr, Spec, StarExpr, Stmt, StructType, SwitchStmt,
+    TypeAssertExpr, TypeSpec, TypeSwitchStmt, ValueSpec};
 use super::errors::{ErrorList, FilePosErrors};
-use super::objects::*;
+use super::objects::{AstObjects, FieldKey, IdentKey, ScopeKey, SpecKey};
 use super::position;
 use super::scanner;
-use super::scope::*;
+use super::scope::{DeclObj, Entity, EntityData, EntityKind, Scope};
 use super::token::{Token, LOWEST_PREC};
 use std::rc::Rc;
 

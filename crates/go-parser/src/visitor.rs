@@ -2,8 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-use super::ast::*;
-use super::objects::*;
+use super::ast::{
+    BadDecl, BadExpr, BadStmt, BasicLit, BlockStmt, BranchStmt, CaseClause, ChanDir,
+    CommClause, CompositeLit, Decl, DeferStmt, EmptyStmt, Expr, ForStmt, FuncLit,
+    GenDecl, GoStmt, IfStmt, IncDecStmt, InterfaceType, RangeStmt, ReturnStmt,
+    SelectStmt, SendStmt, Stmt, StructType, SwitchStmt, TypeSwitchStmt};
+use super::objects::{AssignStmtKey, FuncDeclKey, FuncTypeKey, IdentKey, LabeledStmtKey};
 use super::token::Token;
 
 pub trait ExprVisitor {

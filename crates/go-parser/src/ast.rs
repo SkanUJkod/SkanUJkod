@@ -9,7 +9,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-use super::objects::*;
+use super::objects::{
+    AssignStmtKey, AstObjects, EntityKey, FieldKey, FuncDeclKey, FuncTypeKey,
+    IdentKey, LabeledStmtKey, ScopeKey, SpecKey};
 use super::position;
 use super::scope;
 use super::token;
