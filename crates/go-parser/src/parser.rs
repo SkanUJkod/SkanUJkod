@@ -486,7 +486,7 @@ impl<'a> Parser<'a> {
         let pos = self.pos;
         let mut name = "_".to_owned();
         if let Token::IDENT(lit) = &self.token {
-            name = lit.as_str().clone();
+            name.clone_from(lit.as_str());
             self.next();
         } else {
             self.expect(&Token::IDENT("".to_owned().into()));
