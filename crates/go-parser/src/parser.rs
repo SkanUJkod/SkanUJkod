@@ -1072,12 +1072,10 @@ impl<'a> Parser<'a> {
     }
 
     fn try_type(&mut self) -> Option<Expr> {
-        if let Some(typ) = self.try_ident_or_type() {
+        self.try_ident_or_type().map_or(None, |typ| {
             self.resolve(&typ);
             Some(typ)
-        } else {
-            None
-        }
+        })
     }
 
     // ----------------------------------------------------------------------------
@@ -1949,24 +1947,21 @@ impl<'a> Parser<'a> {
     }
 
     fn make_expr(&self, s: Option<Stmt>, want: &str) -> Option<Expr> {
-        match s {
-            Some(stmt) => match stmt {
-                Stmt::Expr(x) => Some(self.check_expr(x.as_ref().clone())),
-                _ => {
-                    let found = if let Stmt::Assign(_) = stmt {
-                        "assignment"
-                    } else {
-                        "simple statement"
-                    };
-                    let extra = "(missing parentheses around composite literal?)";
-                    let stri = format!("expected {want}, found {found} {extra}");
-                    let pos = stmt.pos(&self.objects);
-                    self.error(pos, stri);
-                    Some(Expr::new_bad(pos, self.safe_pos(stmt.end(&self.objects))))
-                }
-            },
-            None => None,
-        }
+        s.map_or(None, |stmt| match stmt {
+            Stmt::Expr(x) => Some(self.check_expr(x.as_ref().clone())),
+            _ => {
+                let found = if let Stmt::Assign(_) = stmt {
+                    "assignment"
+                } else {
+                    "simple statement"
+                };
+                let extra = "(missing parentheses around composite literal?)";
+                let stri = format!("expected {want}, found {found} {extra}");
+                let pos = stmt.pos(&self.objects);
+                self.error(pos, stri);
+                Some(Expr::new_bad(pos, self.safe_pos(stmt.end(&self.objects))))
+            }
+        })
     }
 
     fn parse_if_header(&mut self) -> (Option<Stmt>, Expr) {
@@ -2111,33 +2106,30 @@ impl<'a> Parser<'a> {
     }
 
     fn is_type_switch_guard(&self, s: &Option<Stmt>) -> bool {
-        match s {
-            Some(stmt) => match stmt {
-                Stmt::Expr(x) => x.is_type_switch_assert(),
-                Stmt::Assign(idx) => {
-                    let ass = &self.objects.a_stmts[*idx];
-                    if ass.lhs.len() == 1
-                        && ass.rhs.len() == 1
-                        && ass.rhs[0].is_type_switch_assert()
-                    {
-                        match ass.token {
-                            Token::ASSIGN => {
-                                // permit v = x.(type) but complain
-                                let s = "expected ':=', found '='";
-                                self.error_str(ass.token_pos, s);
-                                true
-                            }
-                            Token::DEFINE => true,
-                            _ => false,
+        s.as_ref().map_or(false, |stmt| match stmt {
+            Stmt::Expr(x) => x.is_type_switch_assert(),
+            Stmt::Assign(idx) => {
+                let ass = &self.objects.a_stmts[*idx];
+                if ass.lhs.len() == 1
+                    && ass.rhs.len() == 1
+                    && ass.rhs[0].is_type_switch_assert()
+                {
+                    match ass.token {
+                        Token::ASSIGN => {
+                            // permit v = x.(type) but complain
+                            let s = "expected ':=', found '='";
+                            self.error_str(ass.token_pos, s);
+                            true
                         }
-                    } else {
-                        false
+                        Token::DEFINE => true,
+                        _ => false,
                     }
+                } else {
+                    false
                 }
-                _ => false,
-            },
-            None => false,
-        }
+            }
+            _ => false,
+        })
     }
 
     fn parse_switch_stmt(&mut self) -> Stmt {
