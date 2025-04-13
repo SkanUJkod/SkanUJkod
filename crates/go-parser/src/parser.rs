@@ -147,14 +147,11 @@ impl<'a> Parser<'a> {
             Some(v) => {
                 for i in v {
                     let ident = &mut self.objects.idents[i];
-                    match scope.look_up(&ident.name) {
-                        Some(e) => {
-                            ident.entity = IdentEntity::Entity(*e);
-                        }
-                        None => {
-                            let s = format!("label {} undefined", ident.name);
-                            self.error(self.pos, s);
-                        }
+                    if let Some(e) = scope.look_up(&ident.name) {
+                        ident.entity = IdentEntity::Entity(*e);
+                    } else {
+                        let s = format!("label {} undefined", ident.name);
+                        self.error(self.pos, s);
                     }
                 }
             }
@@ -202,19 +199,16 @@ impl<'a> Parser<'a> {
             let ident = &self.objects.idents[*id];
             if ident.name != "_" {
                 let scope = &mut self.objects.scopes[*scope_ind];
-                match scope.insert(ident.name.clone(), entity) {
-                    Some(prev_decl) => {
-                        let p = self.objects.entities[prev_decl].pos(self.objects);
-                        self.error(
-                            ident.pos,
-                            format!(
-                                "{} redeclared in this block\n\tprevious declaration at {}",
-                                ident.name,
-                                self.file().position(p)
-                            ),
-                        );
-                    }
-                    _ => {}
+                if let Some(prev_decl) = scope.insert(ident.name.clone(), entity) {
+                    let p = self.objects.entities[prev_decl].pos(self.objects);
+                    self.error(
+                        ident.pos,
+                        format!(
+                            "{} redeclared in this block\n\tprevious declaration at {}",
+                            ident.name,
+                            self.file().position(p)
+                        ),
+                    );
                 }
             }
         }
@@ -237,22 +231,19 @@ impl<'a> Parser<'a> {
                     let ident = &mut self.objects.idents[*id];
                     if ident.name != "_" {
                         let top_scope = &mut self.objects.scopes[self.top_scope.unwrap()];
-                        match top_scope.look_up(&ident.name) {
-                            Some(e) => {
-                                ident.entity = IdentEntity::Entity(*e);
-                            }
-                            None => {
-                                let entity_obj = Entity::new(
-                                    EntityKind::Var,
-                                    ident.name.clone(),
-                                    DeclObj::AssignStmt(assign),
-                                    EntityData::NoData,
-                                );
-                                let entity = self.objects.entities.insert(entity_obj);
-                                top_scope.insert(ident.name.clone(), entity);
-                                ident.entity = IdentEntity::Entity(entity);
-                                n += 1;
-                            }
+                        if let Some(e) = top_scope.look_up(&ident.name) {
+                            ident.entity = IdentEntity::Entity(*e);
+                        } else {
+                            let entity_obj = Entity::new(
+                                EntityKind::Var,
+                                ident.name.clone(),
+                                DeclObj::AssignStmt(assign),
+                                EntityData::NoData,
+                            );
+                            let entity = self.objects.entities.insert(entity_obj);
+                            top_scope.insert(ident.name.clone(), entity);
+                            ident.entity = IdentEntity::Entity(entity);
+                            n += 1;
                         }
                     }
                 }
@@ -351,17 +342,14 @@ impl<'a> Parser<'a> {
         // Get next token and skip comments
         loop {
             let (token, pos) = self.scanner.scan();
-            match token {
-                Token::COMMENT(_) => {
-                    // Skip comment
-                    self.print_trace(pos, &format!("{token}"));
-                }
-                _ => {
-                    self.print_trace(pos, &format!("next: {token}"));
-                    self.token = token;
-                    self.pos = pos;
-                    break;
-                }
+            if let Token::COMMENT(_) = token {
+                // Skip comment
+                self.print_trace(pos, &format!("{token}"));
+            } else {
+                self.print_trace(pos, &format!("next: {token}"));
+                self.token = token;
+                self.pos = pos;
+                break;
             }
         }
     }
@@ -378,16 +366,13 @@ impl<'a> Parser<'a> {
         let mut mstr = "expected ".to_owned();
         mstr.push_str(msg);
         if pos == self.pos {
-            match &self.token {
-                Token::SEMICOLON(real) => {
-                    if !*real.as_bool() {
-                        mstr.push_str(", found newline");
-                    }
+            if let Token::SEMICOLON(real) = &self.token {
+                if !*real.as_bool() {
+                    mstr.push_str(", found newline");
                 }
-                _ => {
-                    mstr.push_str(", found ");
-                    mstr.push_str(self.token.text());
-                }
+            } else {
+                mstr.push_str(", found ");
+                mstr.push_str(self.token.text());
             }
         }
         self.error(pos, mstr);
@@ -658,16 +643,15 @@ impl<'a> Parser<'a> {
         exprs
             .iter()
             .map(|x| {
-                match x {
-                    Expr::Ident(ident) => *ident,
-                    _ => {
-                        let pos = x.pos(self.objects);
-                        if let Expr::Bad(_) = x {
-                            // only report error if it's a new one
-                            self.error_expected(pos, "identifier");
-                        }
-                        new_ident!(self, pos, "_".to_owned(), IdentEntity::NoEntity)
+                if let Expr::Ident(ident) = x {
+                    *ident
+                } else {
+                    let pos = x.pos(self.objects);
+                    if let Expr::Bad(_) = x {
+                        // only report error if it's a new one
+                        self.error_expected(pos, "identifier");
                     }
+                    new_ident!(self, pos, "_".to_owned(), IdentEntity::NoEntity)
                 }
             })
             .collect()
@@ -799,14 +783,13 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_var_type(&mut self, is_param: bool) -> Expr {
-        match self.try_var_type(is_param) {
-            Some(typ) => typ,
-            None => {
-                let pos = self.pos;
-                self.error_expected(pos, "type");
-                self.next();
-                Expr::new_bad(pos, self.pos)
-            }
+        if let Some(typ) = self.try_var_type(is_param) {
+            typ
+        } else {
+            let pos = self.pos;
+            self.error_expected(pos, "type");
+            self.next();
+            Expr::new_bad(pos, self.pos)
         }
     }
 
@@ -1802,32 +1785,29 @@ impl<'a> Parser<'a> {
                             },
                             _ => None,
                         };
-                        match ident {
-                            Some(ident) => {
-                                // Go spec: The scope of a label is the body of the
-                                // function in which it is declared and excludes the
-                                // body of any nested function.
-                                //
-                                // wuhao todo: this messes up the declaration order! if the next stmt
-                                // contains an exact same label, the error message would be wrong
-                                // like this:
-                                //
-                                // L1:
-                                // L1:
-                                let s = self.parse_stmt();
-                                let ls = LabeledStmt::arena_new(self.objects, ident, colon, s);
-                                self.declare(
-                                    DeclObj::LabeledStmt(ls),
-                                    EntityData::NoData,
-                                    EntityKind::Lbl,
-                                    &self.label_scope.unwrap(),
-                                );
-                                Stmt::Labeled(ls)
-                            }
-                            None => {
-                                self.error_str(colon, "illegal label declaration");
-                                Stmt::new_bad(x0.pos(self.objects), colon + 1)
-                            }
+                        if let Some(ident) = ident {
+                            // Go spec: The scope of a label is the body of the
+                            // function in which it is declared and excludes the
+                            // body of any nested function.
+                            //
+                            // wuhao todo: this messes up the declaration order! if the next stmt
+                            // contains an exact same label, the error message would be wrong
+                            // like this:
+                            //
+                            // L1:
+                            // L1:
+                            let s = self.parse_stmt();
+                            let ls = LabeledStmt::arena_new(self.objects, ident, colon, s);
+                            self.declare(
+                                DeclObj::LabeledStmt(ls),
+                                EntityData::NoData,
+                                EntityKind::Lbl,
+                                &self.label_scope.unwrap(),
+                            );
+                            Stmt::Labeled(ls)
+                        } else {
+                            self.error_str(colon, "illegal label declaration");
+                            Stmt::new_bad(x0.pos(self.objects), colon + 1)
                         }
                     }
                     Token::ARROW => {
@@ -1947,9 +1927,10 @@ impl<'a> Parser<'a> {
     }
 
     fn make_expr(&self, s: Option<Stmt>, want: &str) -> Option<Expr> {
-        s.map_or(None, |stmt| match stmt {
-            Stmt::Expr(x) => Some(self.check_expr(x.as_ref().clone())),
-            _ => {
+        s.map_or(None, |stmt| {
+            if let Stmt::Expr(x) = stmt {
+                Some(self.check_expr(x.as_ref().clone()))
+            } else {
                 let found = if let Stmt::Assign(_) = stmt {
                     "assignment"
                 } else {
@@ -1973,16 +1954,15 @@ impl<'a> Parser<'a> {
         let outer = self.expr_level;
         self.expr_level = -1;
 
-        let mut init = match self.token {
-            Token::SEMICOLON(_) => None,
-            _ => {
-                // accept potential variable declaration but complain
-                if self.token == Token::VAR {
-                    self.next();
-                    self.error_str(self.pos, "var declaration not allowed in 'IF' initializer");
-                }
-                Some(self.parse_simple_stmt(ParseSimpleMode::Basic).0)
+        let mut init = if let Token::SEMICOLON(_) = self.token {
+            None
+        } else {
+            // accept potential variable declaration but complain
+            if self.token == Token::VAR {
+                self.next();
+                self.error_str(self.pos, "var declaration not allowed in 'IF' initializer");
             }
+            Some(self.parse_simple_stmt(ParseSimpleMode::Basic).0)
         };
 
         let mut semi_real = false;
@@ -2480,23 +2460,20 @@ impl<'a> Parser<'a> {
             _ => None,
         };
         let pos = self.pos;
-        let path_token = match &self.token {
-            Token::STRING(lit) => {
-                let litstr: &String = lit.as_ref();
-                if !Parser::is_valid_import(litstr) {
-                    let msg = format!("{}{}", "invalid import path: ", litstr);
-                    self.error(pos, msg);
-                }
-                let token = self.token.clone();
-                self.next();
-                token
+        let path_token = if let Token::STRING(lit) = &self.token {
+            let litstr: &String = lit.as_ref();
+            if !Parser::is_valid_import(litstr) {
+                let msg = format!("{}{}", "invalid import path: ", litstr);
+                self.error(pos, msg);
             }
-            _ => {
-                // use expect() error handling
-                let token = Token::STRING("_".to_owned().into());
-                self.expect(&token);
-                token
-            }
+            let token = self.token.clone();
+            self.next();
+            token
+        } else {
+            // use expect() error handling
+            let token = Token::STRING("_".to_owned().into());
+            self.expect(&token);
+            token
         };
         self.expect_semi();
         let index = self.objects.specs.insert(Spec::Import(Rc::new(ImportSpec {
