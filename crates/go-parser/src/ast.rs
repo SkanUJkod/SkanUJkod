@@ -559,6 +559,11 @@ impl IdentEntity {
     }
 }
 
+/// Checks if the given string is exported, i.e., its first character is uppercase.
+///
+/// # Panics
+///
+/// This function panics if the input string `s` is empty, as calling `unwrap()` on an empty iterator will panic.
 pub fn is_exported(s: &str) -> bool {
     s.chars().next().unwrap().is_uppercase()
 }

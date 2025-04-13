@@ -111,6 +111,13 @@ impl File {
         }
     }
 
+    /// Merges the specified line in the list of lines.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `line` is less than 1, since line numbering starts at 1.
+    /// Panics if `line` is greater than or equal to the number of lines,
+    /// indicating an invalid line index.
     pub fn merge_line(&mut self, line: usize) {
         if line < 1 {
             panic!("illegal line number (line numbering starts at 1)");
@@ -157,6 +164,12 @@ impl File {
         }
     }
 
+    /// Returns the byte offset at which the specified line starts.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `line` is less than 1, since line numbering starts at 1.
+    /// Panics if `line` is greater than or equal to the number of lines.
     #[must_use]
     pub fn line_start(&self, line: usize) -> usize {
         if line < 1 {
@@ -168,6 +181,11 @@ impl File {
         self.base + self.lines[line - 1]
     }
 
+    /// Returns the position in the file corresponding to the given offset.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `offset` is greater than the file size.
     #[must_use]
     pub fn pos(&self, offset: usize) -> Pos {
         if offset > self.size() {
@@ -176,6 +194,11 @@ impl File {
         self.base() + offset
     }
 
+    /// Returns the `FilePos` (line, column, offset) corresponding to a `Pos`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `p` is not within the range of valid positions for this file,
     #[must_use]
     pub fn position(&self, p: Pos) -> FilePos {
         if p < self.base || p > self.base + self.size {
@@ -291,6 +314,12 @@ impl FileSet {
         }
     }
 
+    /// Adds a file with the specified name, base offset, and size.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `real_base` is less than the current base, or if adding
+    /// the file causes an overflow in the base offset.
     pub fn add_file(&mut self, name: String, base: Option<usize>, size: usize) -> &mut File {
         let real_base = if let Some(b) = base { b } else { self.base };
         if real_base < self.base {

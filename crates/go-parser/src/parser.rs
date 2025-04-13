@@ -2755,6 +2755,10 @@ impl<'a> Parser<'a> {
     // ----------------------------------------------------------------------------
     // Source files
 
+    /// # Panics
+    ///
+    /// Panics if `top_scope` or `label_scope` are not `None` after parsing,
+    /// indicating unbalanced scope handling (e.g., missing `close_scope()` call).
     pub fn parse_file(&mut self) -> Option<File> {
         self.trace_begin("File");
 

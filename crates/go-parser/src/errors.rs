@@ -58,6 +58,14 @@ impl ErrorList {
         }
     }
 
+    /// Adds a new error to the error list.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `msg` starts with a tab character (`'\t'`) and there is no
+    /// existing error in the list whose message does **not** start with a tab.
+    /// This happens when trying to determine the insertion order based on
+    /// previous non-indented messages.
     pub fn add(&self, p: Option<FilePos>, msg: String, soft: bool, by_parser: bool) {
         let fp = p.unwrap_or(FilePos::null());
         let order = if msg.starts_with('\t') {
