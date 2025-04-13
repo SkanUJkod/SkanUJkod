@@ -96,6 +96,11 @@ impl ErrorList {
     }
 
     #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    #[must_use]
     pub fn len(&self) -> usize {
         self.errors.borrow().len()
     }
