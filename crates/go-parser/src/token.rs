@@ -357,7 +357,7 @@ impl fmt::Display for Token {
             | Token::IMAG(l)
             | Token::CHAR(l)
             | Token::STRING(l) => f.write_str(l.as_str()),
-            _ => write!(f, "{}", text),
+            _ => write!(f, "{text}"),
         }
     }
 }
@@ -372,9 +372,9 @@ impl fmt::Debug for Token {
             | Token::IMAG(l)
             | Token::CHAR(l)
             | Token::STRING(l) => write!(f, "{} {}", text, l.as_str()),
-            Token::SEMICOLON(real) if !*real.as_bool() => write!(f, "\"{}(inserted)\"", text),
-            token if token.is_operator() || token.is_keyword() => write!(f, "\"{}\"", text),
-            _ => write!(f, "{}", text),
+            Token::SEMICOLON(real) if !*real.as_bool() => write!(f, "\"{text}(inserted)\""),
+            token if token.is_operator() || token.is_keyword() => write!(f, "\"{text}\""),
+            _ => write!(f, "{text}"),
         }
     }
 }
