@@ -654,7 +654,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    fn make_ident_list(&mut self, exprs: &Vec<Expr>) -> Vec<IdentKey> {
+    fn make_ident_list(&mut self, exprs: &[Expr]) -> Vec<IdentKey> {
         exprs
             .iter()
             .map(|x| {
