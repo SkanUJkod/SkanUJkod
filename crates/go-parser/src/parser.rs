@@ -2712,15 +2712,15 @@ impl<'a> Parser<'a> {
         self.unresolved = self
             .unresolved.clone()
             .into_iter()
-            .filter_map(|x| {
+            .filter(|&x| {
                 let ident = &mut self.objects.idents[x];
                 let scope = &self.objects.scopes[self.pkg_scope.unwrap()];
                 let entity = scope.look_up(&ident.name);
                 if let Some(en) = entity {
                     ident.entity = IdentEntity::Entity(*en);
-                    Some(x)
+                    true
                 } else {
-                    None
+                    false
                 }
             })
             .collect();
