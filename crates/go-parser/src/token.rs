@@ -415,14 +415,14 @@ impl TokenData {
     pub fn as_str(&self) -> &String {
         match self.0.as_ref() {
             RawTokenData::Str(s) | RawTokenData::StrStr(s, _) | RawTokenData::StrChar(s, _) => s,
-            _ => unreachable!(),
+            RawTokenData::Bool(_) => unreachable!(),
         }
     }
 
     pub fn as_str_mut(&mut self) -> &mut String {
         match self.0.as_mut() {
             RawTokenData::Str(s) | RawTokenData::StrStr(s, _) | RawTokenData::StrChar(s, _) => s,
-            _ => unreachable!(),
+            RawTokenData::Bool(_) => unreachable!(),
         }
     }
 
