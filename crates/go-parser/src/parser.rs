@@ -204,7 +204,7 @@ impl<'a> Parser<'a> {
                 let scope = &mut self.objects.scopes[*scope_ind];
                 match scope.insert(ident.name.clone(), entity) {
                     Some(prev_decl) => {
-                        let p = self.objects.entities[prev_decl].pos(&self.objects);
+                        let p = self.objects.entities[prev_decl].pos(self.objects);
                         self.error(
                             ident.pos,
                             format!(
@@ -257,13 +257,13 @@ impl<'a> Parser<'a> {
                     }
                 }
                 _ => {
-                    self.error_expected(expr.pos(&self.objects), "identifier on left side of :=");
+                    self.error_expected(expr.pos(self.objects), "identifier on left side of :=");
                 }
             }
         }
         if n == 0 {
             self.error_str(
-                list[0].pos(&self.objects),
+                list[0].pos(self.objects),
                 "no new variables on left side of :=",
             );
         }
@@ -661,7 +661,7 @@ impl<'a> Parser<'a> {
                 match x {
                     Expr::Ident(ident) => *ident,
                     _ => {
-                        let pos = x.pos(&self.objects);
+                        let pos = x.pos(self.objects);
                         if let Expr::Bad(_) = x {
                             // only report error if it's a new one
                             self.error_expected(pos, "identifier");
@@ -702,8 +702,8 @@ impl<'a> Parser<'a> {
                 } else if !Parser::is_type_name(Parser::deref(first)) {
                     self.error_expected(self.pos, "anonymous field");
                     Expr::new_bad(
-                        first.pos(&self.objects),
-                        self.safe_pos(first.end(&self.objects)),
+                        first.pos(self.objects),
+                        self.safe_pos(first.end(self.objects)),
                     )
                 } else {
                     list.into_iter().nth(0).unwrap()
@@ -946,7 +946,7 @@ impl<'a> Parser<'a> {
             idents = vec![*ident.unwrap()];
             let scope = new_scope!(self, self.top_scope);
             let (params, results) = self.parse_signature(scope);
-            typ = Expr::box_func_type(FuncType::new(None, params, results), &mut self.objects);
+            typ = Expr::box_func_type(FuncType::new(None, params, results), self.objects);
         } else {
             // embedded interface
             self.resolve(&typ);
@@ -1051,7 +1051,7 @@ impl<'a> Parser<'a> {
             Token::MUL => Some(self.parse_pointer_type()),
             Token::FUNC => {
                 let (typ, _) = self.parse_func_type();
-                Some(Expr::box_func_type(typ, &mut self.objects))
+                Some(Expr::box_func_type(typ, self.objects))
             }
             Token::INTERFACE => Some(Expr::Interface(Rc::new(self.parse_interface_type()))),
             Token::MAP => Some(Expr::Map(Rc::new(self.parse_map_type()))),
@@ -1443,7 +1443,7 @@ impl<'a> Parser<'a> {
         match unparenx {
             Expr::Bad(_) => {
                 self.error_expected(self.pos, "expression");
-                Expr::new_bad(x.pos(&self.objects), self.safe_pos(x.end(&self.objects)))
+                Expr::new_bad(x.pos(self.objects), self.safe_pos(x.end(self.objects)))
             }
             // If t.Type == nil we have a type assertion of the form
             // y.(type), which is only allowed in type switch expressions.
@@ -1455,7 +1455,7 @@ impl<'a> Parser<'a> {
             Expr::Paren(_) => unreachable!(),
             _ => {
                 self.error_expected(self.pos, "expression");
-                Expr::new_bad(x.pos(&self.objects), self.safe_pos(x.end(&self.objects)))
+                Expr::new_bad(x.pos(self.objects), self.safe_pos(x.end(self.objects)))
             }
         }
     }
@@ -1521,8 +1521,8 @@ impl<'a> Parser<'a> {
                     if let Expr::Ellipsis(ell) = expr {
                         self.error_str(ell.pos, "expected array length, found '...'");
                         return Expr::new_bad(
-                            unparenx.pos(&self.objects),
-                            self.safe_pos(unparenx.end(&self.objects)),
+                            unparenx.pos(self.objects),
+                            self.safe_pos(unparenx.end(self.objects)),
                         );
                     }
                 }
@@ -1779,14 +1779,14 @@ impl<'a> Parser<'a> {
                 } else {
                     y = self.parse_rhs_list();
                 }
-                ret = Stmt::new_assign(&mut self.objects, x, pos, token.clone(), y);
+                ret = Stmt::new_assign(self.objects, x, pos, token.clone(), y);
                 if token == Token::DEFINE {
                     self.short_var_decl(&ret);
                 }
             }
             _ => {
                 if x.len() > 1 {
-                    self.error_expected(x[0].pos(&self.objects), "1 expression");
+                    self.error_expected(x[0].pos(self.objects), "1 expression");
                     // continue with first expression
                 }
                 let x0 = x.into_iter().nth(0).unwrap();
@@ -1815,7 +1815,7 @@ impl<'a> Parser<'a> {
                                 // L1:
                                 // L1:
                                 let s = self.parse_stmt();
-                                let ls = LabeledStmt::arena_new(&mut self.objects, ident, colon, s);
+                                let ls = LabeledStmt::arena_new(self.objects, ident, colon, s);
                                 self.declare(
                                     DeclObj::LabeledStmt(ls),
                                     EntityData::NoData,
@@ -1826,7 +1826,7 @@ impl<'a> Parser<'a> {
                             }
                             None => {
                                 self.error_str(colon, "illegal label declaration");
-                                Stmt::new_bad(x0.pos(&self.objects), colon + 1)
+                                Stmt::new_bad(x0.pos(self.objects), colon + 1)
                             }
                         }
                     }
@@ -1866,7 +1866,7 @@ impl<'a> Parser<'a> {
             if !x.is_bad() {
                 // only report error if it's a new one
                 self.error(
-                    self.safe_pos(x.end(&self.objects)),
+                    self.safe_pos(x.end(self.objects)),
                     format!("function must be invoked in {call_type} statement"),
                 );
             }
@@ -1957,9 +1957,9 @@ impl<'a> Parser<'a> {
                 };
                 let extra = "(missing parentheses around composite literal?)";
                 let stri = format!("expected {want}, found {found} {extra}");
-                let pos = stmt.pos(&self.objects);
+                let pos = stmt.pos(self.objects);
                 self.error(pos, stri);
-                Some(Expr::new_bad(pos, self.safe_pos(stmt.end(&self.objects))))
+                Some(Expr::new_bad(pos, self.safe_pos(stmt.end(self.objects))))
             }
         })
     }
@@ -2217,7 +2217,7 @@ impl<'a> Parser<'a> {
             if self.token == Token::ARROW {
                 // SendStmt
                 if lhs.len() > 1 {
-                    self.error_expected(lhs[0].pos(&self.objects), "1 expression");
+                    self.error_expected(lhs[0].pos(self.objects), "1 expression");
                     // continue with first expression
                 }
                 let arrow = self.pos;
@@ -2233,20 +2233,20 @@ impl<'a> Parser<'a> {
                 if tk == Token::ASSIGN || tk == Token::DEFINE {
                     // RecvStmt with assignment
                     if lhs.len() > 2 {
-                        self.error_expected(lhs[0].pos(&self.objects), "1 or 2 expressions");
+                        self.error_expected(lhs[0].pos(self.objects), "1 or 2 expressions");
                         lhs.truncate(2);
                     }
                     let pos = self.pos;
                     self.next();
                     let rhs = self.parse_rhs();
-                    let ass = Stmt::new_assign(&mut self.objects, lhs, pos, tk.clone(), vec![rhs]);
+                    let ass = Stmt::new_assign(self.objects, lhs, pos, tk.clone(), vec![rhs]);
                     if tk == Token::DEFINE {
                         self.short_var_decl(&ass);
                     }
                     Some(ass)
                 } else {
                     if lhs.len() > 1 {
-                        self.error_expected(lhs[0].pos(&self.objects), "1 expression");
+                        self.error_expected(lhs[0].pos(self.objects), "1 expression");
                         // continue with first expression
                     }
                     Some(Stmt::Expr(Rc::from(Box::new(lhs.into_iter().nth(0).unwrap()))))
@@ -2310,7 +2310,7 @@ impl<'a> Parser<'a> {
                     self.next();
                     let unary = Expr::new_unary_expr(pos, Token::RANGE, self.parse_rhs());
                     s2 = Some(Stmt::new_assign(
-                        &mut self.objects,
+                        self.objects,
                         vec![],
                         0,
                         Token::NONE,
@@ -2357,7 +2357,7 @@ impl<'a> Parser<'a> {
                         (Some(lhs0), Some(lhs1))
                     }
                     _ => {
-                        let pos = ass.lhs[0].pos(&self.objects);
+                        let pos = ass.lhs[0].pos(self.objects);
                         self.error_expected(pos, "at most 2 expressions");
                         (None, None)
                     }
