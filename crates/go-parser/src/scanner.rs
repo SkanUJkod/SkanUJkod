@@ -99,15 +99,12 @@ impl<'a> Scanner<'a> {
                     Some('.') => {
                         self.read_char();
                         self.read_char();
-                        match self.peek_char() {
-                            Some('.') => {
-                                self.read_char();
-                                Token::ELLIPSIS
-                            }
-                            _ => {
-                                self.semi2 = self.semi1; // preserve insert semi info
-                                Token::ILLEGAL("..".to_owned().into())
-                            }
+                        if let Some('.') = self.peek_char() {
+                            self.read_char();
+                            Token::ELLIPSIS
+                        } else {
+                            self.semi2 = self.semi1; // preserve insert semi info
+                            Token::ILLEGAL("..".to_owned().into())
                         }
                     }
                     _ => {
@@ -224,15 +221,14 @@ impl<'a> Scanner<'a> {
     fn scan_number(&mut self, ch: char) -> Token {
         let mut tok = self.scan_number_without_i(ch);
         // Handles the 'i' at the end
-        match self.peek_char() {
-            Some('i') => match tok {
+        if let Some('i') = self.peek_char() {
+            match tok {
                 Token::INT(mut lit) | Token::FLOAT(mut lit) => {
                     self.advance_and_push(lit.as_mut(), 'i');
                     tok = Token::IMAG(lit);
                 }
                 _ => {}
-            },
-            _ => {}
+            }
         }
         tok
     }
@@ -432,8 +428,8 @@ impl<'a> Scanner<'a> {
         let mut n: isize;
         let base: u32;
         let max: u32;
-        match self.peek_char() {
-            Some(&ch) => match ch {
+        if let Some(&ch) = self.peek_char() {
+            match ch {
                 'a' => {
                     self.advance_and_push(lit, ch);
                     return Some('\u{0007}');
@@ -497,29 +493,25 @@ impl<'a> Scanner<'a> {
                     self.error("unknown escape sequence");
                     return None;
                 }
-            },
-            None => {
-                self.error("escape sequence not terminated");
-                return None;
             }
+        } else {
+            self.error("escape sequence not terminated");
+            return None;
         }
 
         let mut x: u32 = 0;
         while n > 0 {
-            match self.peek_char() {
-                Some(&ch) => {
-                    let d = digit_val(ch);
-                    if d >= base {
-                        self.error("illegal character in escape sequence");
-                        return None;
-                    }
-                    self.advance_and_push(lit, ch);
-                    x = x * base + d;
-                }
-                None => {
-                    self.error("escape sequence not terminated");
+            if let Some(&ch) = self.peek_char() {
+                let d = digit_val(ch);
+                if d >= base {
+                    self.error("illegal character in escape sequence");
                     return None;
                 }
+                self.advance_and_push(lit, ch);
+                x = x * base + d;
+            } else {
+                self.error("escape sequence not terminated");
+                return None;
             }
             n -= 1;
         }
@@ -685,15 +677,12 @@ impl<'a> Scanner<'a> {
 
     fn read_char(&mut self) -> Option<char> {
         let next = self.src.next();
-        match next {
-            Some(ch) => {
-                if ch == '\n' {
-                    self.line_offset = self.offset;
-                    self.file.add_line(self.offset + 1);
-                }
-                self.offset += 1;
+        if let Some(ch) = next {
+            if ch == '\n' {
+                self.line_offset = self.offset;
+                self.file.add_line(self.offset + 1);
             }
-            None => {}
+            self.offset += 1;
         }
         next
     }
@@ -718,12 +707,9 @@ impl<'a> Scanner<'a> {
                     match iter.next() {
                         Some('\n') | None => return true,
                         Some('*') => {
-                            match iter.peek() {
-                                Some(&'/') => {
-                                    iter.next();
-                                    break;
-                                }
-                                _ => {}
+                            if let Some(&'/') = iter.peek() {
+                                iter.next();
+                                break;
                             }
                         }
                         Some(_) => {}
