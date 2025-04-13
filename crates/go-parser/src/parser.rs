@@ -1466,14 +1466,12 @@ impl<'a> Parser<'a> {
                 unreachable!()
             }
             Expr::Array(array) => {
-                if let Some(expr) = &array.len {
-                    if let Expr::Ellipsis(ell) = expr {
-                        self.error_str(ell.pos, "expected array length, found '...'");
-                        return Expr::new_bad(
-                            unparenx.pos(self.objects),
-                            self.safe_pos(unparenx.end(self.objects)),
-                        );
-                    }
+                if let Some(Expr::Ellipsis(ell)) = &array.len {
+                    self.error_str(ell.pos, "expected array length, found '...'");
+                    return Expr::new_bad(
+                        unparenx.pos(self.objects),
+                        self.safe_pos(unparenx.end(self.objects)),
+                    );
                 }
             }
             _ => {}
