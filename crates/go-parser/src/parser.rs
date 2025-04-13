@@ -331,7 +331,7 @@ impl<'a> Parser<'a> {
         for _ in 0..self.indent {
             buf.push_str("..");
         }
-        print!("{}{}\n", buf, msg);
+        print!("{buf}{msg}\n");
     }
 
     fn trace_begin(&mut self, msg: &str) {
@@ -353,10 +353,10 @@ impl<'a> Parser<'a> {
             match token {
                 Token::COMMENT(_) => {
                     // Skip comment
-                    self.print_trace(pos, &format!("{}", token));
+                    self.print_trace(pos, &format!("{token}"));
                 }
                 _ => {
-                    self.print_trace(pos, &format!("next: {}", token));
+                    self.print_trace(pos, &format!("next: {token}"));
                     self.token = token;
                     self.pos = pos;
                     break;
@@ -395,7 +395,7 @@ impl<'a> Parser<'a> {
     fn expect(&mut self, token: &Token) -> position::Pos {
         let pos = self.pos;
         if self.token != *token {
-            self.error_expected(pos, &format!("'{}'", token));
+            self.error_expected(pos, &format!("'{token}'"));
         }
         self.next();
         pos
@@ -406,7 +406,7 @@ impl<'a> Parser<'a> {
     fn expect_closing(&mut self, token: &Token, context: &str) -> position::Pos {
         if let Token::SEMICOLON(real) = token {
             if !*real.as_bool() {
-                let msg = format!("missing ',' before newline in {}", context);
+                let msg = format!("missing ',' before newline in {context}");
                 self.error(self.pos, msg);
                 self.next();
             }
@@ -443,7 +443,7 @@ impl<'a> Parser<'a> {
                     msg.push_str(" before newline");
                 }
             }
-            msg = format!("{} in {}", msg, context);
+            msg = format!("{msg} in {context}");
             self.error(self.pos, msg);
             true
         } else {
@@ -1875,7 +1875,7 @@ impl<'a> Parser<'a> {
                 // only report error if it's a new one
                 self.error(
                     self.safe_pos(x.end(&self.objects)),
-                    format!("function must be invoked in {} statement", call_type),
+                    format!("function must be invoked in {call_type} statement"),
                 )
             }
             None
@@ -1969,7 +1969,7 @@ impl<'a> Parser<'a> {
                         "simple statement"
                     };
                     let extra = "(missing parentheses around composite literal?)";
-                    let stri = format!("expected {}, found {} {}", want, found, extra);
+                    let stri = format!("expected {want}, found {found} {extra}");
                     let pos = stmt.pos(&self.objects);
                     self.error(pos, stri);
                     Some(Expr::new_bad(pos, self.safe_pos(stmt.end(&self.objects))))
