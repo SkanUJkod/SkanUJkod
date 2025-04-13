@@ -408,9 +408,6 @@ impl<'a> Scanner<'a> {
                 }
                 Some('\\') => {
                     let result = self.scan_escape(lit, quote);
-                    if result.is_none() {
-                        return None;
-                    }
                     unquoted.push(result?);
                 }
                 Some(&ch) => {
