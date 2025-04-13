@@ -123,21 +123,21 @@ impl Scope {
     }
 
     pub fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match write!(f, "scope {self:p} {{\n") {
+        match writeln!(f, "scope {self:p} {{") {
             Err(e) => {
                 return Err(e);
             }
             Ok(_) => {}
         };
         for (k, _) in self.entities.iter() {
-            match write!(f, "\t{k}\n") {
+            match writeln!(f, "\t{k}") {
                 Err(e) => {
                     return Err(e);
                 }
                 Ok(_) => {}
             }
         }
-        write!(f, "}}\n")
+        writeln!(f, "}}")
     }
 }
 
