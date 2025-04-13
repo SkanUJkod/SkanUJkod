@@ -149,7 +149,7 @@ macro_rules! piggy_key_type {
             #[must_use]
             #[inline]
             pub const fn null() -> Self {
-                $name(std::usize::MAX)
+                $name(usize::MAX)
             }
         }
 
