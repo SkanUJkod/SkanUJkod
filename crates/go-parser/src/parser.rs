@@ -572,13 +572,13 @@ impl<'a> Parser<'a> {
         self.trace_begin("Type");
 
         let typ = self.try_type();
-        let ret = if typ.is_none() {
+        let ret = if let Some(t) = typ {
+            t
+        } else {
             let pos = self.pos;
             self.error_expected(pos, "type");
             self.next();
             Expr::new_bad(pos, self.pos)
-        } else {
-            typ.unwrap()
         };
 
         self.trace_end();
