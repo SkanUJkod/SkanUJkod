@@ -17,6 +17,7 @@ use super::scope;
 use super::token;
 use std::hash::Hash;
 use std::rc::Rc;
+use std::ptr;
 
 /// NodeId can be used as key of HashMaps
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug)]
@@ -669,7 +670,7 @@ pub struct SelectorExpr {
 impl SelectorExpr {
     #[must_use]
     pub fn id(&self) -> NodeId {
-        NodeId::Address(self as *const SelectorExpr as usize)
+        NodeId::Address(ptr::from_ref::<SelectorExpr>(self) as usize)
     }
 }
 
@@ -717,7 +718,7 @@ pub struct CallExpr {
 impl CallExpr {
     #[must_use]
     pub fn id(&self) -> NodeId {
-        NodeId::Address(self as *const CallExpr as usize)
+         NodeId::Address(ptr::from_ref::<CallExpr>(self) as usize)
     }
 }
 
