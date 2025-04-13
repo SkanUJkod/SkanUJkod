@@ -50,6 +50,7 @@ where
         &self.vec
     }
 
+    #[allow(clippy::iter_without_into_iter)]
     #[must_use]
     pub fn iter(&self) -> PiggyVecIter<K, V> {
         PiggyVecIter {

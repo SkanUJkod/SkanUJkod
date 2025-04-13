@@ -274,6 +274,7 @@ impl FileSet {
         self.base
     }
 
+    #[allow(clippy::iter_without_into_iter)]
     #[must_use]
     pub const fn iter(&self) -> FileSetIter {
         FileSetIter { fs: self, cur: 0 }
