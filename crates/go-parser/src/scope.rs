@@ -128,9 +128,9 @@ impl Scope {
     ///
     /// This function can return an error if there is an issue writing to the formatter.
     pub fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "scope {:p} {{", self)?;
+        writeln!(f, "scope {self:p} {{")?;
         for (k, _) in &self.entities {
-            writeln!(f, "\t{}", k)?;
+            writeln!(f, "\t{k}")?;
         }
         writeln!(f, "}}")
     }
