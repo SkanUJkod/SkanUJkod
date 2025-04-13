@@ -159,7 +159,7 @@ impl Expr {
         }
     }
 
-    pub const fn is_type_switch_assert(&self) -> bool {
+    pub fn is_type_switch_assert(&self) -> bool {
         if let Expr::TypeAssert(t) = self {
             t.typ.is_none()
         } else {
