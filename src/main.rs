@@ -8,8 +8,8 @@ fn main() {
      //parse_file();
 	let file_path = String::from("main.go");
 	let pf = parse_file();
-	let fun_count = fun_counter(pf);
-	println!("Number of functions in file: {}", fun_count);
+	// let fun_count = fun_counter(pf);
+	// println!("Number of functions in file: {}", fun_count);
 }
 
 
@@ -27,6 +27,21 @@ fn parse_file() -> go_parser::ast::File{
 			panic!("Error parsing file: {:?}", el);
 		},	
 	}; 	
+	// println!("{:?}", o.entities.vec());
+	
+	for entity in o.entities.vec(){
+		match entity.kind{ 
+			go_parser::scope::EntityKind::Fun => {
+				println!("Function found: {:?}", entity.name);
+			},
+			_ => {
+				
+			}
+			
+		}
+	}
+		
+	
 	return pf;
 }
 
@@ -41,10 +56,19 @@ fn read_file(file_path: &String) -> String{
 fn fun_counter(file: go_parser::ast::File) -> u32 { 
 	let mut counter: u32 = 0;
 	for decl in file.decls{
-		let decl_str = format!("{:?}", decl);
-		if decl_str.contains("FuncDecl") {	
-			counter += 1;
+		match decl{
+			go_parser::ast::Decl::Func(_) => {
+				counter += 1;
+				println!("Function found: {:?}", decl);
+			},
+			_ => {}
 		}
 	}
 	return counter;
+}
+
+fn fun_names(file: go_parser::ast::File) -> Vec<String> { 
+	let mut names: Vec<String> = Vec::new();
+	
+	return names;
 }
