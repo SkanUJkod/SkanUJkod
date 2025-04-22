@@ -1,4 +1,6 @@
-use crate::metrics::{all_metrics, metrics_trait::Metric, result_type::MetricResultType, utils::print_results};
+use crate::metrics::{
+    all_metrics, metrics_trait::Metric, result_type::MetricResultType, utils::print_results,
+};
 use crate::repo::RepoWrapper;
 use std::collections::HashMap;
 
@@ -21,10 +23,8 @@ pub fn run_selected_metrics(
     while let Ok(commit) = repo.find_commit(commit_id) {
         for metric in &selected_metrics {
             let default_params = HashMap::new();
-            let params = all_params
-                .get(metric.name())
-                .unwrap_or(&default_params);
-            
+            let params = all_params.get(metric.name()).unwrap_or(&default_params);
+
             if let Some(result) = results.get_mut(metric.name()) {
                 metric.run(&commit, params, result);
             }
