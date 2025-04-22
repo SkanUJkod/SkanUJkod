@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use gix::Commit;
 use crate::metrics::result_type::MetricResultType;
+use gix::Commit;
+use std::collections::HashMap;
 
 pub trait Metric {
     fn name(&self) -> &'static str;

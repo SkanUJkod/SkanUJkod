@@ -1,4 +1,4 @@
-use gix::{ discover, Repository };
+use gix::{Repository, discover};
 
 pub struct RepoWrapper {
     pub repo: Repository,

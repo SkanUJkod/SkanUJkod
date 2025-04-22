@@ -1,7 +1,7 @@
-use std::collections::{HashMap, HashSet};
-use gix::Commit;
-use crate::metrics::{Metric, utils::parse_param};
 use super::result_type::MetricResultType;
+use crate::metrics::{Metric, utils::parse_param};
+use gix::Commit;
+use std::collections::{HashMap, HashSet};
 
 pub struct CommitsByAuthorInRepo;
 pub struct ContributorsInTimeframe;
@@ -14,8 +14,13 @@ impl Metric for CommitsByAuthorInRepo {
     fn default_results(&self) -> super::result_type::MetricResultType {
         super::result_type::MetricResultType::Map(HashMap::new())
     }
-    
-    fn run(&self, commit: &Commit, _params: &HashMap<String, String>, result: &mut MetricResultType) {
+
+    fn run(
+        &self,
+        commit: &Commit,
+        _params: &HashMap<String, String>,
+        result: &mut MetricResultType,
+    ) {
         match result {
             MetricResultType::Map(authors_commits) => {
                 let author_name = commit.author().unwrap().name.to_string();
@@ -36,8 +41,13 @@ impl Metric for ContributorsInTimeframe {
     fn default_results(&self) -> super::result_type::MetricResultType {
         super::result_type::MetricResultType::Set(HashSet::new())
     }
-    
-    fn run(&self, commit: &Commit, params: &HashMap<String, String>, result: &mut MetricResultType) {    
+
+    fn run(
+        &self,
+        commit: &Commit,
+        params: &HashMap<String, String>,
+        result: &mut MetricResultType,
+    ) {
         let start_date = parse_param(params, "start_date", 10);
         let end_date = parse_param(params, "end_date", 10);
 
