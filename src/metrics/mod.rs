@@ -1,5 +1,7 @@
 pub mod metrics_trait;
 pub mod commits;
+pub mod result_type;
+pub mod utils;
 
 use metrics_trait::Metric;
 use commits::{ CommitsByAuthorInRepo, ContributorsInTimeframe };
