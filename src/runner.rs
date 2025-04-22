@@ -16,12 +16,7 @@ pub fn run_selected_metrics(
 
     let repo = &repo_wrapper.repo;
     let mut commit_id = repo.head_commit().unwrap().id();
-    let mut results: HashMap<&str, MetricResultType> = HashMap::new();
-
-    for metric in &selected_metrics {
-        let metric_name = metric.name();
-        results.insert(metric_name, metric.default_results());
-    }
+    let mut results = init_empty_results(&selected_metrics);
 
     while let Ok(commit) = repo.find_commit(commit_id) {
         for metric in &selected_metrics {
@@ -43,4 +38,11 @@ pub fn run_selected_metrics(
     }
 
     print_results(&selected_metrics, &results);
+}
+
+fn init_empty_results<'a>(metrics: &'a Vec<&dyn Metric>) -> HashMap<&'a str, MetricResultType> {
+    metrics
+        .iter()
+        .map(|metric| (metric.name(), metric.default_results()))
+        .collect()
 }
