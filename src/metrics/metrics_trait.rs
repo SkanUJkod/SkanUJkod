@@ -1,7 +1,9 @@
-use crate::repo::RepoWrapper;
 use std::collections::HashMap;
+use gix::Commit;
+use crate::metrics::result_type::MetricResultType;
 
 pub trait Metric {
     fn name(&self) -> &'static str;
-    fn run(&self, repo: &RepoWrapper, params: &HashMap<String, String>);
+    fn default_results(&self) -> MetricResultType;
+    fn run(&self, repo: &Commit, params: &HashMap<String, String>, result: &mut MetricResultType);
 }
