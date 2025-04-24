@@ -13,8 +13,10 @@ fn main() {
 	//println!("File: {:?}", f);
 	println!("Objects: {:?}", o.fdecls);
 	
-	 fun_name(&f, &o)//human readble output for problem insted (kind of check, regex or predicate , type of message )
-	
+	let funNames =  fun_name(&f, &o);//human readble output for problem insted (kind of check, regex or predicate , type of message )
+	for funName in funNames.iter(){
+		println!("Function name violation: {:?}", funName.name);
+	}
 	//stmt type definition for struct counter
 }
 
@@ -71,5 +73,9 @@ fn name_vaiolation<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObje
 
 fn fun_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> Vec<&'a go_parser::scope::Entity> {
 	return name_vaiolation(file, o, go_parser::scope::EntityKind::Fun);
+}
+
+fn struct_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> Vec<&'a go_parser::scope::Entity> {
+	return name_vaiolation(file, o, go_parser::scope::EntityKind::Struct);
 }
 
