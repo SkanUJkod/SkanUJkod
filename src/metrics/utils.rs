@@ -24,6 +24,11 @@ pub fn print_results(metrics: &Vec<&dyn Metric>, all_results: &HashMap<&str, Met
                     println!("{}", value);
                 }
             }
+            MetricResultType::DatePair(map) => {
+                for (key, value) in map {
+                    println!("{}: {} --- {}", key, value.0, value.1);
+                }
+            }
         }
         println!("--- --- ---\n");
     }

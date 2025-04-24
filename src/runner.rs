@@ -37,6 +37,12 @@ pub fn run_selected_metrics(
         }
     }
 
+    for metric in &selected_metrics {
+        if let Some(result) = results.get_mut(metric.name()) {
+            metric.calculate(result);
+        }
+    }
+
     print_results(&selected_metrics, &results);
 }
 
