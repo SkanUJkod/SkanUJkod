@@ -1,25 +1,33 @@
 use std::any::Any;
 use std::fs;
 use std::path::Path;
-
-use go_parser::ast::Node;
+use regex::Regex;
+use go_parser::ast::{Node, TypeSpec};
 
 fn main() {
-     //parse_file();
-	let file_path = String::from("main.go");
-	let pf = parse_file();
-	// let fun_count = fun_counter(pf);
-	// println!("Number of functions in file: {}", fun_count);
+
+
+
+	let (f,o) = parse_file();
+
+	//println!("File: {:?}", f);
+	println!("Objects: {:?}", o.fdecls);
+	
+	//println!( "Violations: {}", fun_name(&f, &o));
+	//println!("Number of functions in file: {}", fun_counter(&f));
+	
 }
 
 
-fn parse_file() -> go_parser::ast::File{
+fn parse_file() -> (go_parser::ast::File, go_parser::AstObjects) {
     let source = &read_file(&String::from("main.go"));
     let mut fs = go_parser::FileSet::new();
-    let o = &mut go_parser::AstObjects::new();
+    let mut o =   go_parser::AstObjects::new();
     let el = &mut go_parser::ErrorList::new();
-    let (p, pf_maybe) = go_parser::parse_file(o, &mut fs, el, "./main.go", source, false);
-    
+	
+	let mut pf : go_parser::ast::File;
+    let (p, pf_maybe) = go_parser::parse_file(&mut o, &mut fs, el, "./main.go", source, false);
+
 	 let pf = match pf_maybe{
  		Some(pf_maybe) => pf_maybe,
 	 	None => {
@@ -27,22 +35,11 @@ fn parse_file() -> go_parser::ast::File{
 			panic!("Error parsing file: {:?}", el);
 		},	
 	}; 	
-	// println!("{:?}", o.entities.vec());
-	
-	for entity in o.entities.vec(){
-		match entity.kind{ 
-			go_parser::scope::EntityKind::Fun => {
-				println!("Function found: {:?}", entity.name);
-			},
-			_ => {
-				
-			}
-			
-		}
-	}
+
+
 		
 	
-	return pf;
+	return (pf, o);
 }
 
 fn read_file(file_path: &String) -> String{
@@ -53,13 +50,13 @@ fn read_file(file_path: &String) -> String{
     contents
 }
 
-fn fun_counter(file: go_parser::ast::File) -> u32 { 
+fn fun_counter(file: &go_parser::ast::File) -> u32 { 
 	let mut counter: u32 = 0;
-	for decl in file.decls{
+	for decl in file.decls.iter(){
 		match decl{
 			go_parser::ast::Decl::Func(_) => {
 				counter += 1;
-				println!("Function found: {:?}", decl);
+				
 			},
 			_ => {}
 		}
@@ -67,8 +64,32 @@ fn fun_counter(file: go_parser::ast::File) -> u32 {
 	return counter;
 }
 
-fn fun_names(file: go_parser::ast::File) -> Vec<String> { 
-	let mut names: Vec<String> = Vec::new();
-	
-	return names;
+fn name_vaiolation(file: &go_parser::ast::File, o: &go_parser::AstObjects, kind_of_check: go_parser::scope::EntityKind) -> String{
+	let re = Regex::new(r"_").unwrap();
+	let mut vialoations = String::from("Vialations: \n");
+	for entity in o.entities.vec(){
+		match entity.kind{ 
+			go_parser::scope::EntityKind::Fun => {//how to prevent code duplication here? kind_of_check insted of go_parser::scope::EntityKind::Fun?
+				let caps = re.captures(&entity.name);
+				match caps{
+					Some(caps) => {
+						vialoations = format!("{} {:?} \n",vialoations, entity.name);
+					},
+					None => {
+						
+					}
+				}
+			},
+			_ => {
+				
+			}
+			
+		}
+	}
+	return vialoations;
 }
+
+fn fun_name(file: &go_parser::ast::File, o: &go_parser::AstObjects) -> String {
+	return name_vaiolation(file, o, go_parser::scope::EntityKind::Fun);
+}
+
