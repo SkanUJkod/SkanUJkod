@@ -13,9 +13,9 @@ fn main() {
 	//println!("File: {:?}", f);
 	println!("Objects: {:?}", o.fdecls);
 	
-	//println!( "Violations: {}", fun_name(&f, &o));
-	//println!("Number of functions in file: {}", fun_counter(&f));
+	 fun_name(&f, &o)//human readble output for problem insted (kind of check, regex or predicate , type of message )
 	
+	//stmt type definition for struct counter
 }
 
 
@@ -64,32 +64,12 @@ fn fun_counter(file: &go_parser::ast::File) -> u32 {
 	return counter;
 }
 
-fn name_vaiolation(file: &go_parser::ast::File, o: &go_parser::AstObjects, kind_of_check: go_parser::scope::EntityKind) -> String{
+fn name_vaiolation<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, kind_of_check: go_parser::scope::EntityKind) -> Vec<&'a go_parser::scope::Entity> {
 	let re = Regex::new(r"_").unwrap();
-	let mut vialoations = String::from("Vialations: \n");
-	for entity in o.entities.vec(){
-		match entity.kind{ 
-			go_parser::scope::EntityKind::Fun => {//how to prevent code duplication here? kind_of_check insted of go_parser::scope::EntityKind::Fun?
-				let caps = re.captures(&entity.name);
-				match caps{
-					Some(caps) => {
-						vialoations = format!("{} {:?} \n",vialoations, entity.name);
-					},
-					None => {
-						
-					}
-				}
-			},
-			_ => {
-				
-			}
-			
-		}
-	}
-	return vialoations;
+	return o.entities.vec().iter().filter(|entity| matches!(&entity.kind, kind_of_check)).filter(|entity| !re.is_match(&entity.name)).collect();	
 }
 
-fn fun_name(file: &go_parser::ast::File, o: &go_parser::AstObjects) -> String {
+fn fun_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> Vec<&'a go_parser::scope::Entity> {
 	return name_vaiolation(file, o, go_parser::scope::EntityKind::Fun);
 }
 
