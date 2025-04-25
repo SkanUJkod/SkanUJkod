@@ -1,8 +1,9 @@
-use std::any::Any;
+use std::{any::Any, ptr::eq};
 use std::fs;
 use std::path::Path;
-use regex::Regex;
+use regex::{Matches, Regex};
 use go_parser::ast::{Node, TypeSpec};
+use std::mem::{self, discriminant};
 
 fn main() {
 
@@ -11,13 +12,31 @@ fn main() {
 	let (f,o) = parse_file();
 
 	//println!("File: {:?}", f);
-	println!("Objects: {:?}", o.fdecls);
+	//println!("Objects: {:?}", o.fdecls);
 	
-	let funNames =  fun_name(&f, &o);//human readble output for problem insted (kind of check, regex or predicate , type of message )
+	//println!("{:?}", o.entities.vec());
+	//println!("{:?}", o.fdecls);
+	//println!("{:?}", o.fields);
+	//println!("{:?}", o.ftypes);
+	println!("{:?}", o.idents);
+
+	let (funNames, informationFun ) =  fun_name(&f, &o);//human readble output for problem insted (kind of check, regex or predicate , type of message )
+	println!("{}", informationFun);
 	for funName in funNames.iter(){
 		println!("Function name violation: {:?}", funName.name);
 	}
 	//stmt type definition for struct counter
+
+	let (typNames, informationTyp) =  struct_name(&f, &o);
+	println!("{}", informationTyp);
+	for structName in typNames.iter(){
+		println!("Struct name violation: {:?}", structName.name);
+	}
+	let (varNames, informationVar) =  variable_name(&f, &o);
+	println!("{}", informationVar);
+	for varName in varNames.iter(){
+		println!("Variable name violation: {:?}", varName.name);
+	}
 }
 
 
@@ -66,16 +85,21 @@ fn fun_counter(file: &go_parser::ast::File) -> u32 {
 	return counter;
 }
 
-fn name_vaiolation<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, kind_of_check: go_parser::scope::EntityKind) -> Vec<&'a go_parser::scope::Entity> {
-	let re = Regex::new(r"_").unwrap();
-	return o.entities.vec().iter().filter(|entity| matches!(&entity.kind, kind_of_check)).filter(|entity| !re.is_match(&entity.name)).collect();	
+fn name_vaiolation<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, kind_of_check: go_parser::scope::EntityKind, regex: &str) -> (Vec<&'a go_parser::scope::Entity>, String) {
+	let re = Regex::new(&regex).unwrap();
+	let information = String::from(format!("Name violation. Name do not match regex: {}", regex));
+	return (o.entities.vec().iter().filter(|entity| (discriminant(&entity.kind)  == discriminant(&kind_of_check) )).filter(|entity| !re.is_match(&entity.name)).collect(),
+			information);	
 }
 
-fn fun_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> Vec<&'a go_parser::scope::Entity> {
-	return name_vaiolation(file, o, go_parser::scope::EntityKind::Fun);
+fn fun_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> (Vec<&'a go_parser::scope::Entity>, String) {
+	return name_vaiolation(file, o, go_parser::scope::EntityKind::Fun, r"_");
 }
 
-fn struct_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> Vec<&'a go_parser::scope::Entity> {
-	return name_vaiolation(file, o, go_parser::scope::EntityKind::Struct);
+fn struct_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> (Vec<&'a go_parser::scope::Entity>, String) {
+	return name_vaiolation(file, o, go_parser::scope::EntityKind::Typ, r"_");
 }
 
+fn variable_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> (Vec<&'a go_parser::scope::Entity>, String) {
+	return name_vaiolation(file, o, go_parser::scope::EntityKind::Var, r"_");
+}
