@@ -1,5 +1,9 @@
 extern crate go_parser as fe;
-use std::fs;
+use go_parser::{parse_dir, AstObjects, ErrorList, FileSet};
+use std::collections::HashMap;
+use std::fs::{self, File};
+use std::io::Write;
+use tempfile::tempdir;
 
 fn load_parse(path: &str, trace: bool) -> usize {
     let mut fs = fe::FileSet::new();
@@ -42,12 +46,43 @@ fn test_parser_case1() {
 //     total
 // }
 
-// #[test]
-// fn test_parser_dir() {
-//     let t = parse_dir("./../../go/src", false);
-//     //let t = parse_dir("./../../../../go/src/github.com/ethereum", false);
-//     println!("hohohoh{}", t);
-// }
+#[test]
+fn test_parser_dir() {
+    let dir = tempdir().expect("Failed to create temp dir");
+    let file_path = dir.path().join("main.go");
+
+    let go_source = r#"
+        package mainf
+
+        func mainf() {
+            println("Hello, world")
+        }
+    "#;
+
+    let mut file = File::create(&file_path).expect("Failed to create file");
+    file.write_all(go_source.as_bytes())
+        .expect("Failed to write to file");
+
+    let mut ast_objects = AstObjects::new();
+    let mut file_set = FileSet::new();
+    let error_list = ErrorList::new();
+
+    let result = parse_dir(
+        &mut ast_objects,
+        &mut file_set,
+        &error_list,
+        dir.path().to_str().unwrap(),
+        "",
+        false,
+        None,
+    );
+
+    assert!(result.is_ok());
+    let pkgs: HashMap<String, _> = result.unwrap();
+    assert!(!pkgs.is_empty());
+
+    assert!(pkgs.contains_key("main"));
+}
 
 #[test]
 fn test_issue3() {

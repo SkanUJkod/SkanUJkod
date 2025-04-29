@@ -40,3 +40,6 @@ serde_borsh = ["dep:borsh"]
 [lints.clippy]
 pedantic = "warn"
 nursery = "warn"
+
+[dev-dependencies]
+tempfile = "3"

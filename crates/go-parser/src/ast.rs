@@ -13,6 +13,7 @@ use super::objects::*;
 use super::position;
 use super::scope;
 use super::token;
+use std::collections::HashMap;
 use std::hash::Hash;
 use std::rc::Rc;
 
@@ -513,12 +514,31 @@ impl Node for File {
     }
 }
 
-// pub struct Package {
-//     name: String,
-//     scope: ScopeKey,
-//     imports: Map<String, EntityKey>,
-//     files: Map<String, Box<File>>,
-// }
+pub struct Package {
+    name: String,
+    scope: ScopeKey,
+    imports: HashMap<String, EntityKey>,
+    files: HashMap<String, Box<File>>,
+}
+
+impl Package {
+    pub fn new(name: String) -> Self {
+        Package {
+            name,
+            scope: ScopeKey::null(),
+            imports: HashMap::new(),
+            files: HashMap::new(),
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn files_mut(&mut self) -> &mut HashMap<String, Box<File>> {
+        &mut self.files
+    }
+}
 
 // A BadExpr node is a placeholder for expressions containing
 // syntax errors for which no correct expression nodes can be
