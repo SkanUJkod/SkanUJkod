@@ -4,7 +4,7 @@ The SkanUJKod general-purpose static analysis framework is planned to consist of
 
 Pipeline architecture is targeted. This means a single "run" of the framework consumes a project and runs analyses specified by the user in some order. This means the application is fully ephemeral, e.g. no state or data has to be stored persistently, and no on-line analysis is supported.
 
-Some helpful features directly contradict this assumption and the pipeline architecture, like intermediate results caching or integration into IDEs for quickly re-running analyses invalidated by user changes (on-line model). Attempts can be made to accomodate such features in the future, but it is not planned now and would incur more or less changes to the overall model. In short, an attempt at supporting for example caching, should take the entire framework structure into consideration.
+Some helpful features directly contradict this assumption and the pipeline architecture, like intermediate results caching or integration into IDEs for quickly re-running analyses invalidated by user changes (online model). Attempts can be made to accomodate such features in the future, but it is not planned now and would incur more or less changes to the overall model. In short, an attempt at supporting for example caching, should take the entire framework structure into consideration.
 
 ## Plugin model
 
