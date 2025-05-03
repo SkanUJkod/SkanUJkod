@@ -1,6 +1,6 @@
-use std::fmt::{self, Display};
-
 use plugin_interface::{BoxedInterface, ExampleLib, ExampleLib_Ref};
+
+use plugin1::StringBuilder;
 
 use abi_stable::{
     DynTrait, export_root_module, prefix_type::PrefixTypeTrait, sabi_extern_fn, std_types::RString,
@@ -26,27 +26,6 @@ pub fn get_library() -> ExampleLib_Ref {
         append_string,
     }
     .leak_into_prefix()
-}
-
-/// `DynTrait<_, TheInterface>` is constructed from this type in this example
-#[derive(Debug, Clone)]
-pub struct StringBuilder {
-    pub text: String,
-    pub appended: Vec<RString>,
-}
-
-impl Display for StringBuilder {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.text, f)
-    }
-}
-
-impl StringBuilder {
-    /// Appends the string at the end.
-    pub fn append_string(&mut self, string: RString) {
-        self.text.push_str(&string);
-        self.appended.push(string);
-    }
 }
 
 /// Constructs a BoxedInterface.
