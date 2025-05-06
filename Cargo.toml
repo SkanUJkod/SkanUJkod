@@ -14,7 +14,8 @@ members = [
 ]
 
 [dependencies.abi_stable]
-git = "https://github.com/rodrimati1992/abi_stable_crates.git"
+git = "https://github.com/kidq330/abi_stable.git"
+branch = "waive_executable_identity"
 
 [dependencies.plugin_interface]
 path = "crates/plugin_interface"

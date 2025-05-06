@@ -1,47 +1,39 @@
-use plugin_interface::{BoxedInterface, ExampleLib, ExampleLib_Ref};
-
+use abi_stable::{rvec, std_types::RVec};
+use plugin_interface::{BoxedInterface, ExampleLib, ExampleLib_Ref, PluginFunction};
 use plugin1::StringBuilder;
 
-use abi_stable::{
-    DynTrait, export_root_module, prefix_type::PrefixTypeTrait, sabi_extern_fn, std_types::RString,
-};
+use abi_stable::{DynTrait, export_root_module, prefix_type::PrefixTypeTrait, sabi_extern_fn};
 
-/// The function which exports the root module of the library.
-///
-/// The root module is exported inside a static of `LibHeader` type,
-/// which has this extra metadata:
-///
-/// - The abi_stable version number used by the dynamic library.
-///
-/// - A constant describing the layout of the exported root module,and every type it references.
-///
-/// - A lazily initialized reference to the root module.
-///
-/// - The constructor function of the root module.
-///
 #[export_root_module]
 pub fn get_library() -> ExampleLib_Ref {
     ExampleLib {
-        new_boxed_interface,
-        append_string,
+        plugin_functions: new_pf_vec2,
     }
     .leak_into_prefix()
 }
 
-/// Constructs a BoxedInterface.
 #[sabi_extern_fn]
-fn new_boxed_interface() -> BoxedInterface<'static> {
+fn new_pf_vec2() -> RVec<PluginFunction> {
+    rvec![PluginFunction(new_pf2)]
+}
+
+fn new_boxed_interface2() -> BoxedInterface<'static> {
     DynTrait::from_value(StringBuilder {
-        text: "".into(),
-        appended: vec![],
+        text: "plugin2::".into(),
+        appended: rvec![],
     })
 }
 
 /// Appends a string to the erased `StringBuilder`.
 #[sabi_extern_fn]
-fn append_string(wrapped: &mut BoxedInterface<'_>, string: RString) {
-    wrapped
-        .downcast_as_mut::<StringBuilder>() // Returns `Result<&mut StringBuilder, _>`
-        .unwrap() // Returns `&mut StringBuilder`
-        .append_string(string);
+fn new_pf2(mut v: RVec<&mut BoxedInterface<'_>>) -> BoxedInterface<'static> {
+    assert_eq!(v.len(), 1);
+    dbg!(&v);
+    let bi = &mut v[0];
+    dbg!(&bi);
+    let a = bi.downcast_as_mut::<StringBuilder>().unwrap();
+    dbg!(&a);
+    a.append_string("plugin2 was here!".into());
+
+    new_boxed_interface2()
 }
