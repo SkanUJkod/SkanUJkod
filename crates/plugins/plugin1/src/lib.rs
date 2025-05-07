@@ -1,5 +1,5 @@
-use abi_stable::{StableAbi, rvec, std_types::RVec};
-use plugin_interface::{BoxedInterface, ExampleLib, ExampleLib_Ref, PluginFunction};
+use abi_stable::{rvec, std_types::RVec};
+use plugin_interface::{BoxedPFResult, BoxedUserParam, Plugin, Plugin_Ref, PluginFunction};
 use std::fmt::{self, Display};
 
 use abi_stable::{
@@ -7,50 +7,49 @@ use abi_stable::{
 };
 
 #[export_root_module]
-pub fn get_library() -> ExampleLib_Ref {
-    ExampleLib {
-        plugin_functions: new_pf_vec,
-    }
-    .leak_into_prefix()
-}
-
-/// `DynTrait<_, TheInterface>` is constructed from this type in this example
-#[derive(Debug, Clone, StableAbi)]
-#[repr(C)]
-pub struct StringBuilder {
-    pub text: RString,
-    pub appended: RVec<RString>,
-}
-
-impl Display for StringBuilder {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.text, f)
-    }
-}
-
-impl StringBuilder {
-    /// Appends the string at the end.
-    pub fn append_string(&mut self, string: RString) {
-        self.text.push_str(&string);
-        self.appended.push(string);
-    }
+pub fn get_library() -> Plugin_Ref {
+    Plugin { funcs: new_pf_vec }.leak_into_prefix()
 }
 
 #[sabi_extern_fn]
 fn new_pf_vec() -> RVec<PluginFunction> {
-    rvec![PluginFunction(new_pf)]
+    rvec![PluginFunction(parse_file)]
 }
 
-fn new_boxed_interface() -> BoxedInterface<'static> {
-    DynTrait::from_value(StringBuilder {
-        text: "plugin1::".into(),
-        appended: rvec![],
-    })
+#[derive(Debug)]
+pub struct ParseResult {
+    pub file: go_parser::ast::File,
+    pub ast_objects: go_parser::AstObjects,
+}
+
+impl Display for ParseResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&0, f)
+    }
 }
 
 /// Appends a string to the erased `StringBuilder`.
 #[sabi_extern_fn]
-fn new_pf(v: RVec<&mut BoxedInterface<'_>>) -> BoxedInterface<'static> {
-    dbg!(v);
-    new_boxed_interface()
+fn parse_file(
+    pf_results: RVec<&mut BoxedPFResult<'_>>,
+    user_params: RVec<&BoxedUserParam<'_>>,
+) -> BoxedPFResult<'static> {
+    dbg!(&pf_results);
+    dbg!(&user_params);
+    assert!(pf_results.is_empty());
+    assert_eq!(user_params.len(), 1);
+
+    let filepath = unsafe { user_params[0].unchecked_downcast_as::<RString>() };
+    let source = std::fs::read_to_string(filepath.as_str()).expect("Failed to open go source file");
+
+    let mut fs = go_parser::FileSet::new();
+    let mut o = go_parser::AstObjects::new();
+    let el = &mut go_parser::ErrorList::new();
+
+    let (_parser, maybe_file) = go_parser::parse_file(&mut o, &mut fs, el, filepath, &source, true);
+
+    DynTrait::from_value(ParseResult {
+        file: maybe_file.expect("Something went wrong when trying to parse the source"),
+        ast_objects: o,
+    })
 }

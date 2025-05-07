@@ -9,10 +9,14 @@ name = "plugin1"
 crate-type = ["lib", "cdylib"]
 
 [dependencies.abi_stable]
-git = "https://github.com/kidq330/abi_stable.git"
-branch = "waive_executable_identity"
+# git = "https://github.com/kidq330/abi_stable.git"
+# branch = "waive_executable_identity"
+git = "https://github.com/rodrimati1992/abi_stable_crates.git"
+
 
 [dependencies.plugin_interface]
 path = "../../plugin_interface"
 features = ["impls"]
 
+[dependencies.go-parser]
+path = "../../go-parser"
