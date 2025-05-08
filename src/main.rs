@@ -18,8 +18,8 @@ fn main() {
 	//println!("{:?}", o.fdecls);
 	//println!("{:?}", o.fields);
 	//println!("{:?}", o.ftypes);
-	println!("{:?}", o.idents);
-
+	//println!("{:?}", o.idents);
+	println!("Number of functions: {:?}", fun_counter(&f));
 	let (funNames, informationFun ) =  fun_name(&f, &o);//human readble output for problem insted (kind of check, regex or predicate , type of message )
 	println!("{}", informationFun);
 	for funName in funNames.iter(){
@@ -72,23 +72,14 @@ fn read_file(file_path: &String) -> String{
 }
 
 fn fun_counter(file: &go_parser::ast::File) -> u32 { 
-	let mut counter: u32 = 0;
-	for decl in file.decls.iter(){
-		match decl{
-			go_parser::ast::Decl::Func(_) => {
-				counter += 1;
-				
-			},
-			_ => {}
-		}
-	}
-	return counter;
+	return file.decls.iter().filter(|decl| matches!(decl, go_parser::ast::Decl::Func(_))).count() as u32;
 }
 
 fn name_vaiolation<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, kind_of_check: go_parser::scope::EntityKind, regex: &str) -> (Vec<&'a go_parser::scope::Entity>, String) {
 	let re = Regex::new(&regex).unwrap();
 	let information = String::from(format!("Name violation. Name do not match regex: {}", regex));
-	return (o.entities.vec().iter().filter(|entity| (discriminant(&entity.kind)  == discriminant(&kind_of_check) )).filter(|entity| !re.is_match(&entity.name)).collect(),
+	return (o.entities.vec().iter().filter(|entity| (discriminant(&entity.kind)  == discriminant(&kind_of_check) )).
+				filter(|entity| !re.is_match(&entity.name)).collect(),
 			information);	
 }
 

@@ -29,5 +29,14 @@ func foo4() {
 
 func main() {
 	// Example usage
+	var t1 type1
+	var t2 type2
+	var t3 type3
+	var num1 = 4
+	var num2 = 5
+	print(t1, t2, t3, num1, num2)
+	if num1 > num2 {
+		foo1()
+	}
 
 }
