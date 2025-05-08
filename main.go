@@ -27,6 +27,10 @@ func foo4() {
 	print("foo4")
 }
 
+func foo_4() {
+	print("foo_4")
+}
+
 func main() {
 	// Example usage
 	var t1 type1
