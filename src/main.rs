@@ -20,19 +20,19 @@ fn main() {
 	//println!("{:?}", o.ftypes);
 	//println!("{:?}", o.idents);
 	println!("Number of functions: {:?}", fun_counter(&f));
-	let (funNames, informationFun ) =  fun_name(&f, &o);//human readble output for problem insted (kind of check, regex or predicate , type of message )
+	let (funNames, informationFun ) =  fun_name(&f, &o, r"_");//human readble output for problem insted (kind of check, regex or predicate , type of message )
 	println!("{}", informationFun);
 	for funName in funNames.iter(){
 		println!("Function name violation: {:?}", funName.name);
 	}
 	//stmt type definition for struct counter
 
-	let (typNames, informationTyp) =  struct_name(&f, &o);
+	let (typNames, informationTyp) =  struct_name(&f, &o, r"_");
 	println!("{}", informationTyp);
 	for structName in typNames.iter(){
 		println!("Struct name violation: {:?}", structName.name);
 	}
-	let (varNames, informationVar) =  variable_name(&f, &o);
+	let (varNames, informationVar) =  variable_name(&f, &o, r"_");
 	println!("{}", informationVar);
 	for varName in varNames.iter(){
 		println!("Variable name violation: {:?}", varName.name);
@@ -83,14 +83,14 @@ fn name_vaiolation<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObje
 			information);	
 }
 
-fn fun_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> (Vec<&'a go_parser::scope::Entity>, String) {
-	return name_vaiolation(file, o, go_parser::scope::EntityKind::Fun, r"_");
+fn fun_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, regex: &str) -> (Vec<&'a go_parser::scope::Entity>, String) {
+	return name_vaiolation(file, o, go_parser::scope::EntityKind::Fun, regex);
 }
 
-fn struct_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> (Vec<&'a go_parser::scope::Entity>, String) {
-	return name_vaiolation(file, o, go_parser::scope::EntityKind::Typ, r"_");
+fn struct_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, regex: &str) -> (Vec<&'a go_parser::scope::Entity>, String) {
+	return name_vaiolation(file, o, go_parser::scope::EntityKind::Typ, regex);
 }
 
-fn variable_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> (Vec<&'a go_parser::scope::Entity>, String) {
-	return name_vaiolation(file, o, go_parser::scope::EntityKind::Var, r"_");
+fn variable_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, regex: &str) -> (Vec<&'a go_parser::scope::Entity>, String) {
+	return name_vaiolation(file, o, go_parser::scope::EntityKind::Var, regex);
 }
