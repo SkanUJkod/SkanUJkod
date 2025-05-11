@@ -35,7 +35,18 @@ Plugin functions should be small enough to allow re-use, e.g. wherever it makes 
 
 For example, parsing and semantic analysis should be separate. An implementor may instead expose a parsing PF and a semantic analysis PF, and have the latter take as input the output of the former.
 
-The implementor may still choose to export as a PF such composition of the two, to abstract the more structured process of, in this example, computing the typed AST. The vertical composition operator should aim to make this easier, both to plugin implementors and end users.
+The implementor may still choose to export as a PF such composition of the two, which would roughly look like:
+
+```rust
+fn parse_and_type_pf(plugin_dependencies: ParseProjectDeps, user_parameters: &UserParameters) -> TypedAST {
+   let parsed_project_result = parse_project_pf(plugin_dependencies, &user_parameters);
+   compute_typed_ast_pf(ComputeTypedASTDeps{parsed_project: parsed_project_result}, &user_parameters)
+}
+```
+
+Assuming all relevant entities are defined.
+
+The implementor should not bloat the plugin interface with all PFs combined this way, only combinations for which it makes sense should be exposed.
 
 ##### PFs are coarse
 
@@ -45,9 +56,11 @@ We can generally assume the execution plan will be defined using a type of Domai
 
 One guideline to avoid developing PFs with this problem is to consider the inputs and whether we can write a "plural" version of it. For our example this would be a PF that takes as input a list of source files, and "maps" the original PF over it in an element-wise manner.
 
+As a last resort, writing your own plugin is always an option. It should be easy enough to implement a PF composing two other PFs, but it would be best to have to write no code at all.
+
 #### Acyclicity
 
-Some static analysis frameworks allow mutual plugin dependencies, creating cycles in the execution plan graph. For an example of this, see Frama-C's [Plugin Development Guide](https://www.frama-c.com/download/frama-c-plugin-development-guide.pdf), doccumented by section _4.8.2 Dynamic Registration and Access_ at the time of writing this doc (version 30.0 Zinc).
+Some static analysis frameworks allow mutual plugin dependencies, creating cycles in the execution plan graph. For an example of this, see Frama-C's [Plugin Development Guide](https://git.frama-c.com/pub/pub.frama-c.com/-/blob/master/download/plugin-development-guide-30.0-Zinc.pdf?ref_type=heads), doccumented by section _4.8.2 Dynamic Registration and Access_ at the time of writing this doc (version 30.0 Zinc).
 
 For this framework, we decided this is an unnecessary feature at the present. There are rarely situations where this kind of dependency is required, further so under the conceptual model of PFs we employ. Allowing cycles in the execution plan graph would also complicate implementing features like parallel execution, which in our opinion would provide more value.
 
@@ -89,7 +102,7 @@ Basic logging should be supported at this stage to inform the user of when any s
 
 ##### Plugin loading
 
-This section should be prefaced with a quick explanation of why Rust was chosen as the language to implement the framework in. No networking or otherwise remote calls are required from a static analysis framework, and since it is offline, it works mostly like any other OS CLI utility tool. These are fashionable to implement in Rust, as seen by many efforts to, for example, port coreutils implementations from C to Rust, with very impressive tools like [ripgrep](https://github.com/BurntSushi/ripgrep/tree/master) born out of it.
+There are many good [reasons why](choose-rust.md) Rust was chosen as the implementing language of the framework.
 
 However, what surprised us was the immature state of support for dynamic linking in Rust - as of version 1.85, Rust still doesn't offer a stable ABI, or a standard way to layout data in memory. Because of various optimisations the compiler employs, it may decide, even between two runs of the same `rustc` binary, to order the fields of a struct in a different way.
 
@@ -103,9 +116,9 @@ POCs of both approaches are under way.
 
 ###### Type erasure
 
-While it is easy for one plugin to specify an input from another dependent plugin and explicitly annotate its type, this information is unavailable to the kernel code. Mentioned briefly in [Implementation details](#implementation-details), the binary shared libraries would have to retain type info, which has [only recently become a considered approach](https://www.youtube.com/watch?v=3yVc5t-g-VU).
+While it is easy for one plugin to specify an input from another dependent plugin and explicitly annotate its type, this information is unavailable to the kernel code. Mentioned briefly in [Implementation details](#implementation-details), the binary shared libraries would have to retain type info. This idea has recently started getting traction, as seen [here](https://www.youtube.com/watch?v=3yVc5t-g-VU) and [here](https://blaz.is/blog/post/we-dont-need-a-stable-abi/).
 
-This is not a big hindrance to plugin developers, fortunately. It is only the kernel developer that has to employ extra caution, which will be touched upon in the next section.
+However, the kernel code still has to be generic to whatever types the PFs want to juggle around, so any type checking has to be done at runtime. Plugin developers should employ caution when downcasting the results coming from other plugins, because the dependency plugin bundled in the dependent plugin might have a version different from the same plugin used as the shared object library.
 
 ##### Data flow
 
@@ -113,7 +126,7 @@ As mentioned previously, type erasure in the kernel will make it impossible to u
 
 Executing a PF will involve passing the required subset of this data map, inspired by TS's structural subtyping approach. A subset of the map in the kernel could be a record/struct of named fields in the PF.
 
-Rust actually relies on composition and serialization to achieve a flavour of [structural subtyping](https://nickb.dev/blog/a-workaround-for-rusts-lack-of-structural-subtyping/). This could be useful for a serialization based linking approach, but is still useful conceptually for the dynamic linking model.
+Rust actually relies on composition and serialization to achieve a flavour of [structural subtyping](https://nickb.dev/blog/a-workaround-for-rusts-lack-of-structural-subtyping/). This could be useful for a serialization-based linking approach, but is still useful conceptually for the dynamic linking model.
 
 Another approach would be functional optics, but this has the same disadvantage as choosing a functional language for development - the semantics aren't clear to developers who've yet to discover functional programming.
 
@@ -123,8 +136,52 @@ What happens if the representation of a datum differs between the kernel and a P
 
 Another case of this is when a plugin fails. Does execution of independent PFs continue? Ideally, yes. This will have to be handled by the kernel implementation.
 
-## [WIP] Plugin Functions
+## Plugin Functions
 
 This section delves more into the requirements and recommendations of design and development of a PF, from a perspective of the _kernel_ developer, as well as a third-party plugin developer.
 
-### PF Result Type
+### PF Output
+
+The result type must not put too much limitation on the plugin developer, like constraining the format to JSON. Coincidentally, to avoid problems with inter-dependent data in a runtime that not much can be assumed about, the result type must be encodable in an unambiguous manner. With that in mind, we can more exactly constrain as follows:
+
+- The common plugin result type is a type that _is able to_ implement `std::any::Any`. This roughly means a type that fully owns all of its constituent data (no references that aren't also `'static`).
+- This constraint may be extended to only allow serializable types in the future.
+- All additional constraints that come from the mechanism used to implement dynamic linking.
+
+### PF Inputs
+
+We've already [mentioned](#plugin-model), a plugin function expects inputs that fall into one of two groups: other plugin results or user parameters.
+
+While there is reason to assume otherwise in the future, for now all inputs need to have a corresponding, unique name. This makes sense for plugin results, but is not so straightforward for user parameters.
+
+#### Parameter uniqueness
+
+We could expect the framework user to define one constant parameter and pass it to multiple plugin functions. This requires consensus among the PFs on how they communicate their requirement of this parameter to the kernel. Orthogonally, it makes sense to delegate the needed documentation of the parameter to dependent plugins. There is no obvious way to have our cake and eat it too, as some plugin functions may interpret the common parameter differently, or even expect it to be a fundamentally different type (int vs string). Other frameworks deal with this issue by supporting both types of parameters via different utilities. Parameters that are expected to be unique are, as expected, registered to the kernel and information like a `--help` description are offered by the plugin. Parameters expected to be shared may be passed as environment variables, or are fundamental enough to be exposed via some global kernel function, like the path to the project to be analysed. However, we'd like to avoid the second approach in the general design, and will touch upon the reason why later in this section.
+
+Another nice property of this "name uniqueness" is a unique execution plan, which the kernel can infer by simply linking the names together. A cycle can still be detected, which we can break by, for example, excluding any offending plugin function to turn the execution plan back into a DAG.
+
+This will probably change in the future, when support for another target language and multi-language project analysis is added. We could imagine two parsing PFs and one that aggregates them by taking the language ID as a parameter. The user would then like to parametrise the same PF and have it appear twice in the execution plan.
+
+#### Input Data Structures
+
+The following assumptions can be made:
+
+- The order of arguments is not important
+- Each argument should have a unique name (established in [_Parameter uniqueness_](#parameter-uniqueness))
+- The PF knows the exact set of inputs at compile time.
+
+This actually makes a `struct` the perfect data structure to represent the set of inputs. The fields are named, and it doesn't have the overhead of a map-like structure. Unfortunately, the kernel code must employ a dynamic structure, since the set of PFs is dynamic itself, which is why some sort of conversion would have to be implemented (like a custom trait and a derive macro). Research can be made if there's a map DS that allows fast "subset extraction".
+
+### Referential transparency
+
+The above property roughly translates to "same inputs produce the same output". This unfortunately cannot be enforced through design choices, and would probably be very painful to verify statically. Many factors could influence the transparency of a PF, the most obvious of which being the underlying operating system.
+
+It's enough for a PF to read an environment variable to violate referential transparency, as two executors could provide a different value, and produce a different output. The simplest solution is to refactor the read variable into a user parameter, if it's available at the start of the pipeline.
+
+Referential transparency is most often mentioned along with function purity, and pure functions are a subset of referentially transparent functions. Purity means no side effects occur, so things like writing to a file, performing a network request, etc. violates purity. Sandboxing can help by, for example, intercepting all OS calls, but requires a lot of effort. Purity in general could inconvenience plugin developers and there are valid usecases, like dumping results to a file.
+
+### Consequences of the design
+
+A very nice property of the model above is explicit flow of data. To our knowledge, our framework is currently the only one that prioritises said property to such extent. Because static analysis is a mostly offline effort, we think a "functional" approach made sense. Actual benefits of this will be studied once the framework takes up a more concrete shape and plugin developers share their feedback.
+
+In summary, the general shape of a plugin function is `fn example_pf(ExampleDeps, ExampleUserParams) -> ExampleResult`, where `ExampleDeps` and `ExampleUserParams` are both `struct`s.
