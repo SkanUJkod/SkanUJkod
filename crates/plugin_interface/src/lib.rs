@@ -3,17 +3,43 @@ use abi_stable::{
     library::RootModule,
     package_version_strings,
     sabi_types::VersionStrings,
-    std_types::{RBox, RVec},
+    std_types::{RBox, RHashMap, RString, RVec},
 };
 
+pub type PFDependencies<'a> = RHashMap<QualPFID, &'a mut BoxedPFResult<'static>>;
+pub type UserParameters<'a> = RHashMap<RString, BoxedUserParam<'static>>;
+
 #[repr(C)]
-#[derive(StableAbi)]
+#[derive(StableAbi, Debug)]
 pub struct PluginFunction(
-    pub  extern "C" fn(
-        RVec<&mut BoxedPFResult<'_>>,
-        RVec<&BoxedUserParam<'_>>,
-    ) -> BoxedPFResult<'static>,
+    #[allow(improper_ctypes_definitions)]
+    pub  extern "C" fn(PFDependencies, &UserParameters) -> BoxedPFResult<'static>,
 );
+
+pub type PluginID = RString;
+pub type PFID = RString;
+
+#[repr(C)]
+#[derive(StableAbi, Debug, Clone, std::cmp::PartialEq, std::cmp::Eq, std::hash::Hash)]
+pub struct QualPFID {
+    pub plugin_id: PluginID,
+    pub pf_id: PFID,
+}
+
+#[repr(C)]
+#[derive(StableAbi, Debug)]
+pub struct PFType {
+    pub pf_dependencies: RVec<QualPFID>,
+    pub user_params: RVec<RString>,
+}
+
+#[repr(C)]
+#[derive(StableAbi, Debug)]
+pub struct PFConnector {
+    pub pf: PluginFunction,
+    pub pf_type: PFType,
+    pub pf_id: QualPFID,
+}
 
 /// This struct is the root module,
 /// which must be converted to `Plugin_Ref` to be passed through ffi.
@@ -31,7 +57,7 @@ pub struct PluginFunction(
 #[sabi(missing_field(panic))]
 pub struct Plugin {
     #[sabi(last_prefix_field)]
-    pub funcs: extern "C" fn() -> RVec<PluginFunction>,
+    pub funcs: extern "C" fn() -> RVec<PFConnector>,
 }
 
 /// The RootModule trait defines how to load the root module of a library.

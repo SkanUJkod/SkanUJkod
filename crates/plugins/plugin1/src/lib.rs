@@ -1,5 +1,8 @@
 use abi_stable::{rvec, std_types::RVec};
-use plugin_interface::{BoxedPFResult, BoxedUserParam, Plugin, Plugin_Ref, PluginFunction};
+use plugin_interface::{
+    BoxedPFResult, BoxedUserParam, PFConnector, PFDependencies, PFType, Plugin, Plugin_Ref,
+    PluginFunction, QualPFID, UserParameters,
+};
 use std::fmt::{self, Display};
 
 use abi_stable::{
@@ -12,8 +15,18 @@ pub fn get_library() -> Plugin_Ref {
 }
 
 #[sabi_extern_fn]
-fn new_pf_vec() -> RVec<PluginFunction> {
-    rvec![PluginFunction(parse_file)]
+fn new_pf_vec() -> RVec<PFConnector> {
+    rvec![PFConnector {
+        pf: PluginFunction(parse_file),
+        pf_type: PFType {
+            pf_dependencies: rvec![],
+            user_params: rvec!["file_path".into()]
+        },
+        pf_id: QualPFID {
+            plugin_id: "plugin1".into(),
+            pf_id: "parse_file".into()
+        }
+    }]
 }
 
 #[derive(Debug)]
@@ -30,16 +43,14 @@ impl Display for ParseResult {
 
 /// Appends a string to the erased `StringBuilder`.
 #[sabi_extern_fn]
-fn parse_file(
-    pf_results: RVec<&mut BoxedPFResult<'_>>,
-    user_params: RVec<&BoxedUserParam<'_>>,
-) -> BoxedPFResult<'static> {
+fn parse_file(pf_results: PFDependencies, user_params: &UserParameters) -> BoxedPFResult<'static> {
     dbg!(&pf_results);
     dbg!(&user_params);
     assert!(pf_results.is_empty());
     assert_eq!(user_params.len(), 1);
 
-    let filepath = unsafe { user_params[0].unchecked_downcast_as::<RString>() };
+    let boxed_filepath: &BoxedUserParam = user_params.get("file_path").unwrap();
+    let filepath = unsafe { boxed_filepath.unchecked_downcast_as::<RString>() };
     let source = std::fs::read_to_string(filepath.as_str()).expect("Failed to open go source file");
 
     let mut fs = go_parser::FileSet::new();
