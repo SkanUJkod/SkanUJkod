@@ -26,8 +26,9 @@ impl Metric for CommitsByAuthorInRepo {
     ) {
         match result {
             MetricResultType::Map(authors_commits) => {
-                let author_name = commit.author().unwrap().name.to_string();
-                *authors_commits.entry(author_name).or_insert(0) += 1;
+                if let Ok(author) = commit.author() {
+                    *authors_commits.entry(author.name.to_string()).or_insert(0) += 1;
+                }
             }
             _ => {
                 // Handle other types of MetricResultType
