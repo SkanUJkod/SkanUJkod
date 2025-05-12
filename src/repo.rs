@@ -5,8 +5,8 @@ pub struct RepoWrapper {
 }
 
 impl RepoWrapper {
-    pub fn new(path: &str) -> Self {
-        let repo = discover(path).expect("Failed to open repo");
-        Self { repo }
+    pub fn new(path: &str) -> Result<Self, String> {
+        let repo = discover(path).map_err(|e| format!("Failed to open repo: {}", e))?;
+        Ok(Self { repo })
     }
 }
