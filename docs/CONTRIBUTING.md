@@ -8,12 +8,14 @@ This guide outlines our conventions to keep the SkanUJkod project clean, consist
 
 Branches should follow the pattern:
 
-| **Type**  | **Description**                            |
-| --------- | ------------------------------------------ |
-| `feature` | New functionality                          |
-| `bug`     | Bug fixes                                  |
-| `chore`   | Maintenance tasks (e.g., dependency bumps) |
-| `test`    | Adding or updating tests                   |
+| **Type**   | **Description**                             |
+| ---------- | ------------------------------------------- |
+| `feature`  | New functionality                           |
+| `bug`      | Bug fixes                                   |
+| `chore`    | Maintenance tasks (e.g., dependency bumps)  |
+| `test`     | Adding or updating tests                    |
+| `docs`     | Documentation updates                       |
+| `refactor` | Code refactoring without functional changes |
 
 - **short-description**: concise phrase in _kebab-case_ (lowercase, words separated by hyphens).
 
@@ -22,8 +24,10 @@ Branches should follow the pattern:
 ```text
 feature/add-verbose-flag
 bug/fix-parse-error
-chore/update-readme
+chore/bump-dependencies
+docs/update-readme
 test/add-coverage-tests
+refactor/simplify-instrumentation
 ```
 
 ---
@@ -36,7 +40,7 @@ Use the following **literal template** for commit messages:
 
 | **Field**       | **Details**                                               |
 | --------------- | --------------------------------------------------------- |
-| **Type**        | One of `FEAT`, `FIX`, `DOCS`, `REFACTOR`, `TEST`, `CHORE` |
+| **Type**        | One of `FEAT`, `BUG`, `CHORE`, `TEST`, `DOCS`, `REFACTOR` |
 | **Scope**       | Module or area, e.g., `CLI`, `coverage`, `parser`         |
 | **Description** | Short description about your changes                      |
 
@@ -47,7 +51,7 @@ FEAT(CLI): add --verbose flag for detailed output
 ```
 
 ```text
-FIX(Parser): prevent panic on empty input
+BUG(Parser): prevent panic on empty input
 ```
 
 ```text
