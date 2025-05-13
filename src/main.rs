@@ -37,6 +37,7 @@ fn main() {
 	for varName in varNames.iter(){
 		println!("Variable name violation: {:?}", varName.name);
 	}
+	println!("Number of types: {:?}", typ_counter(&f, &o));
 }
 
 
@@ -74,6 +75,12 @@ fn read_file(file_path: &String) -> String{
 fn fun_counter(file: &go_parser::ast::File) -> u32 { 
 	return file.decls.iter().filter(|decl| matches!(decl, go_parser::ast::Decl::Func(_))).count() as u32;
 }
+
+fn typ_counter<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> u32 {
+	return o.entities.vec().iter().
+	filter(|entity| matches!(&entity.kind, go_parser::scope::EntityKind::Typ)).count() as u32;	
+}
+
 
 fn name_vaiolation<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, kind_of_check: go_parser::scope::EntityKind, regex: &str) -> (Vec<&'a go_parser::scope::Entity>, String) {
 	let re = Regex::new(&regex).unwrap();
