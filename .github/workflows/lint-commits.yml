@@ -1,0 +1,41 @@
+name: Validate Commit Message
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches-ignore:
+      - "**/dependabot/**"
+
+jobs:
+  check-commit-message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get last commit message
+        id: get_msg
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:%s)
+          echo "::set-output name=message::$COMMIT_MSG"
+
+      - name: Validate commit message convention
+        run: |
+          MSG="${{ steps.get_msg.outputs.message }}"
+          echo "🔍 Checking commit message: '$MSG'"
+
+          if [[ ! "$MSG" =~ ^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([A-Za-z0-9_-]+\):\ [A-Z][^\.]+$ ]]; then
+            echo "❌ Commit message '$MSG' is invalid."
+            echo ""
+            echo "Commit message must follow this template:"
+            echo "  TYPE(Scope): Description"
+            echo ""
+            echo "Where:"
+            echo "  TYPE     is one of: FEAT, BUG, CHORE, TEST, DOCS, REFACTOR"
+            echo "  Scope    is module or component (e.g., CLI, Parser), in parentheses"
+            echo "  Description starts with a capital letter and has no trailing period"
+            exit 1
+          fi
+
+          echo "✅ Commit message is valid."
