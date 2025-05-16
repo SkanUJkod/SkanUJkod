@@ -4,13 +4,35 @@ use std::io::{self, Write};
 #[derive(Debug, Clone)]
 pub struct AstNode {
     pub kind: String,
+    pub name: Option<String>,
+    pub type_info: Option<String>,
     pub children: Vec<AstNode>,
 }
 
 impl AstNode {
     pub fn new(kind: &str) -> Self {
-        AstNode { 
-            kind: kind.to_string(), 
+        AstNode {
+            kind: kind.to_string(),
+            name: None,
+            type_info: None,
+            children: Vec::new(),
+        }
+    }
+
+    pub fn with_name(kind: &str, name: &str) -> Self {
+        AstNode {
+            kind: kind.to_string(),
+            name: Some(name.to_string()),
+            type_info: None,
+            children: Vec::new(),
+        }
+    }
+
+    pub fn with_name_and_type(kind: &str, name: &str, type_info: &str) -> Self {
+        AstNode {
+            kind: kind.to_string(),
+            name: Some(name.to_string()),
+            type_info: Some(type_info.to_string()),
             children: Vec::new(),
         }
     }
@@ -24,7 +46,11 @@ impl AstNode {
     }
 
     pub fn recursive_count(&self) -> usize {
-        1 + self.children.iter().map(|child| child.recursive_count()).sum::<usize>()
+        1 + self
+            .children
+            .iter()
+            .map(|child| child.recursive_count())
+            .sum::<usize>()
     }
 
     // Traversal Methods
@@ -97,8 +123,19 @@ impl AstNode {
         self.write_tree_with_indent(writer, 0)
     }
 
-    fn write_tree_with_indent<W: Write + ?Sized>(&self, writer: &mut W, level: usize) -> io::Result<()> {
-        writeln!(writer, "{}{}", "  ".repeat(level), self.kind)?;
+    fn write_tree_with_indent<W: Write + ?Sized>(
+        &self,
+        writer: &mut W,
+        level: usize,
+    ) -> io::Result<()> {
+        write!(writer, "{}{}", "  ".repeat(level), self.kind)?;
+        if let Some(ref name) = self.name {
+            write!(writer, " Name: {}", name)?;
+        }
+        if let Some(ref type_info) = self.type_info {
+            write!(writer, " Type: {}", type_info)?;
+        }
+        writeln!(writer)?;
         for child in &self.children {
             child.write_tree_with_indent(writer, level + 1)?;
         }
