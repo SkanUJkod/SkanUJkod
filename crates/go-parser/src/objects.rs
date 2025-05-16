@@ -191,6 +191,7 @@ pub type Fields = PiggyVec<FieldKey, ast::Field>;
 pub type Entitys = PiggyVec<EntityKey, scope::Entity>;
 pub type Scopes = PiggyVec<ScopeKey, scope::Scope>;
 
+#[derive(Debug)]
 pub struct AstObjects {
     pub l_stmts: LabeledStmts,
     pub a_stmts: AssignStmts,
