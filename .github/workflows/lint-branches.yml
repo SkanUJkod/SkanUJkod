@@ -1,0 +1,31 @@
+name: Validate Branch Naming
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch naming convention
+        run: |
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          echo "🔍 Checking branch name: $BRANCH"
+
+          if [[ ! "$BRANCH" =~ ^(feature|bug|chore|test|docs|refactor)/[a-z0-9-]+$ ]]; then
+            echo "❌ Branch name '$BRANCH' is invalid."
+            echo ""
+            echo "Branch name must follow this pattern:"
+            echo "  <type>/<short-description>"
+            echo ""
+            echo "Where:"
+            echo "  <type> is one of: feature, bug, chore, test, docs, refactor"
+            echo "  <short-description> is lowercase kebab-case (e.g., add-verbose-flag)"
+            exit 1
+          fi
+
+          echo "✅ Branch name is valid."
