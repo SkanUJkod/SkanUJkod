@@ -572,13 +572,13 @@ impl<'a> Parser<'a> {
         self.trace_begin("Type");
 
         let typ = self.try_type();
-        let ret = if typ.is_none() {
+        let ret = if let Some(t) = typ {
+            t
+        } else {
             let pos = self.pos;
             self.error_expected(pos, "type");
             self.next();
             Expr::new_bad(pos, self.pos)
-        } else {
-            typ.unwrap()
         };
 
         self.trace_end();
@@ -1202,9 +1202,9 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_index_or_slice(&mut self, x: Expr) -> Expr {
+        const N: usize = 3; // change the 3 to 2 to disable 3-index slices
         self.trace_begin("IndexOrSlice");
 
-        const N: usize = 3; // change the 3 to 2 to disable 3-index slices
         let lbrack = self.expect(&Token::LBRACK);
         self.expr_level += 1;
         let mut indices = vec![None, None, None];
@@ -2048,6 +2048,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    #[allow(clippy::ref_option)]
     fn is_type_switch_guard(&self, s: &Option<Stmt>) -> bool {
         s.as_ref().is_some_and(|stmt| match stmt {
             Stmt::Expr(x) => x.is_type_switch_assert(),
