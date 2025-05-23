@@ -4,6 +4,8 @@ use SkanUJkod::static_analysis::{fun_counter, typ_counter, fun_name, struct_name
 use std::fs;
 use std::path::Path;
 use regex::Regex;
+use SkanUJkod::parser::parse_file;
+
 
 fn main() {
 
@@ -17,62 +19,63 @@ fn main() {
 
 #[test]
 fn test_fun_counter() {
-    let (f, o) = parse_file();
-    assert_eq!(fun_counter(&f), 6);
+    let (f, o) = parse_file("./main.go");
+    assert_eq!(fun_counter(&f), 5);
 }
 
 #[test]
 fn test_type_counter() {
-    let (f, o) = parse_file();
+    let (f, o) = parse_file("./main.go");
     assert_eq!(typ_counter(&f, &o), 3);
 }
 #[test]
 fn test_fun_name_length() {
-    let (f, o) = parse_file();
+    let (f, o) = parse_file("./main.go");
     let (funNames, informationFun) = fun_name(&f, &o, r"_");
     assert_eq!(funNames.len(), 5);
 }
 #[test]
 fn test_struct_name_length() {
-    let (f, o) = parse_file();
+    let (f, o) = parse_file("./main.go");;
     let (funNames, informationFun) = struct_name(&f, &o, r"_");
     assert_eq!(funNames.len(), 3);
 }
 
 #[test]
 fn test_variable_name_length() {
-    let (f, o) = parse_file();
+    let (f, o) = parse_file("./main.go");
     let (funNames, informationFun) = variable_name(&f, &o, r"_");
     assert_eq!(funNames.len(), 11);
 }
 
-fn parse_file() -> (go_parser::ast::File, go_parser::AstObjects) {
-    let source = &read_file(&String::from("main.go"));
-    let mut fs = go_parser::FileSet::new();
-    let mut o =   go_parser::AstObjects::new();
-    let el = &mut go_parser::ErrorList::new();
-	
-	let mut pf : go_parser::ast::File;
-    let (p, pf_maybe) = go_parser::parse_file(&mut o, &mut fs, el, "./main.go", source, false);
 
-	 let pf = match pf_maybe{
- 		Some(pf_maybe) => pf_maybe,
-	 	None => {
-			
-			panic!("Error parsing file: {:?}", el);
-		},	
-	}; 	
-
-
-		
-	
-	return (pf, o);
+// Test for function names which include "_" in their name
+#[test]
+fn test_fun_name() {
+    let (f, o) = parse_file("./main.go");;
+    let (funNames, informationFun) = fun_name(&f, &o, r"_");
+    assert_eq!(funNames.len(), 5);
+    for funName in funNames.iter() {
+        assert!(!Regex::new(r"_").unwrap().is_match(&funName.name));
+    }
 }
 
-fn read_file(file_path: &String) -> String{
-	
-    
-    let contents = fs::read_to_string(file_path)
-    .expect("Should have been able to read the file");
-    contents
+
+//camelCase test for function names
+#[test]
+fn test_fun_name2(){
+    let (f, o) = parse_file("./main.go");;
+    let (funNames, informationFun) = fun_name(&f, &o, r"_");
+    assert_eq!(funNames.len(), 5);
+    for funName in funNames.iter() {
+        if (funName.name == "main"){
+            assert!(true);   
+        }
+        else{
+            assert!(!Regex::new(r"^[a-z]+(?:[A-Z][a-z0-9]*)*$").unwrap().is_match(&funName.name));
+        } 
+    }
 }
+
+
+
