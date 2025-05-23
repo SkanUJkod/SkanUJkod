@@ -40,3 +40,23 @@ pub fn struct_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObje
 pub fn variable_name<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects, regex: &str) -> (Vec<&'a go_parser::scope::Entity>, String) {
     return name_vaiolation(file, o, go_parser::scope::EntityKind::Var, regex);
 }
+
+
+//works only with parser written by Pawel 
+pub fn if_depth(node: &AstNode, depth: &mut usize) -> usize {
+    let mut max_depth = *depth;
+    if node.kind == "If" {
+        *depth += 1;
+        max_depth = *depth;
+    }
+    for child in &node.children {
+        let child_depth = if_depth(child, depth);
+        if child_depth > max_depth {
+            max_depth = child_depth;
+        }
+    }
+    if node.kind == "If" {
+        *depth -= 1;
+    }
+    max_depth
+}
