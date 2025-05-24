@@ -1,4 +1,4 @@
-name: Validate Commit Message
+name: Validate Commit Messages
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
       - "**/dependabot/**"
 
 jobs:
-  check-commit-message:
+  check-commit-messages:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,28 +16,25 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Get last commit message
-        id: get_msg
+      - name: Get commit messages from current push
+        id: commits
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B | head -n1)
           echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
 
       - name: Validate commit message convention
         run: |
-          MSG="${{ steps.get_msg.outputs.message }}"
-          echo "🔍 Checking commit message: '$MSG'"
+          VALID=1
+          echo "🔍 Validating commit messages..."
 
           if [[ ! "$MSG" =~ ^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([a-zA-Z0-9_-]+\):\ [A-Z][^\.\n]+$ ]]; then
             echo "❌ Commit message '$MSG' is invalid."
             echo ""
-            echo "Commit message must follow this template:"
+            echo "❗ Commit message must follow this format:"
             echo "  TYPE(Scope): Description"
             echo ""
-            echo "Where:"
-            echo "  TYPE     is one of: FEAT, BUG, CHORE, TEST, DOCS, REFACTOR"
-            echo "  Scope    is module or component (e.g., CLI, Parser), in parentheses"
-            echo "  Description starts with a capital letter and has no trailing period"
+            echo "TYPE: FEAT, BUG, CHORE, TEST, DOCS, REFACTOR"
+            echo "Scope: module or component in parentheses"
+            echo "Description: no trailing period, no need for uppercase start"
             exit 1
           fi
-
-          echo "✅ Commit message is valid."
