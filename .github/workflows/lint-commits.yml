@@ -14,23 +14,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Get commit messages from current push
         id: commits
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B | head -n1)
-          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "📥 Getting commits from push range: ${{ github.event.before }}..${{ github.sha }}"
+          MESSAGES=$(git log --pretty=format:"%s" ${{ github.event.before }}..${{ github.sha }})
+          echo "$MESSAGES"
+          echo "messages<<EOF" >> $GITHUB_OUTPUT
+          echo "$MESSAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Validate commit message convention
         run: |
           VALID=1
           echo "🔍 Validating commit messages..."
 
-<<<<<<< HEAD
-          if [[ ! "$MSG" =~ ^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([a-zA-Z0-9_-]+\):\ [A-Z][^\.\n]+$ ]]; then
-            echo "❌ Commit message '$MSG' is invalid."
-=======
           REGEX="^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([a-zA-Z0-9_-]+\):\ .+[^\.](\ \(#\d+\))?$"
 
           while read -r MSG; do
@@ -44,7 +44,6 @@ jobs:
           done <<< "${{ steps.commits.outputs.messages }}"
 
           if [[ $VALID -eq 0 ]]; then
->>>>>>> 43ddcfc (DOCS(Contributing): commits linter update)
             echo ""
             echo "❗ Commit message must follow this format:"
             echo "  TYPE(Scope): Description [optional (#123)]"
