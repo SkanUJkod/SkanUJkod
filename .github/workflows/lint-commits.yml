@@ -35,6 +35,12 @@ jobs:
 
           while read -r MSG; do
             echo "🔸 '$MSG'"
+
+            if [[ "$MSG" =~ ^Merge\ [a-f0-9]{40}\ into\ [a-f0-9]{40}$ ]]; then
+              echo "⚠️  Skipping merge commit"
+              continue
+            fi
+
             if [[ ! "$MSG" =~ $REGEX ]]; then
               echo "❌ Invalid commit message: '$MSG'"
               VALID=0
