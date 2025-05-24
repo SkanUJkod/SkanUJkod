@@ -13,19 +13,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Get last commit message
         id: get_msg
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=format:%s)
-          echo "::set-output name=message::$COMMIT_MSG"
+          COMMIT_MSG=$(git log -1 --pretty=%B | head -n1)
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
 
       - name: Validate commit message convention
         run: |
           MSG="${{ steps.get_msg.outputs.message }}"
           echo "🔍 Checking commit message: '$MSG'"
 
-          if [[ ! "$MSG" =~ ^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([A-Za-z0-9_-]+\):\ [A-Z][^\.]+$ ]]; then
+          if [[ ! "$MSG" =~ ^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([a-zA-Z0-9_-]+\):\ [A-Z][^\.\n]+$ ]]; then
             echo "❌ Commit message '$MSG' is invalid."
             echo ""
             echo "Commit message must follow this template:"
