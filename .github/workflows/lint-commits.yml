@@ -1,4 +1,4 @@
-name: Validate Commit Message
+name: Validate Commit Messages
 
 on:
   pull_request:
@@ -8,34 +8,56 @@ on:
       - "**/dependabot/**"
 
 jobs:
-  check-commit-message:
+  check-commit-messages:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Get last commit message
-        id: get_msg
+      - name: Get commit messages from current push
+        id: commits
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=format:%s)
-          echo "::set-output name=message::$COMMIT_MSG"
+          echo "📥 Getting commits from push range: ${{ github.event.before }}..${{ github.sha }}"
+          MESSAGES=$(git log --pretty=format:"%s" ${{ github.event.before }}..${{ github.sha }})
+          echo "$MESSAGES"
+          echo "messages<<EOF" >> $GITHUB_OUTPUT
+          echo "$MESSAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Validate commit message convention
         run: |
-          MSG="${{ steps.get_msg.outputs.message }}"
-          echo "🔍 Checking commit message: '$MSG'"
+          VALID=1
+          echo "🔍 Validating commit messages..."
 
-          if [[ ! "$MSG" =~ ^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([A-Za-z0-9_-]+\):\ [A-Z][^\.]+$ ]]; then
-            echo "❌ Commit message '$MSG' is invalid."
+          REGEX="^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([a-zA-Z0-9_-]+\):\ .+[^\.](\ \(#\d+\))?$"
+
+          while read -r MSG; do
+            echo "🔸 '$MSG'"
+
+            if [[ "$MSG" =~ ^Merge\ [a-f0-9]{40}\ into\ [a-f0-9]{40}$ ]]; then
+              echo "⚠️  Skipping merge commit"
+              continue
+            fi
+
+            if [[ ! "$MSG" =~ $REGEX ]]; then
+              echo "❌ Invalid commit message: '$MSG'"
+              VALID=0
+            else
+              echo "✅ Valid"
+            fi
+          done <<< "${{ steps.commits.outputs.messages }}"
+
+          if [[ $VALID -eq 0 ]]; then
             echo ""
-            echo "Commit message must follow this template:"
-            echo "  TYPE(Scope): Description"
+            echo "❗ Commit message must follow this format:"
+            echo "  TYPE(Scope): Description [optional (#123)]"
             echo ""
             echo "Where:"
-            echo "  TYPE     is one of: FEAT, BUG, CHORE, TEST, DOCS, REFACTOR"
-            echo "  Scope    is module or component (e.g., CLI, Parser), in parentheses"
-            echo "  Description starts with a capital letter and has no trailing period"
+            echo "  TYPE:     FEAT, BUG, CHORE, TEST, DOCS, REFACTOR"
+            echo "  Scope:    module or component in parentheses (e.g., CLI, Parser)"
+            echo "  Description: lowercase or uppercase start, no trailing period"
+            echo "  (#123):   optional reference to issue/PR, must be at end if present"
             exit 1
           fi
-
-          echo "✅ Commit message is valid."
