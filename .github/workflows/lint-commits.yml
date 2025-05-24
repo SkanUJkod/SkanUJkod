@@ -27,14 +27,32 @@ jobs:
           VALID=1
           echo "🔍 Validating commit messages..."
 
+<<<<<<< HEAD
           if [[ ! "$MSG" =~ ^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([a-zA-Z0-9_-]+\):\ [A-Z][^\.\n]+$ ]]; then
             echo "❌ Commit message '$MSG' is invalid."
+=======
+          REGEX="^(FEAT|BUG|CHORE|TEST|DOCS|REFACTOR)\([a-zA-Z0-9_-]+\):\ .+[^\.](\ \(#\d+\))?$"
+
+          while read -r MSG; do
+            echo "🔸 '$MSG'"
+            if [[ ! "$MSG" =~ $REGEX ]]; then
+              echo "❌ Invalid commit message: '$MSG'"
+              VALID=0
+            else
+              echo "✅ Valid"
+            fi
+          done <<< "${{ steps.commits.outputs.messages }}"
+
+          if [[ $VALID -eq 0 ]]; then
+>>>>>>> 43ddcfc (DOCS(Contributing): commits linter update)
             echo ""
             echo "❗ Commit message must follow this format:"
-            echo "  TYPE(Scope): Description"
+            echo "  TYPE(Scope): Description [optional (#123)]"
             echo ""
-            echo "TYPE: FEAT, BUG, CHORE, TEST, DOCS, REFACTOR"
-            echo "Scope: module or component in parentheses"
-            echo "Description: no trailing period, no need for uppercase start"
+            echo "Where:"
+            echo "  TYPE:     FEAT, BUG, CHORE, TEST, DOCS, REFACTOR"
+            echo "  Scope:    module or component in parentheses (e.g., CLI, Parser)"
+            echo "  Description: lowercase or uppercase start, no trailing period"
+            echo "  (#123):   optional reference to issue/PR, must be at end if present"
             exit 1
           fi
