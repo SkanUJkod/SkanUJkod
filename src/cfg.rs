@@ -6,15 +6,16 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 /// Single basic block
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BasicBlock {
+    #[allow(dead_code)]
     pub id: usize,
     pub stmts: Vec<Stmt>,
     pub succs: Vec<usize>,
 }
 
 /// Control flow graph for a function
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ControlFlowGraph {
     pub blocks: HashMap<usize, BasicBlock>,
     pub entry: usize,
@@ -608,12 +609,22 @@ impl ControlFlowGraph {
                                             pending_gotos.push((id, name));
                                             Vec::new()
                                         }
-                                    } else {
+                                    } else if let Some(after) = loop_after {
                                         // Normal break
-                                        vec![loop_after.expect("break outside loop")]
+                                        vec![after]
+                                    } else {
+                                        // Break outside loop - goes to exit
+                                        vec![exit_id]
                                     }
                                 },
-                                Token::CONTINUE => vec![loop_cond.expect("continue outside loop")],
+                                Token::CONTINUE => {
+                                    if let Some(cond) = loop_cond {
+                                        vec![cond]
+                                    } else {
+                                        // Continue outside loop - goes to exit
+                                        vec![exit_id]
+                                    }
+                                },
                                 Token::GOTO => {
                                     if let Some(label_ident) = bs.label {
                                         let name = objs.idents[label_ident].name.clone();
