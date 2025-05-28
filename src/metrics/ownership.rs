@@ -1,5 +1,5 @@
 use super::result_type::MetricResultType;
-use crate::metrics::Metric;
+use crate::metrics::{Metric, utils::parse_param_string};
 use gix::Commit;
 use imara_diff::Algorithm::Histogram;
 use imara_diff::intern::InternedInput;
@@ -20,7 +20,7 @@ impl Metric for LinesAddedRemoved {
         &self,
         commit: &Commit,
         _child_commit: &Option<gix::Commit>,
-        _params: &HashMap<String, String>,
+        params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {
         match result {
@@ -29,6 +29,12 @@ impl Metric for LinesAddedRemoved {
                     Some(c) => c,
                     None => return,
                 };
+
+                if parse_param_string(params, "author", &String::from(""))
+                    != commit.author().unwrap().name
+                {
+                    return;
+                }
 
                 let current_files = files_in_commit(commit);
                 let child_files = files_in_commit(_child_commit);
