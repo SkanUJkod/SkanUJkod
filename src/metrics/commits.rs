@@ -21,6 +21,7 @@ impl Metric for CommitsByAuthorInRepo {
     fn run(
         &self,
         commit: &Commit,
+        _child_commit: &Option<Commit>,
         _params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {
@@ -49,6 +50,7 @@ impl Metric for ContributorsInTimeframe {
     fn run(
         &self,
         commit: &Commit,
+        _child_commit: &Option<Commit>,
         params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {
@@ -82,10 +84,11 @@ impl Metric for PercentageOfTotalCommits {
     fn run(
         &self,
         commit: &Commit,
+        _child_commit: &Option<Commit>,
         _params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {
-        CommitsByAuthorInRepo.run(commit, &HashMap::new(), result);
+        CommitsByAuthorInRepo.run(commit, _child_commit, &HashMap::new(), result);
     }
 
     fn calculate(&self, result: &mut MetricResultType) {
@@ -117,6 +120,7 @@ impl Metric for FirstLastCommit {
     fn run(
         &self,
         commit: &Commit,
+        _child_commit: &Option<Commit>,
         _params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {

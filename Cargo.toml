@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 gix = "0.71.0"
 chrono="0.4.40"
+imara-diff = "0.1.8"
