@@ -1,5 +1,5 @@
 use super::result_type::MetricResultType;
-use crate::metrics::{Metric, utils::parse_param};
+use crate::metrics::{Metric, utils::parse_param_i64};
 use chrono::DateTime;
 use gix::Commit;
 use std::collections::{HashMap, HashSet};
@@ -54,8 +54,8 @@ impl Metric for ContributorsInTimeframe {
         params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {
-        let start_date = parse_param(params, "start_date", 10);
-        let end_date = parse_param(params, "end_date", 10);
+        let start_date = parse_param_i64(params, "start_date", 10);
+        let end_date = parse_param_i64(params, "end_date", 10);
 
         match result {
             MetricResultType::Set(contributors) => {
