@@ -2,7 +2,7 @@ use crate::metrics::{
     all_metrics, metrics_trait::Metric, result_type::MetricResultType, utils::print_results,
 };
 use crate::repo::RepoWrapper;
-use gix::{Commit, Repository};
+use gix::Repository;
 use std::collections::HashMap;
 
 pub fn run_selected_metrics(
@@ -20,20 +20,27 @@ pub fn run_selected_metrics(
     let repo = &repo_wrapper.repo;
     let mut results = init_empty_results(&selected_metrics);
 
-    let all_commits_info = get_all_commits(repo);
-    let mut previous_commit: Option<Commit> = None;
+    let mut all_commits_info: Vec<_> = get_all_commits(repo).collect();
+    all_commits_info.reverse();
 
-    for commit_info in all_commits_info {
-        let commit_info = commit_info.unwrap();
+    for i in 0..all_commits_info.len() {
+        let commit_info = all_commits_info[i].as_ref().unwrap();
         let commit = repo.find_commit(commit_info.id()).unwrap();
+
+        let child_commit = if i + 1 < all_commits_info.len() {
+            let child_info = all_commits_info[i + 1].as_ref().unwrap();
+            Some(repo.find_commit(child_info.id()).unwrap())
+        } else {
+            None
+        };
+
         for metric in &selected_metrics {
             let default_params = HashMap::new();
             let params = all_params.get(metric.name()).unwrap_or(&default_params);
             if let Some(result) = results.get_mut(metric.name()) {
-                metric.run(&commit, &previous_commit, &params, result);
+                metric.run(&commit, &child_commit, &params, result);
             }
         }
-        previous_commit = Some(commit);
     }
 
     for metric in &selected_metrics {

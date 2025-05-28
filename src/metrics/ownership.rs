@@ -3,7 +3,7 @@ use crate::metrics::{Metric, utils::parse_param_string};
 use gix::Commit;
 use imara_diff::Algorithm::Histogram;
 use imara_diff::intern::InternedInput;
-use std::{collections::HashMap, str};
+use std::{collections::HashMap, ops::Range, str};
 
 pub struct LinesAddedRemoved;
 
@@ -19,13 +19,13 @@ impl Metric for LinesAddedRemoved {
     fn run(
         &self,
         commit: &Commit,
-        _child_commit: &Option<gix::Commit>,
+        child_commit: &Option<Commit>,
         params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {
         match result {
             MetricResultType::Map(lines_map) => {
-                let _child_commit = match _child_commit {
+                let child_commit = match child_commit {
                     Some(c) => c,
                     None => return,
                 };
@@ -37,7 +37,7 @@ impl Metric for LinesAddedRemoved {
                 }
 
                 let current_files = files_in_commit(commit);
-                let child_files = files_in_commit(_child_commit);
+                let child_files = files_in_commit(child_commit);
 
                 let mut total_added = 0;
                 let mut total_removed = 0;
@@ -60,7 +60,7 @@ impl Metric for LinesAddedRemoved {
                         imara_diff::diff(
                             Histogram,
                             &InternedInput::new(current_content, child_content),
-                            |before: std::ops::Range<u32>, after: std::ops::Range<u32>| {
+                            |before: Range<u32>, after: Range<u32>| {
                                 added += after.end - after.start;
                                 removed += before.end - before.start;
                             },
