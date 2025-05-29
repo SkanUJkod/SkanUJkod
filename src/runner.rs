@@ -7,15 +7,15 @@ use std::collections::HashMap;
 
 pub fn run_selected_metrics(
     repo_wrapper: &RepoWrapper,
-    selected: Vec<&str>,
+    selected: &[&str],
     all_params: &HashMap<String, HashMap<String, String>>,
 ) {
     let metrics = all_metrics();
-    let selected_with_deps = resolve_metric_dependencies(&metrics, &selected);
+    let selected_with_deps = resolve_metric_dependencies(&metrics, selected);
     let selected_metrics_with_deps: Vec<&dyn Metric> = metrics
         .iter()
         .filter(|metric| selected_with_deps.contains(&metric.name()))
-        .map(|metric| metric.as_ref())
+        .map(AsRef::as_ref)
         .collect();
 
     let repo = &repo_wrapper.repo;
@@ -39,7 +39,7 @@ pub fn run_selected_metrics(
             let default_params = HashMap::new();
             let params = all_params.get(metric.name()).unwrap_or(&default_params);
             if let Some(result) = results.get_mut(metric.name()) {
-                metric.run(&commit, &child_commit, &params, result);
+                metric.run(&commit, child_commit.as_ref(), params, result);
             }
         }
     }
@@ -58,7 +58,7 @@ pub fn run_selected_metrics(
     let selected_metrics_without_deps: Vec<&dyn Metric> = metrics
         .iter()
         .filter(|metric| selected.contains(&metric.name()))
-        .map(|metric| metric.as_ref())
+        .map(AsRef::as_ref)
         .collect();
 
     print_results(&selected_metrics_without_deps, &results);
@@ -81,12 +81,11 @@ fn get_all_commits(repo: &Repository) -> gix::revision::Walk {
 
 fn resolve_metric_dependencies<'a>(
     metrics: &'a Vec<Box<dyn Metric>>,
-    selected: &Vec<&'a str>,
+    selected: &[&'a str],
 ) -> Vec<&'a str> {
-    let mut stack = selected.clone();
+    let mut stack = selected.to_vec();
     let mut resolved = Vec::new();
-    while !stack.is_empty() {
-        let metric_name = stack.pop().unwrap();
+    while let Some(metric_name) = stack.pop() {
         if !resolved.contains(&metric_name) {
             resolved.push(metric_name);
         }
