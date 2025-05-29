@@ -8,7 +8,7 @@ use std::{collections::HashMap, ops::Range, str};
 pub struct LinesAddedRemoved;
 
 impl Metric for LinesAddedRemoved {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "lines_added_removed"
     }
 

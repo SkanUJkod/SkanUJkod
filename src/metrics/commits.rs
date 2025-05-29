@@ -10,7 +10,7 @@ pub struct PercentageOfTotalCommits;
 pub struct FirstLastCommit;
 
 impl Metric for CommitsByAuthorInRepo {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "commits_by_author_in_repo"
     }
 
@@ -39,7 +39,7 @@ impl Metric for CommitsByAuthorInRepo {
 }
 
 impl Metric for ContributorsInTimeframe {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "contributors_in_timeframe"
     }
 
@@ -73,7 +73,8 @@ impl Metric for ContributorsInTimeframe {
 }
 
 impl Metric for PercentageOfTotalCommits {
-    fn name(&self) -> &'static str {
+
+    fn name(&self) -> &str {
         "percentage_of_total_commits"
     }
 
@@ -109,7 +110,7 @@ impl Metric for PercentageOfTotalCommits {
 }
 
 impl Metric for FirstLastCommit {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "first_last_commit"
     }
 
