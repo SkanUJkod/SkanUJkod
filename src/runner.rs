@@ -11,14 +11,15 @@ pub fn run_selected_metrics(
     all_params: &HashMap<String, HashMap<String, String>>,
 ) {
     let metrics = all_metrics();
-    let selected_metrics: Vec<&dyn Metric> = metrics
+    let selected_with_deps = resolve_metric_dependencies(&metrics, &selected);
+    let selected_metrics_with_deps: Vec<&dyn Metric> = metrics
         .iter()
-        .filter(|metric| selected.contains(&metric.name()))
+        .filter(|metric| selected_with_deps.contains(&metric.name()))
         .map(|metric| metric.as_ref())
         .collect();
 
     let repo = &repo_wrapper.repo;
-    let mut results = init_empty_results(&selected_metrics);
+    let mut results = init_empty_results(&selected_metrics_with_deps);
 
     let mut all_commits_info: Vec<_> = get_all_commits(repo).collect();
     all_commits_info.reverse();
@@ -34,7 +35,7 @@ pub fn run_selected_metrics(
             None
         };
 
-        for metric in &selected_metrics {
+        for metric in &selected_metrics_with_deps {
             let default_params = HashMap::new();
             let params = all_params.get(metric.name()).unwrap_or(&default_params);
             if let Some(result) = results.get_mut(metric.name()) {
@@ -43,13 +44,24 @@ pub fn run_selected_metrics(
         }
     }
 
-    for metric in &selected_metrics {
+    for metric in &selected_metrics_with_deps {
+        if let Some(dependency_name) = metric.dependencies() {
+            if let Some(dependency_result) = results.get(dependency_name).cloned() {
+                results.insert(metric.name(), dependency_result);
+            }
+        }
         if let Some(result) = results.get_mut(metric.name()) {
             metric.calculate(result);
         }
     }
 
-    print_results(&selected_metrics, &results);
+    let selected_metrics_without_deps: Vec<&dyn Metric> = metrics
+        .iter()
+        .filter(|metric| selected.contains(&metric.name()))
+        .map(|metric| metric.as_ref())
+        .collect();
+
+    print_results(&selected_metrics_without_deps, &results);
 }
 
 fn init_empty_results<'a>(metrics: &'a Vec<&dyn Metric>) -> HashMap<&'a str, MetricResultType> {
@@ -65,4 +77,28 @@ fn get_all_commits(repo: &Repository) -> gix::revision::Walk {
     let commits = commit.ancestors().all().unwrap();
 
     commits
+}
+
+fn resolve_metric_dependencies<'a>(
+    metrics: &'a Vec<Box<dyn Metric>>,
+    selected: &Vec<&'a str>,
+) -> Vec<&'a str> {
+    let mut stack = selected.clone();
+    let mut resolved = Vec::new();
+    while !stack.is_empty() {
+        let metric_name = stack.pop().unwrap();
+        if !resolved.contains(&metric_name) {
+            resolved.push(metric_name);
+        }
+
+        if let Some(metric) = metrics.iter().find(|m| m.name() == metric_name) {
+            if let Some(dep) = metric.dependencies() {
+                if !resolved.contains(&dep) && !stack.contains(&dep) {
+                    stack.push(dep);
+                    resolved.push(dep);
+                }
+            }
+        }
+    }
+    resolved
 }

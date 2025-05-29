@@ -7,3 +7,13 @@ pub enum MetricResultType {
     DatePair(HashMap<String, (DateTime<Utc>, DateTime<Utc>)>),
     Set(HashSet<String>),
 }
+
+impl Clone for MetricResultType {
+    fn clone(&self) -> Self {
+        match self {
+            MetricResultType::Map(map) => MetricResultType::Map(map.clone()),
+            MetricResultType::DatePair(date_pair) => MetricResultType::DatePair(date_pair.clone()),
+            MetricResultType::Set(set) => MetricResultType::Set(set.clone()),
+        }
+    }
+}
