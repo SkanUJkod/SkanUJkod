@@ -8,7 +8,7 @@ use std::{collections::HashMap, ops::Range, str};
 pub struct LinesAddedRemoved;
 
 impl Metric for LinesAddedRemoved {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "lines_added_removed"
     }
 
@@ -19,78 +19,68 @@ impl Metric for LinesAddedRemoved {
     fn run(
         &self,
         commit: &Commit,
-        child_commit: &Option<Commit>,
+        child_commit: Option<&Commit>,
         params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {
-        match result {
-            MetricResultType::Map(lines_map) => {
-                let child_commit = match child_commit {
-                    Some(c) => c,
-                    None => return,
+        if let MetricResultType::Map(lines_map) = result {
+            let Some(child_commit) = child_commit else {
+                return;
+            };
+
+            if parse_param_string(params, "author", &String::new()) != commit.author().unwrap().name
+            {
+                return;
+            }
+
+            let current_files = files_in_commit(commit);
+            let child_files = files_in_commit(child_commit);
+
+            let mut total_added = 0;
+            let mut total_removed = 0;
+
+            for (filename, current_content_bytes) in &current_files {
+                let Ok(current_content) = str::from_utf8(current_content_bytes) else {
+                    continue;
                 };
 
-                if parse_param_string(params, "author", &String::from(""))
-                    != commit.author().unwrap().name
-                {
-                    return;
-                }
-
-                let current_files = files_in_commit(commit);
-                let child_files = files_in_commit(child_commit);
-
-                let mut total_added = 0;
-                let mut total_removed = 0;
-
-                for (filename, current_content_bytes) in &current_files {
-                    let current_content = match str::from_utf8(current_content_bytes) {
-                        Ok(s) => s,
-                        Err(_) => continue,
+                if let Some(child_content_bytes) = child_files.get(filename) {
+                    let Ok(child_content) = str::from_utf8(child_content_bytes) else {
+                        continue;
                     };
 
-                    if let Some(child_content_bytes) = child_files.get(filename) {
-                        let child_content = match str::from_utf8(child_content_bytes) {
-                            Ok(s) => s,
-                            Err(_) => continue,
-                        };
+                    let mut added = 0;
+                    let mut removed = 0;
 
-                        let mut added = 0;
-                        let mut removed = 0;
+                    imara_diff::diff(
+                        Histogram,
+                        &InternedInput::new(current_content, child_content),
+                        |before: Range<u32>, after: Range<u32>| {
+                            added += after.end - after.start;
+                            removed += before.end - before.start;
+                        },
+                    );
 
-                        imara_diff::diff(
-                            Histogram,
-                            &InternedInput::new(current_content, child_content),
-                            |before: Range<u32>, after: Range<u32>| {
-                                added += after.end - after.start;
-                                removed += before.end - before.start;
-                            },
-                        );
-
-                        if added + removed > 0 {
-                            total_added += added;
-                            total_removed += removed;
-                        }
-                    } else {
-                        total_removed += current_content.lines().count() as u32;
+                    if added + removed > 0 {
+                        total_added += added;
+                        total_removed += removed;
                     }
+                } else {
+                    total_removed += u32::try_from(current_content.lines().count()).unwrap_or(0);
                 }
+            }
 
-                for (filename, child_content_bytes) in &child_files {
-                    if !current_files.contains_key(filename) {
-                        let child_content = match str::from_utf8(child_content_bytes) {
-                            Ok(s) => s,
-                            Err(_) => continue,
-                        };
-                        total_added += child_content.lines().count() as u32;
-                    }
+            for (filename, child_content_bytes) in &child_files {
+                if !current_files.contains_key(filename) {
+                    let Ok(child_content) = str::from_utf8(child_content_bytes) else {
+                        continue;
+                    };
+                    total_added += u32::try_from(child_content.lines().count()).unwrap_or(0);
                 }
+            }
 
-                *lines_map.entry("insertions".to_string()).or_insert(0) += total_added as i32;
-                *lines_map.entry("deletions".to_string()).or_insert(0) += total_removed as i32;
-            }
-            _ => {
-                // Handle other types of MetricResultType
-            }
+            *lines_map.entry("insertions".to_string()).or_insert(0) += total_added;
+            *lines_map.entry("deletions".to_string()).or_insert(0) += total_removed;
         }
     }
 }

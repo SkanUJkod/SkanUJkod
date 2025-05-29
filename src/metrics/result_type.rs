@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub enum MetricResultType {
-    Map(HashMap<String, i32>),
+    Map(HashMap<String, u32>),
     DatePair(HashMap<String, (DateTime<Utc>, DateTime<Utc>)>),
     Set(HashSet<String>),
 }
@@ -11,9 +11,9 @@ pub enum MetricResultType {
 impl Clone for MetricResultType {
     fn clone(&self) -> Self {
         match self {
-            MetricResultType::Map(map) => MetricResultType::Map(map.clone()),
-            MetricResultType::DatePair(date_pair) => MetricResultType::DatePair(date_pair.clone()),
-            MetricResultType::Set(set) => MetricResultType::Set(set.clone()),
+            Self::Map(map) => Self::Map(map.clone()),
+            Self::DatePair(date_pair) => Self::DatePair(date_pair.clone()),
+            Self::Set(set) => Self::Set(set.clone()),
         }
     }
 }
