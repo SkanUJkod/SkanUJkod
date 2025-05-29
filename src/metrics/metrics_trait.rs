@@ -5,12 +5,16 @@ use std::collections::HashMap;
 pub trait Metric {
     fn name(&self) -> &str;
     fn default_results(&self) -> MetricResultType;
+    fn dependencies(&self) -> Option<&str> {
+        None
+    }
     fn run(
         &self,
-        commit: &Commit,
+        _commit: &Commit,
         _child_commit: &Option<Commit>,
-        params: &HashMap<String, String>,
-        result: &mut MetricResultType,
-    );
+        _params: &HashMap<String, String>,
+        _result: &mut MetricResultType,
+    ) {
+    }
     fn calculate(&self, _result: &mut MetricResultType) {}
 }

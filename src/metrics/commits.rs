@@ -73,7 +73,6 @@ impl Metric for ContributorsInTimeframe {
 }
 
 impl Metric for PercentageOfTotalCommits {
-
     fn name(&self) -> &str {
         "percentage_of_total_commits"
     }
@@ -82,14 +81,8 @@ impl Metric for PercentageOfTotalCommits {
         super::result_type::MetricResultType::Map(HashMap::new())
     }
 
-    fn run(
-        &self,
-        commit: &Commit,
-        _child_commit: &Option<Commit>,
-        _params: &HashMap<String, String>,
-        result: &mut MetricResultType,
-    ) {
-        CommitsByAuthorInRepo.run(commit, _child_commit, &HashMap::new(), result);
+    fn dependencies(&self) -> Option<&str> {
+        Some("commits_by_author_in_repo")
     }
 
     fn calculate(&self, result: &mut MetricResultType) {
