@@ -1,12 +1,10 @@
-mod ast;
-mod cfg;
-mod dot;
-
-#[cfg(test)]
-mod cfg_tests;
+use cfg_lib::ast::parse_project;
+use cfg_lib::cfg::build_cfgs_for_file;
+use cfg_lib::export::to_dot;
 
 use anyhow::Result;
 use std::env;
+use std::collections::HashMap;
 
 fn main() -> Result<()> {
     // -----------------------------------------------
@@ -45,40 +43,44 @@ fn main() -> Result<()> {
     let root = &args[0];
     let root_path = std::path::Path::new(root);
 
-    let (fset, objs, files) = ast::parse_project(root_path)?;
+    let (fset, objs, files) = parse_project(root_path)?;
 
     if dot_all_mode {
         let out_dir = std::path::Path::new("out");
         if !out_dir.exists() {
             std::fs::create_dir_all(out_dir)?;
         }
-        for parsed in files {
-            let cfgs = cfg::build_cfgs_for_file(&fset, &objs, &parsed.ast);
-            for (fname, graph) in cfgs {
-                let dot = dot::to_dot(&graph, &fname);
-                let filepath = out_dir.join(format!("{}.dot", fname));
-                std::fs::write(filepath, dot)?;
-            }
+        let mut cfgs_map = HashMap::new();
+        for pf in &files {
+            let per_file_map = build_cfgs_for_file(&fset, &objs, &pf.ast);
+            cfgs_map.extend(per_file_map);
+        }
+        for (fname, graph) in cfgs_map {
+            let dot = to_dot(&graph, &fname);
+            let filepath = out_dir.join(format!("{}.dot", fname));
+            std::fs::write(filepath, dot)?;
         }
         return Ok(());
     }
 
-    for parsed in files {
-        let cfgs = cfg::build_cfgs_for_file(&fset, &objs, &parsed.ast);
+    let mut cfgs_map = HashMap::new();
+    for pf in &files {
+        let per_file_map = build_cfgs_for_file(&fset, &objs, &pf.ast);
+        cfgs_map.extend(per_file_map);
+    }
 
-        match &dot_mode {
-            Some(func_name) => {
-                if let Some(graph) = cfgs.get(func_name) {
-                    let dot = dot::to_dot(graph, func_name);
-                    println!("{}", dot);
-                    return Ok(());
-                }
+    match &dot_mode {
+        Some(func_name) => {
+            if let Some(graph) = cfgs_map.get(func_name) {
+                let dot = to_dot(graph, func_name);
+                println!("{}", dot);
+                return Ok(());
             }
-            None => {
-                println!("=== {} ===", parsed.path.display());
-                for (fname, graph) in cfgs {
-                    println!("--- func {} ---\n{:#?}", fname, graph);
-                }
+        }
+        None => {
+            println!("=== CFGs ===");
+            for (fname, graph) in &cfgs_map {
+                println!("--- func {} ---\n{:#?}", fname, graph);
             }
         }
     }
