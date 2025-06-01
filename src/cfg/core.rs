@@ -20,6 +20,13 @@ pub struct ControlFlowGraph {
     pub entry: usize,
 }
 
+#[derive(Debug, Clone)]
+struct LoopContext {
+    label_id: usize,
+    cond_id: usize,
+    after_id: usize,
+}
+
 impl ControlFlowGraph {
     pub fn build(fset: &FileSet, func: &FuncDecl, objs: &AstObjects) -> Self {
         let mut blocks = HashMap::<usize, BasicBlock>::new();
@@ -53,8 +60,9 @@ impl ControlFlowGraph {
         let body_rc = match &func.body {
             Some(b) => b,
             None => {
-                let entry_block = blocks.get_mut(&entry).unwrap();
-                entry_block.succs = vec![exit_id];
+                if let Some(entry_block) = blocks.get_mut(&entry) {
+                    entry_block.succs = vec![exit_id];
+                }
                 return ControlFlowGraph { blocks, entry };
             }
         };
@@ -86,8 +94,11 @@ impl ControlFlowGraph {
             }};
         }
         let mut label_map: HashMap<String, usize> = HashMap::new();
+        let mut loop_contexts: HashMap<String, LoopContext> = HashMap::new();
         let mut label_def_ids: std::collections::HashSet<usize> = std::collections::HashSet::new();
         let mut pending_gotos: Vec<(usize, String)> = Vec::new();
+        let mut current_loop_cond: Option<usize> = None;
+        let mut current_loop_after: Option<usize> = None;
 
         for stmt in &body.list {
             match stmt {
@@ -103,8 +114,8 @@ impl ControlFlowGraph {
                         &mut next_id,
                         &ifst.body.list,
                         exit_id,
-                        None,
-                        None,
+                        current_loop_cond,
+                        current_loop_after,
                         &mut then_label_map,
                     );
                     for (k, v) in then_label_map {
@@ -128,8 +139,8 @@ impl ControlFlowGraph {
                                 &mut next_id,
                                 &list,
                                 exit_id,
-                                None,
-                                None,
+                                current_loop_cond,
+                                current_loop_after,
                                 &mut else_label_map,
                             );
                             for (k, v) in else_label_map {
@@ -158,26 +169,28 @@ impl ControlFlowGraph {
                         },
                     );
 
-                    {
-                        let prev_block = blocks.get_mut(&prev_id).unwrap();
+                    if let Some(prev_block) = blocks.get_mut(&prev_id) {
                         prev_block.succs = vec![cond_id];
                     }
 
-                    let cond_block = blocks.get_mut(&cond_id).unwrap();
-                    cond_block.succs.push(then_entry);
-                    cond_block
-                        .succs
-                        .push(else_result.map(|(entry, _)| entry).unwrap_or(after_id));
+                    if let Some(cond_block) = blocks.get_mut(&cond_id) {
+                        cond_block.succs.push(then_entry);
+                        cond_block
+                            .succs
+                            .push(else_result.map(|(entry, _)| entry).unwrap_or(after_id));
+                    }
 
-                    let then_exit_block = blocks.get_mut(&then_exit).unwrap();
-                    if then_exit_block.succs.is_empty() {
-                        then_exit_block.succs = vec![after_id];
+                    if let Some(then_exit_block) = blocks.get_mut(&then_exit) {
+                        if then_exit_block.succs.is_empty() {
+                            then_exit_block.succs = vec![after_id];
+                        }
                     }
 
                     if let Some((_, else_exit)) = else_result {
-                        let else_exit_block = blocks.get_mut(&else_exit).unwrap();
-                        if else_exit_block.succs.is_empty() {
-                            else_exit_block.succs = vec![after_id];
+                        if let Some(else_exit_block) = blocks.get_mut(&else_exit) {
+                            if else_exit_block.succs.is_empty() {
+                                else_exit_block.succs = vec![after_id];
+                            }
                         }
                     }
 
@@ -189,8 +202,9 @@ impl ControlFlowGraph {
                         next_id += 1;
                         push_single(&mut blocks, id, init_stmt.clone());
 
-                        let prev_block = blocks.get_mut(&prev_id).unwrap();
-                        prev_block.succs = vec![id];
+                        if let Some(prev_block) = blocks.get_mut(&prev_id) {
+                            prev_block.succs = vec![id];
+                        }
 
                         id
                     } else {
@@ -210,11 +224,13 @@ impl ControlFlowGraph {
                     push_single(&mut blocks, cond_id, cond_stmt);
 
                     if init_id == prev_id {
-                        let prev_block = blocks.get_mut(&prev_id).unwrap();
-                        prev_block.succs = vec![cond_id];
+                        if let Some(prev_block) = blocks.get_mut(&prev_id) {
+                            prev_block.succs = vec![cond_id];
+                        }
                     } else {
-                        let init_block = blocks.get_mut(&init_id).unwrap();
-                        init_block.succs = vec![cond_id];
+                        if let Some(init_block) = blocks.get_mut(&init_id) {
+                            init_block.succs = vec![cond_id];
+                        }
                     }
 
                     let after_id = next_id;
@@ -233,6 +249,11 @@ impl ControlFlowGraph {
                         },
                     );
 
+                    let saved_loop_cond = current_loop_cond;
+                    let saved_loop_after = current_loop_after;
+                    current_loop_cond = Some(cond_id);
+                    current_loop_after = Some(after_id);
+
                     let mut loop_label_map = label_map.clone();
                     let (body_entry, body_exit, mut body_gotos) = Self::build_chain(
                         objs,
@@ -249,27 +270,35 @@ impl ControlFlowGraph {
                     }
                     pending_gotos.append(&mut body_gotos);
 
+                    // Restore previous loop context
+                    current_loop_cond = saved_loop_cond;
+                    current_loop_after = saved_loop_after;
+
                     if let Some(post_stmt) = &forst.post {
                         let post_id = next_id;
                         next_id += 1;
                         push_single(&mut blocks, post_id, post_stmt.clone());
 
-                        let body_exit_block = blocks.get_mut(&body_exit).unwrap();
-                        if body_exit_block.succs.is_empty() {
-                            body_exit_block.succs = vec![post_id];
+                        if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
+                            if body_exit_block.succs.is_empty() {
+                                body_exit_block.succs = vec![post_id];
+                            }
                         }
-                        let post_block = blocks.get_mut(&post_id).unwrap();
-                        post_block.succs = vec![cond_id];
+                        if let Some(post_block) = blocks.get_mut(&post_id) {
+                            post_block.succs = vec![cond_id];
+                        }
                     } else {
-                        let body_exit_block = blocks.get_mut(&body_exit).unwrap();
-                        if body_exit_block.succs.is_empty() {
-                            body_exit_block.succs = vec![cond_id];
+                        if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
+                            if body_exit_block.succs.is_empty() {
+                                body_exit_block.succs = vec![cond_id];
+                            }
                         }
                     }
 
-                    let cond_block = blocks.get_mut(&cond_id).unwrap();
-                    cond_block.succs.push(body_entry);
-                    cond_block.succs.push(after_id);
+                    if let Some(cond_block) = blocks.get_mut(&cond_id) {
+                        cond_block.succs.push(body_entry);
+                        cond_block.succs.push(after_id);
+                    }
 
                     prev_id = after_id;
                 }
@@ -294,6 +323,11 @@ impl ControlFlowGraph {
                         },
                     );
 
+                    let saved_loop_cond = current_loop_cond;
+                    let saved_loop_after = current_loop_after;
+                    current_loop_cond = Some(cond_id);
+                    current_loop_after = Some(after_id);
+
                     let mut range_label_map = label_map.clone();
                     let (body_entry, body_exit, mut range_gotos) = Self::build_chain(
                         objs,
@@ -310,17 +344,24 @@ impl ControlFlowGraph {
                     }
                     pending_gotos.append(&mut range_gotos);
 
-                    let body_exit_block = blocks.get_mut(&body_exit).unwrap();
-                    if body_exit_block.succs.is_empty() {
-                        body_exit_block.succs = vec![cond_id];
+                    // Restore previous loop context
+                    current_loop_cond = saved_loop_cond;
+                    current_loop_after = saved_loop_after;
+
+                    if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
+                        if body_exit_block.succs.is_empty() {
+                            body_exit_block.succs = vec![cond_id];
+                        }
                     }
 
-                    let prev_block = blocks.get_mut(&prev_id).unwrap();
-                    prev_block.succs = vec![cond_id];
+                    if let Some(prev_block) = blocks.get_mut(&prev_id) {
+                        prev_block.succs = vec![cond_id];
+                    }
 
-                    let cond_block = blocks.get_mut(&cond_id).unwrap();
-                    cond_block.succs.push(body_entry);
-                    cond_block.succs.push(after_id);
+                    if let Some(cond_block) = blocks.get_mut(&cond_id) {
+                        cond_block.succs.push(body_entry);
+                        cond_block.succs.push(after_id);
+                    }
 
                     prev_id = after_id;
                 }
@@ -341,8 +382,8 @@ impl ControlFlowGraph {
                                 &mut next_id,
                                 &case.body,
                                 exit_id,
-                                None,
-                                None,
+                                current_loop_cond,
+                                current_loop_after,
                                 &mut case_label_map,
                             );
                             for (k, v) in case_label_map {
@@ -382,29 +423,31 @@ impl ControlFlowGraph {
                         },
                     );
 
-                    let prev_block = blocks.get_mut(&prev_id).unwrap();
-                    prev_block.succs = vec![sw_id];
+                    if let Some(prev_block) = blocks.get_mut(&prev_id) {
+                        prev_block.succs = vec![sw_id];
+                    }
 
                     {
-                        let sw_block = blocks.get_mut(&sw_id).unwrap();
-                        for (entry, _, _) in &case_info {
-                            sw_block.succs.push(*entry);
-                        }
-                        if sw_block.succs.is_empty() {
-                            sw_block.succs.push(after_id);
+                        if let Some(sw_block) = blocks.get_mut(&sw_id) {
+                            for (entry, _, _) in &case_info {
+                                sw_block.succs.push(*entry);
+                            }
+                            if sw_block.succs.is_empty() {
+                                sw_block.succs.push(after_id);
+                            }
                         }
                     }
 
                     for i in 0..case_info.len() {
                         let (_, exit, has_fallthrough) = case_info[i];
-                        let exit_block = blocks.get_mut(&exit).unwrap();
-
-                        if exit_block.succs.is_empty() {
-                            if has_fallthrough && i + 1 < case_info.len() {
-                                let next_entry = case_info[i + 1].0;
-                                exit_block.succs = vec![next_entry];
-                            } else {
-                                exit_block.succs = vec![after_id];
+                        if let Some(exit_block) = blocks.get_mut(&exit) {
+                            if exit_block.succs.is_empty() {
+                                if has_fallthrough && i + 1 < case_info.len() {
+                                    let next_entry = case_info[i + 1].0;
+                                    exit_block.succs = vec![next_entry];
+                                } else {
+                                    exit_block.succs = vec![after_id];
+                                }
                             }
                         }
                     }
@@ -470,7 +513,18 @@ impl ControlFlowGraph {
                                     end_line: 0,
                                 },
                             );
-                            label_map.insert(name.clone(), after_id);
+                            
+                            // Store context for this labeled loop
+                            loop_contexts.insert(name.clone(), LoopContext {
+                                label_id: id,
+                                cond_id,
+                                after_id,
+                            });
+
+                            let saved_loop_cond = current_loop_cond;
+                            let saved_loop_after = current_loop_after;
+                            current_loop_cond = Some(cond_id);
+                            current_loop_after = Some(after_id);
 
                             let mut loop_label_map = label_map.clone();
                             let (body_entry, body_exit, mut body_gotos) = Self::build_chain(
@@ -483,31 +537,42 @@ impl ControlFlowGraph {
                                 Some(after_id),
                                 &mut loop_label_map,
                             );
+                            
                             for (k, v) in loop_label_map {
                                 label_map.insert(k, v);
                             }
                             pending_gotos.append(&mut body_gotos);
 
+                            // Restore previous loop context
+                            current_loop_cond = saved_loop_cond;
+                            current_loop_after = saved_loop_after;
+
                             if let Some(post_stmt) = &forst.post {
                                 let post_id = next_id;
                                 next_id += 1;
                                 push_single(&mut blocks, post_id, post_stmt.clone());
-                                let body_exit_block = blocks.get_mut(&body_exit).unwrap();
-                                if body_exit_block.succs.is_empty() {
-                                    body_exit_block.succs = vec![post_id];
+                                
+                                if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
+                                    if body_exit_block.succs.is_empty() {
+                                        body_exit_block.succs = vec![post_id];
+                                    }
                                 }
-                                let post_block = blocks.get_mut(&post_id).unwrap();
-                                post_block.succs = vec![cond_id];
+                                
+                                if let Some(post_block) = blocks.get_mut(&post_id) {
+                                    post_block.succs = vec![cond_id];
+                                }
                             } else {
-                                let body_exit_block = blocks.get_mut(&body_exit).unwrap();
-                                if body_exit_block.succs.is_empty() {
-                                    body_exit_block.succs = vec![cond_id];
+                                if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
+                                    if body_exit_block.succs.is_empty() {
+                                        body_exit_block.succs = vec![cond_id];
+                                    }
                                 }
                             }
 
-                            let cond_block = blocks.get_mut(&cond_id).unwrap();
-                            cond_block.succs.push(body_entry);
-                            cond_block.succs.push(after_id);
+                            if let Some(cond_block) = blocks.get_mut(&cond_id) {
+                                cond_block.succs.push(body_entry);
+                                cond_block.succs.push(after_id);
+                            }
 
                             prev_id = after_id;
                             let _ = prev_saved;
@@ -520,11 +585,12 @@ impl ControlFlowGraph {
                                 &mut next_id,
                                 &inner_vec,
                                 exit_id,
-                                None,
-                                None,
+                                current_loop_cond,
+                                current_loop_after,
                                 &mut label_map,
                             );
                             pending_gotos.append(&mut rng_gotos);
+                            
                             if let Some(lb) = blocks.get_mut(&id) {
                                 if lb.succs.is_empty() {
                                     lb.succs = vec![entry];
@@ -545,46 +611,56 @@ impl ControlFlowGraph {
                     connect_if_empty!(prev_id, id, blocks);
 
                     let bs: &BranchStmt = br_rc.as_ref();
-                    let branch_block = blocks.get_mut(&id).unwrap();
-
-                    match bs.token {
-                        Token::GOTO => {
-                            if let Some(label_ident) = bs.label {
-                                let name = objs.idents[label_ident].name.clone();
-                                if let Some(&target) = label_map.get(&name) {
-                                    branch_block.succs = vec![target];
-                                } else {
-                                    pending_gotos.push((id, name));
-                                }
-                            }
-                        }
-                        Token::BREAK => {
-                            let mut succ: usize = exit_id;
-
-                            if let Some(label_ident) = bs.label {
-                                let name = objs.idents[label_ident].name.clone();
-                                if let Some(&target) = label_map.get(&name) {
-                                    if let Some(tgt_block) = blocks.get(&target) {
-                                        if let Some(&first) = tgt_block.succs.first() {
-                                            succ = first;
-                                        }
+                    
+                    if let Some(branch_block) = blocks.get_mut(&id) {
+                        match bs.token {
+                            Token::GOTO => {
+                                if let Some(label_ident) = bs.label {
+                                    let name = objs.idents[label_ident].name.clone();
+                                    if let Some(&target) = label_map.get(&name) {
+                                        branch_block.succs = vec![target];
+                                    } else {
+                                        pending_gotos.push((id, name));
                                     }
-                                } else {
-                                    pending_gotos.push((id, name));
                                 }
-                            } else {
-                                succ = exit_id;
                             }
-
-                            if let Some(bb) = blocks.get_mut(&id) {
-                                bb.succs = vec![succ];
+                            Token::BREAK => {
+                                if let Some(label_ident) = bs.label {
+                                    let name = objs.idents[label_ident].name.clone();
+                                    if let Some(context) = loop_contexts.get(&name) {
+                                        branch_block.succs = vec![context.after_id];
+                                    } else if let Some(&target) = label_map.get(&name) {
+                                        // Fallback for labels that aren't loop contexts
+                                        branch_block.succs = vec![target];
+                                    } else {
+                                        pending_gotos.push((id, name));
+                                    }
+                                } else if let Some(after) = current_loop_after {
+                                    branch_block.succs = vec![after];
+                                } else {
+                                    branch_block.succs = vec![exit_id];
+                                }
                             }
+                            Token::CONTINUE => {
+                                if let Some(label_ident) = bs.label {
+                                    let name = objs.idents[label_ident].name.clone();
+                                    if let Some(context) = loop_contexts.get(&name) {
+                                        branch_block.succs = vec![context.cond_id];
+                                    } else if let Some(&target) = label_map.get(&name) {
+                                        // Fallback for labels that aren't loop contexts
+                                        branch_block.succs = vec![target];
+                                    } else {
+                                        pending_gotos.push((id, name));
+                                    }
+                                } else if let Some(cond) = current_loop_cond {
+                                    branch_block.succs = vec![cond];
+                                } else {
+                                    branch_block.succs = vec![exit_id];
+                                }
+                            }
+                            Token::FALLTHROUGH => {}
+                            _ => {}
                         }
-                        Token::CONTINUE => {
-                            branch_block.succs = vec![exit_id];
-                        }
-                        Token::FALLTHROUGH => {}
-                        _ => {}
                     }
 
                     prev_id = id;
@@ -596,8 +672,9 @@ impl ControlFlowGraph {
 
                     connect_if_empty!(prev_id, id, blocks);
 
-                    let return_block = blocks.get_mut(&id).unwrap();
-                    return_block.succs = vec![exit_id];
+                    if let Some(return_block) = blocks.get_mut(&id) {
+                        return_block.succs = vec![exit_id];
+                    }
 
                     prev_id = id;
                 }
@@ -613,6 +690,7 @@ impl ControlFlowGraph {
             }
         }
 
+        // Resolve pending gotos
         for (blk_id, label_name) in pending_gotos {
             if let Some(&target) = label_map.get(&label_name) {
                 if let Some(goto_block) = blocks.get_mut(&blk_id) {
@@ -629,13 +707,16 @@ impl ControlFlowGraph {
             }
         }
 
-        if prev_id != exit_id && blocks.contains_key(&prev_id) {
-            let prev_block = blocks.get_mut(&prev_id).unwrap();
-            if prev_block.succs.is_empty() {
-                prev_block.succs.push(exit_id);
+        // Connect last block to exit if needed
+        if prev_id != exit_id {
+            if let Some(prev_block) = blocks.get_mut(&prev_id) {
+                if prev_block.succs.is_empty() {
+                    prev_block.succs.push(exit_id);
+                }
             }
         }
 
+        // Clean up unreachable blocks
         {
             use std::collections::HashSet;
             let mut visited = HashSet::new();
@@ -653,6 +734,7 @@ impl ControlFlowGraph {
             blocks.retain(|id, _| visited.contains(id));
         }
 
+        // Optimize empty blocks
         {
             let mut changed = true;
             let mut iterations = 0;
@@ -712,6 +794,7 @@ impl ControlFlowGraph {
             }
         }
 
+        // Clean up again after optimization
         {
             use std::collections::HashSet;
             let mut visited = HashSet::new();
@@ -729,6 +812,7 @@ impl ControlFlowGraph {
             blocks.retain(|id, _| visited.contains(id));
         }
 
+        // Validate the graph
         for (id, block) in &blocks {
             if block.succs.is_empty() && *id != exit_id {
                 eprintln!("Warning: block {} has no successors", id);
@@ -744,6 +828,7 @@ impl ControlFlowGraph {
             }
         }
 
+        // Ensure exit block has no successors
         if let Some(exit_blk) = blocks.get_mut(&exit_id) {
             exit_blk.succs.clear();
         }
@@ -802,9 +887,12 @@ impl ControlFlowGraph {
                     );
 
                     if let Some(p) = prev {
-                        if blocks.get(&p).unwrap().succs.is_empty() {
-                            let prev_block = blocks.get_mut(&p).unwrap();
-                            prev_block.succs = vec![cond_id];
+                        if let Some(prev_block) = blocks.get(&p) {
+                            if prev_block.succs.is_empty() {
+                                if let Some(pb) = blocks.get_mut(&p) {
+                                    pb.succs = vec![cond_id];
+                                }
+                            }
                         }
                     }
 
@@ -870,21 +958,24 @@ impl ControlFlowGraph {
                         },
                     );
 
-                    let cond_block = blocks.get_mut(&cond_id).unwrap();
-                    cond_block.succs.push(then_entry);
-                    cond_block
-                        .succs
-                        .push(else_result.map(|(entry, _)| entry).unwrap_or(after_id));
+                    if let Some(cond_block) = blocks.get_mut(&cond_id) {
+                        cond_block.succs.push(then_entry);
+                        cond_block
+                            .succs
+                            .push(else_result.map(|(entry, _)| entry).unwrap_or(after_id));
+                    }
 
-                    let then_exit_block = blocks.get_mut(&then_exit).unwrap();
-                    if then_exit_block.succs.is_empty() {
-                        then_exit_block.succs = vec![after_id];
+                    if let Some(then_exit_block) = blocks.get_mut(&then_exit) {
+                        if then_exit_block.succs.is_empty() {
+                            then_exit_block.succs = vec![after_id];
+                        }
                     }
 
                     if let Some((_, else_exit)) = else_result {
-                        let else_exit_block = blocks.get_mut(&else_exit).unwrap();
-                        if else_exit_block.succs.is_empty() {
-                            else_exit_block.succs = vec![after_id];
+                        if let Some(else_exit_block) = blocks.get_mut(&else_exit) {
+                            if else_exit_block.succs.is_empty() {
+                                else_exit_block.succs = vec![after_id];
+                            }
                         }
                     }
 
@@ -906,8 +997,12 @@ impl ControlFlowGraph {
                             },
                         );
                         if let Some(p) = prev {
-                            if blocks.get(&p).unwrap().succs.is_empty() {
-                                blocks.get_mut(&p).unwrap().succs = vec![id];
+                            if let Some(prev_block) = blocks.get(&p) {
+                                if prev_block.succs.is_empty() {
+                                    if let Some(pb) = blocks.get_mut(&p) {
+                                        pb.succs = vec![id];
+                                    }
+                                }
                             }
                         }
                         id
@@ -953,8 +1048,10 @@ impl ControlFlowGraph {
                             end_line: 0,
                         },
                     );
-                    if blocks.get(&init_id).unwrap().succs.is_empty() {
-                        blocks.get_mut(&init_id).unwrap().succs = vec![cond_id];
+                    if let Some(init_block) = blocks.get_mut(&init_id) {
+                        if init_block.succs.is_empty() {
+                            init_block.succs = vec![cond_id];
+                        }
                     }
 
                     let after_id = *next_id;
@@ -1002,16 +1099,21 @@ impl ControlFlowGraph {
                                 end_line: 0,
                             },
                         );
-                        if blocks.get(&body_exit).unwrap().succs.is_empty() {
-                            blocks.get_mut(&body_exit).unwrap().succs = vec![post_id];
+                        if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
+                            if body_exit_block.succs.is_empty() {
+                                body_exit_block.succs = vec![post_id];
+                            }
                         }
-                    } else if blocks.get(&body_exit).unwrap().succs.is_empty() {
-                        blocks.get_mut(&body_exit).unwrap().succs = vec![cond_id];
+                    } else if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
+                        if body_exit_block.succs.is_empty() {
+                            body_exit_block.succs = vec![cond_id];
+                        }
                     }
 
-                    let cond_blk = blocks.get_mut(&cond_id).unwrap();
-                    cond_blk.succs.push(body_entry);
-                    cond_blk.succs.push(after_id);
+                    if let Some(cond_blk) = blocks.get_mut(&cond_id) {
+                        cond_blk.succs.push(body_entry);
+                        cond_blk.succs.push(after_id);
+                    }
 
                     prev = Some(after_id);
                     last_id = after_id;
@@ -1031,9 +1133,12 @@ impl ControlFlowGraph {
                     );
 
                     if let Some(p) = prev {
-                        if blocks.get(&p).unwrap().succs.is_empty() {
-                            let prev_block = blocks.get_mut(&p).unwrap();
-                            prev_block.succs = vec![nested_cond_id];
+                        if let Some(prev_block) = blocks.get(&p) {
+                            if prev_block.succs.is_empty() {
+                                if let Some(prev_block) = blocks.get_mut(&p) {
+                                    prev_block.succs = vec![nested_cond_id];
+                                }
+                            }
                         }
                     }
 
@@ -1069,14 +1174,16 @@ impl ControlFlowGraph {
                     }
                     pending_gotos.append(&mut nested_gotos);
 
-                    let body_exit_block = blocks.get_mut(&body_exit).unwrap();
-                    if body_exit_block.succs.is_empty() {
-                        body_exit_block.succs = vec![nested_cond_id];
+                    if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
+                        if body_exit_block.succs.is_empty() {
+                            body_exit_block.succs = vec![nested_cond_id];
+                        }
                     }
 
-                    let cond_block = blocks.get_mut(&nested_cond_id).unwrap();
-                    cond_block.succs.push(body_entry);
-                    cond_block.succs.push(nested_after_id);
+                    if let Some(cond_block) = blocks.get_mut(&nested_cond_id) {
+                        cond_block.succs.push(body_entry);
+                        cond_block.succs.push(nested_after_id);
+                    }
 
                     prev = Some(nested_after_id);
                     last_id = nested_after_id;
@@ -1096,9 +1203,12 @@ impl ControlFlowGraph {
                         },
                     );
                     if let Some(p) = prev {
-                        if blocks.get(&p).unwrap().succs.is_empty() {
-                            let prev_block = blocks.get_mut(&p).unwrap();
-                            prev_block.succs = vec![id];
+                        if let Some(prev_block) = blocks.get(&p) {
+                            if prev_block.succs.is_empty() {
+                                if let Some(prev_block) = blocks.get_mut(&p) {
+                                    prev_block.succs = vec![id];
+                                }
+                            }
                         }
                     }
 
@@ -1143,24 +1253,18 @@ impl ControlFlowGraph {
                             let bs: &BranchStmt = br_rc.as_ref();
                             match bs.token {
                                 Token::BREAK => {
-                                    let mut succ: usize = exit_id;
-
                                     if let Some(label_ident) = bs.label {
                                         let name = objs.idents[label_ident].name.clone();
                                         if let Some(&target) = label_map.get(&name) {
-                                            if let Some(tgt_block) = blocks.get(&target) {
-                                                if let Some(&first) = tgt_block.succs.first() {
-                                                    succ = first;
-                                                }
-                                            }
+                                            succs.push(target);
                                         } else {
                                             pending_gotos.push((id, name));
                                         }
                                     } else if let Some(after) = loop_after {
-                                        succ = after;
+                                        succs.push(after);
+                                    } else {
+                                        succs.push(exit_id);
                                     }
-
-                                    succs.push(succ);
                                 }
                                 Token::CONTINUE => {
                                     if let Some(label_ident) = bs.label {
@@ -1205,9 +1309,12 @@ impl ControlFlowGraph {
                     );
 
                     if let Some(p) = prev {
-                        if blocks.get(&p).unwrap().succs.is_empty() {
-                            let prev_block = blocks.get_mut(&p).unwrap();
-                            prev_block.succs = vec![id];
+                        if let Some(prev_block) = blocks.get(&p) {
+                            if prev_block.succs.is_empty() {
+                                if let Some(prev_block) = blocks.get_mut(&p) {
+                                    prev_block.succs = vec![id];
+                                }
+                            }
                         }
                     }
                     prev = Some(id);
