@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use skan_uj_kod::ast::parse_project;
-    use skan_uj_kod::cfg::build_cfgs_for_file;
+    use cfg_lib::ast::parse_project;
+    use cfg_lib::cfg::build_cfgs_for_file;
     use go_parser::Token;
     use go_parser::ast::Stmt;
     use std::collections::HashSet;
@@ -146,7 +146,7 @@ mod tests {
     }
     
 
-    use skan_uj_kod::cfg::ControlFlowGraph;
+    use cfg_lib::cfg::ControlFlowGraph;
 
     fn verify_cfg_structure(code: &str) -> ControlFlowGraph {
         let (temp_file, func_name) = parse_go_code(code);
