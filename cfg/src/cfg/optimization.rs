@@ -2,7 +2,6 @@ use crate::cfg::types::BasicBlock;
 use go_parser::ast::Stmt;
 use std::collections::{HashMap, HashSet};
 
-// Clean up unreachable blocks
 pub fn clean_unreachable_blocks(blocks: &mut HashMap<usize, BasicBlock>, entry: usize) {
     let mut visited = HashSet::new();
     let mut stack = vec![entry];
@@ -19,7 +18,6 @@ pub fn clean_unreachable_blocks(blocks: &mut HashMap<usize, BasicBlock>, entry: 
     blocks.retain(|id, _| visited.contains(id));
 }
 
-// Optimize empty blocks
 pub fn optimize_empty_blocks(
     blocks: &mut HashMap<usize, BasicBlock>,
     entry: usize,
