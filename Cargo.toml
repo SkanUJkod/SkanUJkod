@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "cfg-lib", 
+    "cfg", 
+    "statement_cov",
     ".",     
 ]
 
@@ -12,10 +13,11 @@ edition = "2021"
 
 
 [dependencies]
-anyhow    = "1.0"
-walkdir   = "2.3"
-tempfile  = "3.3"
-go-parser = "0.1.5"
-
-
-cfg_lib = { path = "cfg-lib" }
+anyhow = "1.0"
+walkdir = "2.3"
+tempfile = "3.3"
+go-parser = "0.1"
+cfg = { path = "cfg" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+statement_cov = { path = "statement_cov" }
