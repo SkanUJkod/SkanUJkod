@@ -1,4 +1,4 @@
-use crate::cfg::types::{BasicBlock, ControlFlowGraph, LoopContext};
+use crate::cfg::types::{BasicBlock, ControlFlowGraph, LoopContext, Statement};
 use go_parser::Token;
 use go_parser::ast::{BlockStmt, BranchStmt, CaseClause, Decl, EmptyStmt, FuncDecl, Node, Stmt};
 use go_parser::{AstObjects, FileSet};
@@ -49,11 +49,15 @@ impl ControlFlowGraph {
         let push_single = |blocks: &mut HashMap<usize, BasicBlock>, id: usize, stmt: Stmt| {
             let pos = stmt.pos(objs);
             let line = fset.position(pos).unwrap().line;
+            let stmt_text = format!("{:?}", stmt);
             blocks.insert(
                 id,
                 BasicBlock {
                     id,
-                    stmts: vec![stmt],
+                    stmts: vec![crate::cfg::types::Statement {
+                        text: stmt_text,
+                        stmt,
+                    }],
                     succs: Vec::new(),
                     start_line: line,
                     end_line: line,
@@ -137,10 +141,13 @@ impl ControlFlowGraph {
                         after_id,
                         BasicBlock {
                             id: after_id,
-                            stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                semi: 0,
-                                implicit: true,
-                            }))],
+                            stmts: vec![Statement {
+                                text: "<empty>".to_string(),
+                                stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                    semi: 0,
+                                    implicit: true,
+                                })),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -217,10 +224,13 @@ impl ControlFlowGraph {
                         after_id,
                         BasicBlock {
                             id: after_id,
-                            stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                semi: 0,
-                                implicit: true,
-                            }))],
+                            stmts: vec![Statement {
+                                text: "<empty>".to_string(),
+                                stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                    semi: 0,
+                                    implicit: true,
+                                })),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -291,10 +301,13 @@ impl ControlFlowGraph {
                         after_id,
                         BasicBlock {
                             id: after_id,
-                            stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                semi: 0,
-                                implicit: true,
-                            }))],
+                            stmts: vec![Statement {
+                                text: "<empty>".to_string(),
+                                stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                    semi: 0,
+                                    implicit: true,
+                                })),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -391,10 +404,13 @@ impl ControlFlowGraph {
                         after_id,
                         BasicBlock {
                             id: after_id,
-                            stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                semi: 0,
-                                implicit: true,
-                            }))],
+                            stmts: vec![Statement {
+                                text: "<empty>".to_string(),
+                                stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                    semi: 0,
+                                    implicit: true,
+                                })),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -482,10 +498,13 @@ impl ControlFlowGraph {
                                 after_id,
                                 BasicBlock {
                                     id: after_id,
-                                    stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                        semi: 0,
-                                        implicit: true,
-                                    }))],
+                                    stmts: vec![Statement {
+                                        text: "<empty>".to_string(),
+                                        stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                            semi: 0,
+                                            implicit: true,
+                                        })),
+                                    }],
                                     succs: vec![],
                                     start_line: 0,
                                     end_line: 0,
@@ -732,10 +751,13 @@ impl ControlFlowGraph {
                 id,
                 BasicBlock {
                     id,
-                    stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                        semi: 0,
-                        implicit: true,
-                    }))],
+                    stmts: vec![Statement {
+                        text: "<empty>".to_string(),
+                        stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                            semi: 0,
+                            implicit: true,
+                        })),
+                    }],
                     succs: vec![],
                     start_line: 0,
                     end_line: 0,
@@ -758,7 +780,10 @@ impl ControlFlowGraph {
                         cond_id,
                         BasicBlock {
                             id: cond_id,
-                            stmts: vec![stmt.clone()],
+                            stmts: vec![Statement {
+                                text: format!("{:?}", stmt),
+                                stmt: stmt.clone(),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -827,10 +852,13 @@ impl ControlFlowGraph {
                         after_id,
                         BasicBlock {
                             id: after_id,
-                            stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                semi: 0,
-                                implicit: true,
-                            }))],
+                            stmts: vec![Statement {
+                                text: "<empty>".to_string(),
+                                stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                    semi: 0,
+                                    implicit: true,
+                                })),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -869,7 +897,10 @@ impl ControlFlowGraph {
                             id,
                             BasicBlock {
                                 id,
-                                stmts: vec![init_stmt.clone()],
+                                stmts: vec![Statement {
+                                    text: format!("{:?}", init_stmt),
+                                    stmt: init_stmt.clone(),
+                                }],
                                 succs: vec![],
                                 start_line: 0,
                                 end_line: 0,
@@ -894,10 +925,13 @@ impl ControlFlowGraph {
                             id,
                             BasicBlock {
                                 id,
-                                stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                    semi: 0,
-                                    implicit: true,
-                                }))],
+                                stmts: vec![Statement {
+                                    text: "<empty>".to_string(),
+                                    stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                        semi: 0,
+                                        implicit: true,
+                                    })),
+                                }],
                                 succs: vec![],
                                 start_line: 0,
                                 end_line: 0,
@@ -920,7 +954,10 @@ impl ControlFlowGraph {
                         cond_id,
                         BasicBlock {
                             id: cond_id,
-                            stmts: vec![cond_stmt],
+                            stmts: vec![Statement {
+                                text: format!("{:?}", cond_stmt),
+                                stmt: cond_stmt,
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -938,10 +975,13 @@ impl ControlFlowGraph {
                         after_id,
                         BasicBlock {
                             id: after_id,
-                            stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                semi: 0,
-                                implicit: true,
-                            }))],
+                            stmts: vec![Statement {
+                                text: "<empty>".to_string(),
+                                stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                    semi: 0,
+                                    implicit: true,
+                                })),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -971,7 +1011,10 @@ impl ControlFlowGraph {
                             post_id,
                             BasicBlock {
                                 id: post_id,
-                                stmts: vec![post_stmt.clone()],
+                                stmts: vec![Statement {
+                                    text: format!("{:?}", post_stmt),
+                                    stmt: post_stmt.clone(),
+                                }],
                                 succs: vec![cond_id],
                                 start_line: 0,
                                 end_line: 0,
@@ -1003,7 +1046,10 @@ impl ControlFlowGraph {
                         nested_cond_id,
                         BasicBlock {
                             id: nested_cond_id,
-                            stmts: vec![stmt.clone()],
+                            stmts: vec![Statement {
+                                text: format!("{:?}", stmt),
+                                stmt: stmt.clone(),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -1026,10 +1072,13 @@ impl ControlFlowGraph {
                         nested_after_id,
                         BasicBlock {
                             id: nested_after_id,
-                            stmts: vec![Stmt::Empty(Rc::new(EmptyStmt {
-                                semi: 0,
-                                implicit: true,
-                            }))],
+                            stmts: vec![Statement {
+                                text: "<empty>".to_string(),
+                                stmt: Stmt::Empty(Rc::new(EmptyStmt {
+                                    semi: 0,
+                                    implicit: true,
+                                })),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -1074,7 +1123,10 @@ impl ControlFlowGraph {
                         id,
                         BasicBlock {
                             id,
-                            stmts: vec![stmt.clone()],
+                            stmts: vec![Statement {
+                                text: format!("{:?}", stmt),
+                                stmt: stmt.clone(),
+                            }],
                             succs: vec![],
                             start_line: 0,
                             end_line: 0,
@@ -1179,7 +1231,10 @@ impl ControlFlowGraph {
                         id,
                         BasicBlock {
                             id,
-                            stmts: vec![stmt.clone()],
+                            stmts: vec![Statement {
+                                text: format!("{:?}", stmt),
+                                stmt: stmt.clone(),
+                            }],
                             succs,
                             start_line: 0,
                             end_line: 0,
@@ -1218,4 +1273,39 @@ pub fn build_cfgs_for_file(
         }
     }
     out
+}
+
+use std::fs::File;
+use std::io::Write;
+
+pub fn export_instrumented_go(
+    func_name: &str,
+    cfg: &ControlFlowGraph,
+    output_path: &std::path::Path,
+) -> std::io::Result<()> {
+    let mut file = File::create(output_path)?;
+    writeln!(file, "package main\n")?;
+    writeln!(file, "var hits = map[string]map[int]bool{{}}")?;
+    writeln!(
+        file,
+        "func stmt_hit(funcName string, id int) {{\n\tif _, ok := hits[funcName]; !ok {{\n\t\thits[funcName] = map[int]bool{{}}\n\t}}\n\thits[funcName][id] = true\n}}\n"
+    )?;
+
+    writeln!(file, "func {}() {{", func_name)?;
+
+    for (block_id, block) in &cfg.blocks {
+        for _stmt in &block.stmts {
+            writeln!(file, "\tstmt_hit(\"{}\", {});", func_name, block_id)?;
+            writeln!(file, "\t// <original statement here>")?;
+        }
+    }
+
+    writeln!(file, "}}")?;
+
+    writeln!(
+        file,
+        "\n// TODO: call {} from main or test to execute it",
+        func_name
+    )?;
+    Ok(())
 }

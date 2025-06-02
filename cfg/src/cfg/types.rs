@@ -1,10 +1,15 @@
-use go_parser::ast::Stmt;
 use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+pub struct Statement {
+    pub text: String,
+    pub stmt: go_parser::ast::Stmt,
+}
 
 #[derive(Debug, Clone)]
 pub struct BasicBlock {
     pub id: usize,
-    pub stmts: Vec<Stmt>,
+    pub stmts: Vec<Statement>,
     pub succs: Vec<usize>,
     pub start_line: usize,
     pub end_line: usize,

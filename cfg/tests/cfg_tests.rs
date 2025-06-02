@@ -144,7 +144,6 @@ mod tests {
             "Not all blocks are reachable"
         );
     }
-    
 
     use cfg_lib::cfg::ControlFlowGraph;
 
@@ -337,7 +336,7 @@ mod tests {
             .values()
             .find(|b| {
                 b.stmts.iter().any(|s| {
-                    if let Stmt::Branch(br) = s {
+                    if let Stmt::Branch(br) = &s.stmt {
                         br.token == Token::GOTO
                     } else {
                         false
@@ -993,7 +992,7 @@ mod tests {
         let switch_block = cfg
             .blocks
             .values()
-            .find(|b| b.stmts.iter().any(|s| matches!(s, Stmt::Switch(_))))
+            .find(|b| b.stmts.iter().any(|s| matches!(&s.stmt, Stmt::Switch(_))))
             .expect("Switch block not found");
 
         assert!(
@@ -1044,7 +1043,7 @@ mod tests {
             .values()
             .find(|b| {
                 b.stmts.iter().any(|s| {
-                    if let Stmt::Branch(br) = s {
+                    if let Stmt::Branch(br) = &s.stmt {
                         br.token == Token::GOTO
                     } else {
                         false
@@ -1104,7 +1103,7 @@ mod tests {
         let empty_blocks = cfg
             .blocks
             .values()
-            .filter(|b| b.stmts.len() == 1 && matches!(&b.stmts[0], Stmt::Empty(_)))
+            .filter(|b| b.stmts.len() == 1 && matches!(&b.stmts[0].stmt, Stmt::Empty(_)))
             .count();
 
         assert!(empty_blocks <= 2, "Too many empty blocks: {}", empty_blocks);
@@ -1132,7 +1131,7 @@ mod tests {
             .blocks
             .values()
             .flat_map(|b| &b.stmts)
-            .filter(|s| matches!(s, Stmt::Return(_)))
+            .filter(|s| matches!(&s.stmt, Stmt::Return(_)))
             .count();
 
         assert!(

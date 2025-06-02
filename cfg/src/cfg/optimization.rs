@@ -42,7 +42,7 @@ pub fn optimize_empty_blocks(
             }
 
             let is_trivial = blk.stmts.len() == 1
-                && matches!(&blk.stmts[0], Stmt::Empty(e) if e.implicit)
+                && matches!(&blk.stmts[0].stmt, Stmt::Empty(e) if e.implicit)
                 && blk.succs.len() == 1;
 
             let is_label_def = label_def_ids.contains(bid);
