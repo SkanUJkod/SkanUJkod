@@ -17,7 +17,7 @@ anyhow = "1.0"
 walkdir = "2.3"
 tempfile = "3.3"
 go-parser = "0.1"
-cfg = { path = "cfg" }
+cfg = { path = "./cfg" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-statement_cov = { path = "statement_cov" }
+statement_cov = { path = "./statement_cov" }

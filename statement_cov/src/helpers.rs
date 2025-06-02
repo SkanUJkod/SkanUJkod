@@ -1,8 +1,7 @@
-use crate::analyze_statement_coverage;
 use crate::ProjectCoverage;
 use anyhow::{Context, Result};
 use serde::Serialize;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
