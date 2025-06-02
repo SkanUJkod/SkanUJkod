@@ -79,8 +79,8 @@ impl ControlFlowGraph {
         let mut loop_contexts: HashMap<String, LoopContext> = HashMap::new();
         let mut label_def_ids: std::collections::HashSet<usize> = std::collections::HashSet::new();
         let mut pending_gotos: Vec<(usize, String)> = Vec::new();
-        let mut current_loop_cond: Option<usize> = None;
-        let mut current_loop_after: Option<usize> = None;
+        let current_loop_cond: Option<usize> = None;
+        let current_loop_after: Option<usize> = None;
 
         for stmt in &body.list {
             match stmt {
@@ -237,11 +237,6 @@ impl ControlFlowGraph {
                         },
                     );
 
-                    let saved_loop_cond = current_loop_cond;
-                    let saved_loop_after = current_loop_after;
-                    current_loop_cond = Some(cond_id);
-                    current_loop_after = Some(after_id);
-
                     let mut loop_label_map = label_map.clone();
                     let (body_entry, body_exit, mut body_gotos) = Self::build_chain(
                         objs,
@@ -257,10 +252,6 @@ impl ControlFlowGraph {
                         label_map.insert(k, v);
                     }
                     pending_gotos.append(&mut body_gotos);
-
-                    // Restore previous loop context
-                    current_loop_cond = saved_loop_cond;
-                    current_loop_after = saved_loop_after;
 
                     if let Some(post_stmt) = &forst.post {
                         let post_id = next_id;
@@ -314,11 +305,6 @@ impl ControlFlowGraph {
                         },
                     );
 
-                    let saved_loop_cond = current_loop_cond;
-                    let saved_loop_after = current_loop_after;
-                    current_loop_cond = Some(cond_id);
-                    current_loop_after = Some(after_id);
-
                     let mut range_label_map = label_map.clone();
                     let (body_entry, body_exit, mut range_gotos) = Self::build_chain(
                         objs,
@@ -334,10 +320,6 @@ impl ControlFlowGraph {
                         label_map.insert(k, v);
                     }
                     pending_gotos.append(&mut range_gotos);
-
-                    // Restore previous loop context
-                    current_loop_cond = saved_loop_cond;
-                    current_loop_after = saved_loop_after;
 
                     if let Some(body_exit_block) = blocks.get_mut(&body_exit) {
                         if body_exit_block.succs.is_empty() {
@@ -521,11 +503,6 @@ impl ControlFlowGraph {
                                 },
                             );
 
-                            let saved_loop_cond = current_loop_cond;
-                            let saved_loop_after = current_loop_after;
-                            current_loop_cond = Some(cond_id);
-                            current_loop_after = Some(after_id);
-
                             let mut loop_label_map = label_map.clone();
                             let (body_entry, body_exit, mut body_gotos) = Self::build_chain(
                                 objs,
@@ -544,9 +521,6 @@ impl ControlFlowGraph {
                             pending_gotos.append(&mut body_gotos);
 
                             // Restore previous loop context
-                            current_loop_cond = saved_loop_cond;
-                            current_loop_after = saved_loop_after;
-
                             if let Some(post_stmt) = &forst.post {
                                 let post_id = next_id;
                                 next_id += 1;

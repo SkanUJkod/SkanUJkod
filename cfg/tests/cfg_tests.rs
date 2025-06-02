@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use cfg_lib::ast::parse_project;
-    use cfg_lib::cfg::build_cfgs_for_file;
+
+    use cfg::ast::parse_project;
+    use cfg::cfg::build_cfgs_for_file;
+    use cfg::cfg::ControlFlowGraph;
     use go_parser::Token;
     use go_parser::ast::Stmt;
     use std::collections::HashSet;
@@ -9,7 +11,6 @@ mod tests {
     use tempfile::NamedTempFile;
 
     fn parse_go_code(code: &str) -> (tempfile::NamedTempFile, String) {
-        use std::io::Write;
         let mut temp_file = NamedTempFile::with_suffix(".go").expect("Failed to create temp file");
 
         let lines: Vec<&str> = code.lines().collect();
@@ -39,9 +40,9 @@ mod tests {
             format!("{}\n", formatted_code)
         };
 
-        write!(temp_file, "{}", final_code).expect("Failed to write to temp file");
+        write!(temp_file.as_file_mut(), "{}", final_code).expect("Failed to write to temp file");
 
-        temp_file.flush().expect("Failed to flush temp file");
+        temp_file.as_file_mut().flush().expect("Failed to flush temp file");
 
         temp_file.as_file().sync_all().expect("Failed to sync file");
 
@@ -144,8 +145,6 @@ mod tests {
             "Not all blocks are reachable"
         );
     }
-
-    use cfg_lib::cfg::ControlFlowGraph;
 
     fn verify_cfg_structure(code: &str) -> ControlFlowGraph {
         let (temp_file, func_name) = parse_go_code(code);

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-walkdir    = "2"
-tempfile   = "3"
-anyhow     = "1"
-go-parser  = "0.1.5"
+walkdir = "2"
+tempfile = "3"
+anyhow = "1"
+go-parser = "0.1.5"
