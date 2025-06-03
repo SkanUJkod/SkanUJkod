@@ -14,11 +14,11 @@ impl Metric for CommitsByAuthorInRepo {
         "commits_by_author_in_repo"
     }
 
-    fn default_results(&self) -> super::result_type::MetricResultType {
+    fn default_result(&self) -> super::result_type::MetricResultType {
         super::result_type::MetricResultType::CountMap(HashMap::new())
     }
 
-    fn run(
+    fn compute(
         &self,
         commit: &Commit,
         _child_commit: Option<&Commit>,
@@ -38,11 +38,11 @@ impl Metric for ContributorsInTimeframe {
         "contributors_in_timeframe"
     }
 
-    fn default_results(&self) -> super::result_type::MetricResultType {
+    fn default_result(&self) -> super::result_type::MetricResultType {
         super::result_type::MetricResultType::UniqueValues(HashSet::new())
     }
 
-    fn run(
+    fn compute(
         &self,
         commit: &Commit,
         _child_commit: Option<&Commit>,
@@ -67,17 +67,17 @@ impl Metric for PercentageOfTotalCommits {
         "percentage_of_total_commits"
     }
 
-    fn default_results(&self) -> super::result_type::MetricResultType {
+    fn default_result(&self) -> super::result_type::MetricResultType {
         super::result_type::MetricResultType::CountMap(HashMap::new())
     }
 
-    fn dependencies(&self) -> Option<&str> {
+    fn dependency(&self) -> Option<&str> {
         Some("commits_by_author_in_repo")
     }
 
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
-    fn calculate(&self, result: &mut MetricResultType) {
+    fn finalize(&self, result: &mut MetricResultType) {
         if let MetricResultType::CountMap(authors_commits) = result {
             let total: u32 = authors_commits.values().sum();
             if total > 0 {
@@ -94,11 +94,11 @@ impl Metric for FirstLastCommit {
         "first_last_commit"
     }
 
-    fn default_results(&self) -> super::result_type::MetricResultType {
+    fn default_result(&self) -> super::result_type::MetricResultType {
         super::result_type::MetricResultType::TimeRange(HashMap::new())
     }
 
-    fn run(
+    fn compute(
         &self,
         commit: &Commit,
         _child_commit: Option<&Commit>,

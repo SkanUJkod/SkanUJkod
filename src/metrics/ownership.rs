@@ -12,11 +12,11 @@ impl Metric for LinesAddedRemoved {
         "lines_added_removed"
     }
 
-    fn default_results(&self) -> super::result_type::MetricResultType {
+    fn default_result(&self) -> super::result_type::MetricResultType {
         super::result_type::MetricResultType::CountMap(HashMap::new())
     }
 
-    fn run(
+    fn compute(
         &self,
         commit: &Commit,
         child_commit: Option<&Commit>,

@@ -4,11 +4,11 @@ use std::collections::HashMap;
 
 pub trait Metric {
     fn name(&self) -> &'static str;
-    fn default_results(&self) -> MetricResultType;
-    fn dependencies(&self) -> Option<&str> {
+    fn default_result(&self) -> MetricResultType;
+    fn dependency(&self) -> Option<&str> {
         None
     }
-    fn run(
+    fn compute(
         &self,
         _commit: &Commit,
         _child_commit: Option<&Commit>,
@@ -16,5 +16,5 @@ pub trait Metric {
         _result: &mut MetricResultType,
     ) {
     }
-    fn calculate(&self, _result: &mut MetricResultType) {}
+    fn finalize(&self, _result: &mut MetricResultType) {}
 }
