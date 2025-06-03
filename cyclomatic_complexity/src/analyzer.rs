@@ -374,6 +374,30 @@ fn analyze_statement(
                 None
             }
         }
+        Stmt::For(_) => {
+            let pos = stmt.pos(objs);
+            if let Some(position) = fset.position(pos) {
+                Some(DecisionPoint {
+                    line: position.line,
+                    stmt_type: "for".to_string(),
+                    nesting_level,
+                })
+            } else {
+                None
+            }
+        }
+        Stmt::Switch(_) => {
+            let pos = stmt.pos(objs);
+            if let Some(position) = fset.position(pos) {
+                Some(DecisionPoint {
+                    line: position.line,
+                    stmt_type: "switch".to_string(),
+                    nesting_level,
+                })
+            } else {
+                None
+            }
+        }
         Stmt::Range(_) => {
             let pos = stmt.pos(objs);
             if let Some(position) = fset.position(pos) {

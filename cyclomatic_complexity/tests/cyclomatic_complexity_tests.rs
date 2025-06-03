@@ -346,6 +346,14 @@ func decisions(x int) int {
         let types: Vec<String> = func.decision_points.iter()
             .map(|dp| dp.stmt_type.clone())
             .collect();
+        
+        // Debug output
+        println!("Detected decision point types: {:?}", types);
+        println!("Number of decision points: {}", func.decision_points.len());
+        for dp in &func.decision_points {
+            println!("Decision point: {} at line {}", dp.stmt_type, dp.line);
+        }
+        
         assert!(types.contains(&"if".to_string()));
         assert!(types.contains(&"for".to_string()));
         assert!(types.contains(&"switch".to_string()));
