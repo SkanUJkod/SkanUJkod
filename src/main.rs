@@ -78,6 +78,14 @@ enum Commands {
         #[arg(long, value_enum)]
         image: Option<ImageFormat>,
     },
+    /// Generate CFG HTML gallery
+    CfgGallery {
+        /// Path to Go project or file
+        path: PathBuf,
+        /// Generate images (SVG) instead of DOT files
+        #[arg(long)]
+        images: bool,
+    },
     /// Analyze statement coverage
     StmtCov {
         /// Path to Go project
@@ -170,6 +178,7 @@ fn main() -> Result<()> {
         Commands::Cfg { path } => path.clone(),
         Commands::Dot { path, .. } => path.clone(),
         Commands::DotAll { path, .. } => path.clone(),
+        Commands::CfgGallery { path, .. } => path.clone(),
         Commands::StmtCov { path, .. } => path.clone(),
         Commands::BranchCov { path, .. } => path.clone(),
         Commands::Complexity { path, .. } => path.clone(),
@@ -352,6 +361,28 @@ fn main() -> Result<()> {
                 println!("Graph images generated in directory: {} (format: {})", out_dir.display(), format.extension());
             } else {
                 println!("DOT graphs generated in directory: {}", out_dir.display());
+            }
+        },
+        
+        Commands::CfgGallery { images, .. } => {
+            let output_path = args.output.unwrap_or_else(|| {
+                config.output.output_dir.join("cfg_gallery.html")
+            });
+            
+            if let Some(parent) = output_path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            
+            let spinner = cli::create_spinner("Generating CFG HTML gallery...");
+            reports::generate_cfg_html_gallery(&project_path, &output_path, images)?;
+            spinner.finish_with_message("✅ CFG gallery generated successfully");
+            
+            cli::print_success(&format!("CFG HTML gallery generated: {}", output_path.display()));
+            
+            if images {
+                println!("📸 SVG images generated in: {}/graphs/", output_path.parent().unwrap().display());
+            } else {
+                println!("📄 DOT files generated in: {}/graphs/", output_path.parent().unwrap().display());
             }
         },
         
