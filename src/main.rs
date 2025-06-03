@@ -1,10 +1,9 @@
-use std::path::{Path, PathBuf};
-use std::env;
+use std::path::PathBuf;
 use std::fs;
 use std::collections::HashMap;
-use std::process::Command;
-use anyhow::{Result, Context};
-use serde_json;
+use anyhow::Result;
+use clap::{Parser, Subcommand, ValueEnum};
+use colored::*;
 
 use cfg::{parse_project, build_cfgs_for_file, to_dot};
 use statement_cov::{
@@ -23,303 +22,271 @@ use branch_cov::{
     ProjectBranchCoverage
 };
 
-mod cli {
-    use super::*;
+mod cli;
+mod config;
+mod reports;
 
-    #[derive(Clone)]
-    pub enum ImageFormat {
-        PNG,
-        SVG,
-        PDF
-    }
+use config::Config;
 
-    impl ImageFormat {
-        pub fn from_str(format: &str) -> Option<Self> {
-            match format.to_lowercase().as_str() {
-                "png" => Some(Self::PNG),
-                "svg" => Some(Self::SVG),
-                "pdf" => Some(Self::PDF),
-                _ => None
-            }
+#[derive(Parser)]
+#[command(name = "skan-uj-kod")]
+#[command(about = "Static analysis tool for Go code")]
+#[command(version = "1.0")]
+struct Args {
+    #[command(subcommand)]
+    command: Commands,
+
+    /// Enable verbose output
+    #[arg(short, long, global = true)]
+    verbose: bool,
+
+    /// Output in JSON format
+    #[arg(short, long, global = true)]
+    json: bool,
+
+    /// Output file path
+    #[arg(short, long, global = true)]
+    output: Option<PathBuf>,
+
+    /// Configuration file path
+    #[arg(short, long, global = true)]
+    config: Option<PathBuf>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Display Control Flow Graph in debug format
+    Cfg {
+        /// Path to Go project or file
+        path: PathBuf,
+    },
+    /// Generate DOT format for a specific function
+    Dot {
+        /// Path to Go project or file
+        path: PathBuf,
+        /// Function name to generate DOT for
+        function: String,
+        /// Image format to generate
+        #[arg(long, value_enum)]
+        image: Option<ImageFormat>,
+    },
+    /// Generate DOT files for all functions
+    DotAll {
+        /// Path to Go project or file
+        path: PathBuf,
+        /// Image format to generate
+        #[arg(long, value_enum)]
+        image: Option<ImageFormat>,
+    },
+    /// Analyze statement coverage
+    StmtCov {
+        /// Path to Go project
+        path: PathBuf,
+        /// Coverage threshold for CI
+        #[arg(long, default_value = "80")]
+        threshold: f64,
+        /// Test timeout in seconds
+        #[arg(long, default_value = "30")]
+        timeout: u64,
+    },
+    /// Analyze branch coverage
+    BranchCov {
+        /// Path to Go project
+        path: PathBuf,
+        /// Coverage threshold for CI
+        #[arg(long, default_value = "80")]
+        threshold: f64,
+        /// Include test files in analysis
+        #[arg(long)]
+        include_tests: bool,
+        /// Test timeout in seconds
+        #[arg(long, default_value = "30")]
+        timeout: u64,
+    },
+    /// Analyze cyclomatic complexity
+    Complexity {
+        /// Path to Go project
+        path: PathBuf,
+        /// Maximum complexity threshold
+        #[arg(long, default_value = "10")]
+        max_complexity: usize,
+    },
+    /// Run comprehensive analysis (all metrics)
+    Full {
+        /// Path to Go project
+        path: PathBuf,
+        /// Generate HTML report
+        #[arg(long)]
+        html: bool,
+        /// Coverage threshold
+        #[arg(long, default_value = "80")]
+        threshold: f64,
+    },
+    /// Generate default configuration file
+    InitConfig {
+        /// Output path for config file
+        #[arg(default_value = "skan-uj-kod.toml")]
+        output: PathBuf,
+    },
+}
+
+#[derive(Clone, ValueEnum)]
+enum ImageFormat {
+    Png,
+    Svg,
+    Pdf,
+}
+
+impl ImageFormat {
+    pub fn extension(&self) -> &'static str {
+        match self {
+            Self::Png => "png",
+            Self::Svg => "svg",
+            Self::Pdf => "pdf",
         }
-
-        pub fn extension(&self) -> &'static str {
-            match self {
-                Self::PNG => "png",
-                Self::SVG => "svg",
-                Self::PDF => "pdf",
-            }
-        }
-    }
-
-    pub fn check_graphviz_installation() -> Result<bool> {
-        let output = Command::new("dot")
-            .arg("-V")
-            .output();
-
-        match output {
-            Ok(output) => Ok(output.status.success()),
-            Err(_) => Ok(false)
-        }
-    }
-
-    pub fn generate_image_from_dot(
-        dot_content: &str, 
-        output_path: &Path, 
-        format: ImageFormat
-    ) -> Result<()> {
-        if !check_graphviz_installation()? {
-            anyhow::bail!("Graphviz is not installed. Please install 'graphviz' package to generate images.");
-        }
-
-        let temp_dot_path = output_path.with_extension("dot");
-        fs::write(&temp_dot_path, dot_content)?;
-
-        let status = Command::new("dot")
-            .arg("-T")
-            .arg(format.extension())
-            .arg("-o")
-            .arg(output_path)
-            .arg(&temp_dot_path)
-            .status()
-            .context("Failed to run 'dot' command")?;
-
-        if !status.success() {
-            anyhow::bail!("The 'dot' command failed to execute");
-        }
-
-        if temp_dot_path != output_path {
-            let _ = fs::remove_file(temp_dot_path);
-        }
-
-        Ok(())
-    }
-
-    pub fn print_usage() {
-        eprintln!(
-            "Usage:\n  \
-            skan-uj-kod <command> [options] <path>\n\n\
-            Commands:\n  \
-            cfg                   - Display CFG in debug format\n  \
-            dot <FuncName>        - Print DOT format for selected function\n  \
-            dot-all               - Generate DOT files for all functions\n  \
-            stmt-cov              - Display statement coverage\n  \
-            branch-cov            - Display branch coverage analysis\n  \
-            complexity            - Display cyclomatic complexity analysis\n  \
-            help                  - Show this help message\n\n\
-            Options:\n  \
-            --json                - Output in JSON format\n  \
-            --output=<file>       - Write output to file\n  \
-            --image=<format>      - Generate image (png, svg, pdf) from DOT\n  \
-            --verbose             - Show detailed information"
-        );
-    }
-
-    pub fn print_complexity_report(complexity: &ProjectComplexity, detailed: bool) {
-        println!("\n=== Cyclomatic Complexity Report ===\n");
-        println!("Files analyzed: {}", complexity.files_analyzed);
-        println!("Functions found: {}", complexity.total_functions);
-        println!("Average complexity: {:.2}", complexity.average_complexity);
-        println!("Maximum complexity: {} ({})\n", 
-                complexity.max_complexity, complexity.max_complexity_function);
-
-        println!("Complexity Distribution:");
-        println!("  Low (1-5): {} functions", complexity.complexity_distribution.get("low").unwrap_or(&0));
-        println!("  Moderate (6-10): {} functions", complexity.complexity_distribution.get("moderate").unwrap_or(&0));
-        println!("  High (11-20): {} functions", complexity.complexity_distribution.get("high").unwrap_or(&0));
-        println!("  Very High (>20): {} functions\n", complexity.complexity_distribution.get("very_high").unwrap_or(&0));
-
-        if detailed {
-            println!("Function Details:");
-            let mut sorted_functions: Vec<_> = complexity.functions.iter().collect();
-            sorted_functions.sort_by(|a, b| b.1.cyclomatic_complexity.cmp(&a.1.cyclomatic_complexity));
-            
-            for (name, func) in sorted_functions.iter().take(10) {
-                println!("{} - CC: {}, Cognitive: {}, LOC: {}",
-                    name, 
-                    func.cyclomatic_complexity,
-                    func.cognitive_complexity,
-                    func.lines_of_code
-                );
-            }
-        }
-    }
-
-    pub fn print_coverage_report(coverage: &StmtCoverage, detailed: bool) {
-        println!("\n=== Statement Coverage Report ===\n");
-        println!("Files analyzed: {}", coverage.files_analyzed);
-        println!("Functions found: {}", coverage.functions.len());
-        println!("Total statements: {}", coverage.total_statements);
-        println!("Covered statements: {}", coverage.covered_statements);
-        println!("Overall coverage: {:.1}%\n", coverage.overall_coverage);
-
-        if detailed {
-            println!("Function Details:");
-            let mut functions: Vec<_> = coverage.functions.iter().collect();
-            functions.sort_by(|a, b| a.1.coverage_percentage.partial_cmp(&b.1.coverage_percentage).unwrap());
-            
-            for (func_name, func_coverage) in functions {
-                println!("{}", func_name);
-                println!("  Coverage: {:.1}% ({}/{})",
-                    func_coverage.coverage_percentage,
-                    func_coverage.covered_statements,
-                    func_coverage.total_statements
-                );
-                
-                if !func_coverage.uncovered_lines.is_empty() && func_coverage.uncovered_lines.len() <= 5 {
-                    println!("  Uncovered lines: {:?}", func_coverage.uncovered_lines);
-                } else if !func_coverage.uncovered_lines.is_empty() {
-                    println!("  Uncovered lines: {} (showing first 5: {:?}...)", 
-                        func_coverage.uncovered_lines.len(),
-                        &func_coverage.uncovered_lines[..5.min(func_coverage.uncovered_lines.len())]
-                    );
-                }
-                println!();
-            }
-        }
-    }
-
-    pub fn print_branch_coverage_report(coverage: &ProjectBranchCoverage, detailed: bool) {
-        println!("\n=== Branch Coverage Report ===\n");
-        println!("Files analyzed: {}", coverage.files_analyzed.len());
-        println!("Functions found: {}", coverage.functions.len());
-        println!("Total branches: {}", coverage.total_branches);
-        println!("Covered branches: {}", coverage.covered_branches);
-        println!("Overall coverage: {:.1}%\n", coverage.overall_coverage_percentage);
-
-        if detailed {
-            println!("Function Details:");
-            let mut functions: Vec<_> = coverage.functions.iter().collect();
-            functions.sort_by(|a, b| a.1.coverage_percentage.partial_cmp(&b.1.coverage_percentage).unwrap());
-            
-            for (func_name, func_coverage) in functions {
-                println!("{}", func_name);
-                println!("  Coverage: {:.1}% ({}/{})",
-                    func_coverage.coverage_percentage,
-                    func_coverage.covered_branches,
-                    func_coverage.total_branches
-                );
-                
-                if !func_coverage.uncovered_branches.is_empty() && func_coverage.uncovered_branches.len() <= 5 {
-                    println!("  Uncovered branches:");
-                    for uncovered in &func_coverage.uncovered_branches[..5.min(func_coverage.uncovered_branches.len())] {
-                        println!("    Line {}: {} ({})", uncovered.line, uncovered.branch_type, uncovered.condition);
-                    }
-                } else if !func_coverage.uncovered_branches.is_empty() {
-                    println!("  Uncovered branches: {} (showing first 5)", func_coverage.uncovered_branches.len());
-                    for uncovered in &func_coverage.uncovered_branches[..5] {
-                        println!("    Line {}: {} ({})", uncovered.line, uncovered.branch_type, uncovered.condition);
-                    }
-                    println!("    ...");
-                }
-                println!();
-            }
-
-            if !coverage.uncovered_branches.is_empty() {
-                println!("Overall Uncovered Branches Summary:");
-                println!("Total uncovered: {}", coverage.uncovered_branches.len());
-            }
-        }
-    }
-
-    pub fn export_to_json<T: serde::Serialize>(data: &T, output: Option<&Path>) -> Result<()> {
-        let json = serde_json::to_string_pretty(data)?;
-        
-        if let Some(path) = output {
-            fs::write(path, json).context("Failed to write JSON to file")?;
-            println!("Output written to: {}", path.display());
-        } else {
-            println!("{}", json);
-        }
-        
-        Ok(())
     }
 }
 
 fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
+    let args = Args::parse();
     
-    if args.len() < 2 {
-        cli::print_usage();
-        std::process::exit(1);
+    // Load configuration
+    let config = Config::load_or_default(args.config.as_deref());
+    
+    match args.command {
+        Commands::InitConfig { output } => {
+            config.save_to_file(&output)?;
+            cli::print_success(&format!("Configuration file created: {}", output.display()));
+            return Ok(());
+        },
+        _ => {}
     }
-
-    let command = &args[1];
     
-    if command == "help" {
-        cli::print_usage();
-        return Ok(());
-    }
+    let json_output = args.json;
+    let verbose = args.verbose || config.output.verbose;
     
-    let json_output = args.iter().any(|arg| arg == "--json");
-    let verbose = args.iter().any(|arg| arg == "--verbose");
-    
-    let image_format = args.iter()
-        .find(|arg| arg.starts_with("--image="))
-        .and_then(|arg| {
-            let format = &arg[8..];
-            cli::ImageFormat::from_str(format)
-        });
-    
-    let output_path = args.iter()
-        .filter_map(|arg| {
-            if arg.starts_with("--output=") {
-                Some(arg[9..].to_string())
-            } else {
-                None
-            }
-        })
-        .next()
-        .map(PathBuf::from);
-    
-    let project_path = match args.last() {
-        Some(path) if !path.starts_with("--") => Path::new(path),
-        _ => {
-            eprintln!("Error: No project path provided");
-            cli::print_usage();
-            std::process::exit(1);
-        }
+    // Extract project path without borrowing the whole command
+    let project_path = match &args.command {
+        Commands::Cfg { path } => path.clone(),
+        Commands::Dot { path, .. } => path.clone(),
+        Commands::DotAll { path, .. } => path.clone(),
+        Commands::StmtCov { path, .. } => path.clone(),
+        Commands::BranchCov { path, .. } => path.clone(),
+        Commands::Complexity { path, .. } => path.clone(),
+        Commands::Full { path, .. } => path.clone(),
+        Commands::InitConfig { .. } => return Ok(()),
     };
     
     if !project_path.exists() {
-        eprintln!("Error: Project path does not exist: {}", project_path.display());
+        cli::print_error(&format!("Project path does not exist: {}", project_path.display()));
         std::process::exit(1);
     }
-    
-    match command.as_str() {
-        "cfg" => {
-            let (fset, objs, files) = parse_project(project_path)?;
+
+    match args.command {
+        Commands::Cfg { .. } => {
+            let spinner = cli::create_spinner("Parsing Go project...");
+            let (fset, objs, files) = parse_project(&project_path)?;
+            spinner.finish_with_message("✅ Project parsed successfully");
+            
+            let pb = cli::create_progress_bar(files.len() as u64, "Building CFGs");
             let mut cfgs_map = HashMap::new();
             
-            for pf in &files {
+            for (i, pf) in files.iter().enumerate() {
                 let per_file_map = build_cfgs_for_file(&fset, &objs, &pf.ast);
                 cfgs_map.extend(per_file_map);
+                pb.set_position(i as u64 + 1);
             }
+            pb.finish_with_message("✅ CFGs built successfully");
             
             if json_output {
                 let mut cfg_data = HashMap::new();
                 for (name, cfg) in &cfgs_map {
                     cfg_data.insert(name.clone(), format!("{:#?}", cfg));
                 }
-                
-                cli::export_to_json(&cfg_data, output_path.as_deref())?;
+                cli::export_to_json(&cfg_data, args.output.as_deref())?;
             } else {
-                println!("=== Control Flow Graphs ===");
+                println!("\n{}", "=== Control Flow Graphs ===".bright_blue().bold());
                 for (fname, graph) in &cfgs_map {
-                    println!("--- func {} ---\n{:#?}", fname, graph);
+                    println!("--- func {} ---\n{:#?}", fname.white().bold(), graph);
                 }
             }
         },
         
-        "dot" => {
-            if args.len() < 4 {
-                eprintln!("Error: Missing function name for 'dot' command");
-                cli::print_usage();
-                std::process::exit(1);
-            }
+        Commands::Full { html, threshold, .. } => {
+            cli::print_info("Running comprehensive analysis...");
             
-            let func_name = &args[2];
-            let (fset, objs, files) = parse_project(project_path)?;
+            // Run all analyses
+            let stmt_spinner = cli::create_spinner("Analyzing statement coverage...");
+            let stmt_options = CoverageOptions {
+                verbose,
+                min_coverage_threshold: threshold,
+                timeout_seconds: config.coverage.timeout_seconds,
+                ..CoverageOptions::default()
+            };
+            let stmt_coverage = analyze_statement_coverage_with_options(&project_path, &stmt_options)?;
+            stmt_spinner.finish_with_message("✅ Statement coverage analysis complete");
+            
+            let branch_spinner = cli::create_spinner("Analyzing branch coverage...");
+            let branch_options = BranchCoverageOptions {
+                verbose,
+                min_coverage_threshold: threshold,
+                timeout_seconds: config.coverage.timeout_seconds,
+                include_test_files: config.coverage.include_test_files,
+                exclude_patterns: config.coverage.exclude_patterns.clone(),
+                ..BranchCoverageOptions::default()
+            };
+            let branch_coverage = analyze_branch_coverage_with_options(&project_path, &branch_options)?;
+            branch_spinner.finish_with_message("✅ Branch coverage analysis complete");
+            
+            let complexity_spinner = cli::create_spinner("Analyzing complexity...");
+            let complexity_options = ComplexityOptions {
+                verbose,
+                max_allowed_complexity: config.complexity.max_complexity,
+                ..ComplexityOptions::default()
+            };
+            let complexity = analyze_cyclomatic_complexity_with_options(&project_path, &complexity_options)?;
+            complexity_spinner.finish_with_message("✅ Complexity analysis complete");
+            
+            if html {
+                let output_path = args.output.unwrap_or_else(|| {
+                    config.output.output_dir.join("report.html")
+                });
+                
+                if let Some(parent) = output_path.parent() {
+                    fs::create_dir_all(parent)?;
+                }
+                
+                reports::generate_html_report(
+                    Some(&stmt_coverage),
+                    Some(&branch_coverage),
+                    Some(&complexity),
+                    &output_path,
+                )?;
+                cli::print_success(&format!("HTML report generated: {}", output_path.display()));
+            } else if json_output {
+                let combined_data = serde_json::json!({
+                    "statement_coverage": stmt_coverage,
+                    "branch_coverage": branch_coverage,
+                    "complexity": complexity,
+                    "summary": {
+                        "overall_health": calculate_health_score(&stmt_coverage, &branch_coverage, &complexity),
+                        "recommendations": generate_recommendations(&stmt_coverage, &branch_coverage, &complexity)
+                    }
+                });
+                cli::export_to_json(&combined_data, args.output.as_deref())?;
+            } else {
+                // Print all reports
+                cli::print_coverage_report(&stmt_coverage, verbose);
+                cli::print_branch_coverage_report(&branch_coverage, verbose);
+                cli::print_complexity_report(&complexity, verbose);
+                
+                // Print summary
+                print_summary_report(&stmt_coverage, &branch_coverage, &complexity);
+            }
+        },
+        
+        Commands::Dot { function, image, .. } => {
+            let (fset, objs, files) = parse_project(&project_path)?;
             
             let mut cfgs_map = HashMap::new();
             for pf in &files {
@@ -327,30 +294,30 @@ fn main() -> Result<()> {
                 cfgs_map.extend(per_file_map);
             }
             
-            if let Some(graph) = cfgs_map.get(func_name) {
-                let dot = to_dot(graph, func_name);
+            if let Some(graph) = cfgs_map.get(&function) {
+                let dot = to_dot(graph, &function);
                 
-                if let Some(format) = image_format {
-                    let output = output_path.unwrap_or_else(|| 
-                        PathBuf::from(format!("{}.{}", func_name, format.extension()))
+                if let Some(format) = image {
+                    let output_path = args.output.unwrap_or_else(|| 
+                        PathBuf::from(format!("{}.{}", function, format.extension()))
                     );
                     
-                    cli::generate_image_from_dot(&dot, &output, format)?;
-                    println!("Graph image for '{}' generated: {}", func_name, output.display());
-                } else if let Some(path) = output_path {
+                    cli::generate_image_from_dot(&dot, &output_path, format)?;
+                    println!("Graph image for '{}' generated: {}", function, output_path.display());
+                } else if let Some(path) = args.output {
                     fs::write(&path, dot)?;
-                    println!("DOT graph for '{}' written to: {}", func_name, path.display());
+                    println!("DOT graph for '{}' written to: {}", function, path.display());
                 } else {
                     println!("{}", dot);
                 }
             } else {
-                eprintln!("Error: Function '{}' not found", func_name);
+                eprintln!("Error: Function '{}' not found", function);
                 std::process::exit(1);
             }
         },
         
-        "dot-all" => {
-            let (fset, objs, files) = parse_project(project_path)?;
+        Commands::DotAll { image, .. } => {
+            let (fset, objs, files) = parse_project(&project_path)?;
             
             let mut cfgs_map = HashMap::new();
             for pf in &files {
@@ -358,7 +325,7 @@ fn main() -> Result<()> {
                 cfgs_map.extend(per_file_map);
             }
             
-            let out_dir = output_path.unwrap_or(PathBuf::from("dot_output"));
+            let out_dir = args.output.unwrap_or(PathBuf::from("dot_output"));
             if !out_dir.exists() {
                 fs::create_dir_all(&out_dir)?;
             }
@@ -366,7 +333,7 @@ fn main() -> Result<()> {
             for (fname, graph) in cfgs_map {
                 let dot = to_dot(&graph, &fname);
                 
-                if let Some(format) = &image_format {
+                if let Some(format) = &image {
                     let filepath = out_dir.join(format!("{}.{}", fname, format.extension()));
                     cli::generate_image_from_dot(&dot, &filepath, format.clone())?;
                     if verbose {
@@ -381,71 +348,137 @@ fn main() -> Result<()> {
                 }
             }
             
-            if let Some(format) = &image_format {
+            if let Some(format) = &image {
                 println!("Graph images generated in directory: {} (format: {})", out_dir.display(), format.extension());
             } else {
                 println!("DOT graphs generated in directory: {}", out_dir.display());
             }
         },
         
-        "stmt-cov" => {
+        Commands::StmtCov { threshold, timeout, .. } => {
             let options = CoverageOptions {
                 verbose,
+                min_coverage_threshold: threshold,
+                timeout_seconds: timeout,
                 ..CoverageOptions::default()
             };
             
-            let coverage = analyze_statement_coverage_with_options(project_path, &options)?;
+            let coverage = analyze_statement_coverage_with_options(&project_path, &options)?;
             
             if json_output {
-                cli::export_to_json(&coverage, output_path.as_deref())?;
+                cli::export_to_json(&coverage, args.output.as_deref())?;
             } else {
                 cli::print_coverage_report(&coverage, verbose);
             }
         },
         
-        "complexity" => {
+        Commands::Complexity { max_complexity, .. } => {
             let options = ComplexityOptions {
                 verbose,
+                max_allowed_complexity: max_complexity,
                 ..ComplexityOptions::default()
             };
             
-            let complexity = analyze_cyclomatic_complexity_with_options(project_path, &options)?;
+            let complexity = analyze_cyclomatic_complexity_with_options(&project_path, &options)?;
             
             if json_output {
-                cli::export_to_json(&complexity, output_path.as_deref())?;
+                cli::export_to_json(&complexity, args.output.as_deref())?;
             } else {
                 cli::print_complexity_report(&complexity, verbose);
             }
         },
         
-        "branch-cov" => {
+        Commands::BranchCov { threshold, include_tests, timeout, .. } => {
             let options = BranchCoverageOptions {
                 verbose,
-                include_test_files: false,
-                min_coverage_threshold: 80.0,
+                include_test_files: include_tests,
+                min_coverage_threshold: threshold,
                 fail_on_low_coverage: false,
                 exclude_patterns: vec!["*_test.go".to_string(), "vendor/*".to_string()],
                 simulate_coverage: false,
                 test_args: Vec::new(),
                 fail_on_error: false,
-                timeout_seconds: 30,
+                timeout_seconds: timeout,
             };
             
-            let coverage = analyze_branch_coverage_with_options(project_path, &options)?;
+            let coverage = analyze_branch_coverage_with_options(&project_path, &options)?;
             
             if json_output {
-                cli::export_to_json(&coverage, output_path.as_deref())?;
+                cli::export_to_json(&coverage, args.output.as_deref())?;
             } else {
                 cli::print_branch_coverage_report(&coverage, verbose);
             }
         },
         
-        _ => {
-            eprintln!("Error: Unknown command '{}'", command);
-            cli::print_usage();
-            std::process::exit(1);
+        Commands::InitConfig { .. } => {
+            // Already handled above
         }
     }
     
     Ok(())
+}
+
+fn calculate_health_score(
+    stmt_coverage: &StmtCoverage,
+    branch_coverage: &ProjectBranchCoverage,
+    complexity: &ProjectComplexity,
+) -> f64 {
+    let coverage_score = (stmt_coverage.overall_coverage + branch_coverage.overall_coverage_percentage) / 2.0;
+    let complexity_score = (20.0 - complexity.average_complexity.min(20.0)) / 20.0 * 100.0;
+    
+    (coverage_score * 0.7 + complexity_score * 0.3).min(100.0)
+}
+
+fn generate_recommendations(
+    stmt_coverage: &StmtCoverage,
+    branch_coverage: &ProjectBranchCoverage,
+    complexity: &ProjectComplexity,
+) -> Vec<String> {
+    let mut recommendations = Vec::new();
+    
+    if stmt_coverage.overall_coverage < 80.0 {
+        recommendations.push("Consider adding more unit tests to improve statement coverage".to_string());
+    }
+    
+    if branch_coverage.overall_coverage_percentage < 75.0 {
+        recommendations.push("Add tests for edge cases to improve branch coverage".to_string());
+    }
+    
+    if complexity.average_complexity > 10.0 {
+        recommendations.push("Consider refactoring complex functions to improve maintainability".to_string());
+    }
+    
+    let high_complexity_count = complexity.functions.values()
+        .filter(|f| f.cyclomatic_complexity > 15)
+        .count();
+    
+    if high_complexity_count > 0 {
+        recommendations.push(format!("Review {} functions with very high complexity (>15)", high_complexity_count));
+    }
+    
+    recommendations
+}
+
+fn print_summary_report(
+    stmt_coverage: &StmtCoverage,
+    branch_coverage: &ProjectBranchCoverage,
+    complexity: &ProjectComplexity,
+) {
+    let health_score = calculate_health_score(stmt_coverage, branch_coverage, complexity);
+    let recommendations = generate_recommendations(stmt_coverage, branch_coverage, complexity);
+    
+    println!("\n{}", "=== Project Health Summary ===".bright_blue().bold());
+    
+    let health_color = if health_score >= 90.0 { health_score.to_string().green().bold() }
+                      else if health_score >= 70.0 { health_score.to_string().yellow().bold() }
+                      else { health_score.to_string().red().bold() };
+    
+    println!("{}: {}", "Overall Health Score".cyan(), health_color);
+    
+    if !recommendations.is_empty() {
+        println!("\n{}:", "Recommendations".yellow().bold());
+        for (i, rec) in recommendations.iter().enumerate() {
+            println!("  {}. {}", (i + 1).to_string().cyan(), rec);
+        }
+    }
 }

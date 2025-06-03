@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
@@ -19,12 +19,16 @@ pub struct FunctionCoverage {
     pub covered_statements: usize,
     pub coverage_percentage: f64,
     pub uncovered_lines: Vec<usize>,
+    pub uncovered_statements: Vec<usize>,
+    pub uncovered_line_details: Vec<UncoveredLine>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct UncoveredLine {
     pub line: usize,
     pub statement: String,
+    pub stmt_type: String,
+    pub stmt_ids: Vec<usize>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -34,6 +38,7 @@ pub struct ProjectCoverage {
     pub covered_statements: usize,
     pub overall_coverage: f64,
     pub functions: HashMap<String, FunctionCoverage>,
+    pub test_output: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -248,6 +253,7 @@ fn calculate_statement_coverage(
                 };
                 UncoveredLine {
                     line,
+                    statement: format!("Line {}", line),
                     stmt_type,
                     stmt_ids,
                 }

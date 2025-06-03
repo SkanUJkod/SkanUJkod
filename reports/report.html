@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkanUJkod Analysis Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .metric { background: #ecf0f1; padding: 20px; border-radius: 6px; text-align: center; }
+        .metric h3 { margin: 0 0 10px 0; color: #2c3e50; }
+        .metric .value { font-size: 2em; font-weight: bold; color: #3498db; }
+        .coverage-high { color: #27ae60; }
+        .coverage-medium { color: #f39c12; }
+        .coverage-low { color: #e74c3c; }
+        .complexity-low { color: #27ae60; }
+        .complexity-medium { color: #f39c12; }
+        .complexity-high { color: #e74c3c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .progress-bar { width: 100%; height: 20px; background-color: #ecf0f1; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #e74c3c 0%, #f39c12 50%, #27ae60 100%); transition: width 0.3s ease; }
+        .tab-container { margin-top: 30px; }
+        .tab-buttons { display: flex; border-bottom: 1px solid #ddd; }
+        .tab-button { padding: 10px 20px; background: none; border: none; cursor: pointer; font-size: 16px; }
+        .tab-button.active { background: #3498db; color: white; }
+        .tab-content { display: none; padding: 20px 0; }
+        .tab-content.active { display: block; }
+    </style>
+    <script>
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-button');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 SkanUJkod Analysis Report</h1>
+        
+        <div class="summary">
+            <div class="metric">
+                    <h3>Statement Coverage</h3>
+                    <div class="value coverage-low">64.3%</div>
+                    <div>74/115 statements covered</div>
+                </div>
+            <div class="metric">
+                    <h3>Branch Coverage</h3>
+                    <div class="value coverage-low">18.4%</div>
+                    <div>14/76 branches covered</div>
+                </div>
+            <div class="metric">
+                    <h3>Avg Cyclomatic Complexity</h3>
+                    <div class="value complexity-low">3.2</div>
+                    <div>Max: 8 (getDayName)</div>
+                </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showTab('stmt-tab')">Statement Coverage</button>
+<button class="tab-button" onclick="showTab('branch-tab')">Branch Coverage</button>
+<button class="tab-button" onclick="showTab('complexity-tab')">Cyclomatic Complexity</button>
+            </div>
+            
+            <div id="stmt-tab" class="tab-content active">
+            <h2>Statement Coverage Details</h2>
+            <table>
+                <thead>
+                    <tr><th>Function</th><th>Coverage</th><th>Percentage</th><th>Covered/Total</th></tr>
+                </thead>
+                <tbody><tr>
+                <td>BenchmarkSumArray</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/8</td>
+            </tr><tr>
+                <td>main</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/9</td>
+            </tr><tr>
+                <td>calculateGrade</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/8</td>
+            </tr><tr>
+                <td>TestDeadCodeExample</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 50%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">50.0%</td>
+                <td>1/2</td>
+            </tr><tr>
+                <td>getDayName</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 55.55555555555556%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">55.6%</td>
+                <td>5/9</td>
+            </tr><tr>
+                <td>TestDivide</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 62.5%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">62.5%</td>
+                <td>5/8</td>
+            </tr><tr>
+                <td>deadCodeExample</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 66.66666666666666%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">66.7%</td>
+                <td>2/3</td>
+            </tr><tr>
+                <td>TestProcessFile</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 66.66666666666666%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">66.7%</td>
+                <td>4/6</td>
+            </tr><tr>
+                <td>TestFindMax</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </td>
+                <td class="coverage-medium">80.0%</td>
+                <td>4/5</td>
+            </tr><tr>
+                <td>TestGetDayName</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </td>
+                <td class="coverage-medium">80.0%</td>
+                <td>4/5</td>
+            </tr><tr>
+                <td>TestMinMax</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </td>
+                <td class="coverage-medium">80.0%</td>
+                <td>4/5</td>
+            </tr><tr>
+                <td>TestSumArray</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </td>
+                <td class="coverage-medium">80.0%</td>
+                <td>4/5</td>
+            </tr><tr>
+                <td>TestComplexFlow</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </td>
+                <td class="coverage-medium">80.0%</td>
+                <td>4/5</td>
+            </tr><tr>
+                <td>findMax</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>7/7</td>
+            </tr><tr>
+                <td>minMax</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>9/9</td>
+            </tr><tr>
+                <td>divide</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>3/3</td>
+            </tr><tr>
+                <td>processFile</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>6/6</td>
+            </tr><tr>
+                <td>complexFlow</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>6/6</td>
+            </tr><tr>
+                <td>sumArray</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>6/6</td>
+            </tr></tbody>
+            </table>
+        </div>
+<div id="branch-tab" class="tab-content">
+            <h2>Branch Coverage Details</h2>
+            <table>
+                <thead>
+                    <tr><th>Function</th><th>Coverage</th><th>Percentage</th><th>Covered/Total</th></tr>
+                </thead>
+                <tbody><tr>
+                <td>findMax</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/6</td>
+            </tr><tr>
+                <td>TestProcessFile</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/4</td>
+            </tr><tr>
+                <td>TestMinMax</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/4</td>
+            </tr><tr>
+                <td>TestDivide</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/6</td>
+            </tr><tr>
+                <td>TestDeadCodeExample</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/2</td>
+            </tr><tr>
+                <td>calculateGrade</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/8</td>
+            </tr><tr>
+                <td>TestFindMax</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/4</td>
+            </tr><tr>
+                <td>TestComplexFlow</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/4</td>
+            </tr><tr>
+                <td>main</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/2</td>
+            </tr><tr>
+                <td>TestGetDayName</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/4</td>
+            </tr><tr>
+                <td>BenchmarkSumArray</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/4</td>
+            </tr><tr>
+                <td>TestSumArray</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">0.0%</td>
+                <td>0/4</td>
+            </tr><tr>
+                <td>minMax</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 12.5%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">12.5%</td>
+                <td>1/8</td>
+            </tr><tr>
+                <td>processFile</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 50%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">50.0%</td>
+                <td>1/2</td>
+            </tr><tr>
+                <td>divide</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 50%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">50.0%</td>
+                <td>1/2</td>
+            </tr><tr>
+                <td>deadCodeExample</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 50%"></div>
+                    </div>
+                </td>
+                <td class="coverage-low">50.0%</td>
+                <td>1/2</td>
+            </tr><tr>
+                <td>complexFlow</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>0/0</td>
+            </tr><tr>
+                <td>getDayName</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>8/8</td>
+            </tr><tr>
+                <td>sumArray</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </td>
+                <td class="coverage-high">100.0%</td>
+                <td>2/2</td>
+            </tr></tbody>
+            </table>
+        </div>
+<div id="complexity-tab" class="tab-content">
+            <h2>Cyclomatic Complexity Analysis (Top 20)</h2>
+            <table>
+                <thead>
+                    <tr><th>Function</th><th>Cyclomatic</th><th>Cognitive</th><th>LOC</th></tr>
+                </thead>
+                <tbody><tr>
+                <td>getDayName</td>
+                <td class="complexity-medium">8</td>
+                <td>1</td>
+                <td>9</td>
+            </tr><tr>
+                <td>calculateGrade</td>
+                <td class="complexity-low">5</td>
+                <td>20</td>
+                <td>8</td>
+            </tr><tr>
+                <td>minMax</td>
+                <td class="complexity-low">5</td>
+                <td>8</td>
+                <td>9</td>
+            </tr><tr>
+                <td>findMax</td>
+                <td class="complexity-low">4</td>
+                <td>5</td>
+                <td>7</td>
+            </tr><tr>
+                <td>TestDivide</td>
+                <td class="complexity-low">4</td>
+                <td>3</td>
+                <td>8</td>
+            </tr><tr>
+                <td>TestMinMax</td>
+                <td class="complexity-low">3</td>
+                <td>4</td>
+                <td>5</td>
+            </tr><tr>
+                <td>TestComplexFlow</td>
+                <td class="complexity-low">3</td>
+                <td>4</td>
+                <td>5</td>
+            </tr><tr>
+                <td>BenchmarkSumArray</td>
+                <td class="complexity-low">3</td>
+                <td>1</td>
+                <td>8</td>
+            </tr><tr>
+                <td>TestSumArray</td>
+                <td class="complexity-low">3</td>
+                <td>4</td>
+                <td>5</td>
+            </tr><tr>
+                <td>TestFindMax</td>
+                <td class="complexity-low">3</td>
+                <td>4</td>
+                <td>5</td>
+            </tr><tr>
+                <td>TestProcessFile</td>
+                <td class="complexity-low">3</td>
+                <td>2</td>
+                <td>6</td>
+            </tr><tr>
+                <td>TestGetDayName</td>
+                <td class="complexity-low">3</td>
+                <td>4</td>
+                <td>5</td>
+            </tr><tr>
+                <td>sumArray</td>
+                <td class="complexity-low">2</td>
+                <td>0</td>
+                <td>6</td>
+            </tr><tr>
+                <td>processFile</td>
+                <td class="complexity-low">2</td>
+                <td>1</td>
+                <td>6</td>
+            </tr><tr>
+                <td>deadCodeExample</td>
+                <td class="complexity-low">2</td>
+                <td>1</td>
+                <td>3</td>
+            </tr><tr>
+                <td>TestDeadCodeExample</td>
+                <td class="complexity-low">2</td>
+                <td>1</td>
+                <td>2</td>
+            </tr><tr>
+                <td>divide</td>
+                <td class="complexity-low">2</td>
+                <td>1</td>
+                <td>3</td>
+            </tr><tr>
+                <td>complexFlow</td>
+                <td class="complexity-low">2</td>
+                <td>0</td>
+                <td>6</td>
+            </tr><tr>
+                <td>main</td>
+                <td class="complexity-low">2</td>
+                <td>1</td>
+                <td>9</td>
+            </tr></tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+</body>
+</html>
