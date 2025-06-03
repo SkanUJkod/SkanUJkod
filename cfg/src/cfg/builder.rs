@@ -512,7 +512,6 @@ impl ControlFlowGraph {
                                 },
                             );
 
-                            // Store context for this labeled loop
                             loop_contexts.insert(
                                 name.clone(),
                                 LoopContext {
@@ -539,7 +538,6 @@ impl ControlFlowGraph {
                             }
                             pending_gotos.append(&mut body_gotos);
 
-                            // Restore previous loop context
                             if let Some(post_stmt) = &forst.post {
                                 let post_id = next_id;
                                 next_id += 1;
@@ -623,7 +621,6 @@ impl ControlFlowGraph {
                                     if let Some(context) = loop_contexts.get(&name) {
                                         branch_block.succs = vec![context.after_id];
                                     } else if let Some(&target) = label_map.get(&name) {
-                                        // Fallback for labels that aren't loop contexts
                                         branch_block.succs = vec![target];
                                     } else {
                                         pending_gotos.push((id, name));
@@ -700,7 +697,6 @@ impl ControlFlowGraph {
             }
         }
 
-        // Connect last block to exit if needed
         if prev_id != exit_id {
             if let Some(prev_block) = blocks.get_mut(&prev_id) {
                 if prev_block.succs.is_empty() {
@@ -719,7 +715,6 @@ impl ControlFlowGraph {
         crate::cfg::optimization::clean_unreachable_blocks(&mut blocks, entry);
         crate::cfg::validation::validate_graph(&blocks, exit_id);
 
-        // Ensure exit block has no successors
         if let Some(exit_blk) = blocks.get_mut(&exit_id) {
             exit_blk.succs.clear();
         }
@@ -1289,16 +1284,9 @@ pub fn export_instrumented_go(
     for (block_id, block) in &cfg.blocks {
         for _stmt in &block.stmts {
             writeln!(file, "\tstmt_hit(\"{}\", {});", func_name, block_id)?;
-            writeln!(file, "\t// <original statement here>")?;
         }
     }
 
     writeln!(file, "}}")?;
-
-    writeln!(
-        file,
-        "\n// TODO: call {} from main or test to execute it",
-        func_name
-    )?;
     Ok(())
 }

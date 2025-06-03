@@ -361,10 +361,8 @@ var (
     coverageInit  sync.Once
 )
 
-// Initialize coverage tracking
 func initCoverage() {
     coverageInit.Do(func() {
-        // Ensure we save coverage on normal exit
         c := make(chan os.Signal, 1)
         go func() {
             for range c {
@@ -373,14 +371,12 @@ func initCoverage() {
             }
         }()
         
-        // Also save on normal program termination
         runtime.SetFinalizer(&coverageData, func(*map[string]map[int]bool) {
             saveCoverageData()
         })
     })
 }
 
-// Track statement execution
 func stmt_hit(funcName string, stmtID int) {
     initCoverage()
     
@@ -393,7 +389,6 @@ func stmt_hit(funcName string, stmtID int) {
     coverageData[funcName][stmtID] = true
 }
 
-// Save coverage data
 func saveCoverageData() {
     coverageMutex.Lock()
     defer coverageMutex.Unlock()
@@ -401,9 +396,7 @@ func saveCoverageData() {
     exportCoverageData()
 }
 
-// Export coverage data to JSON
 func exportCoverageData() error {
-    // Convert map[int]bool to []int for JSON
     exportData := make(map[string][]int)
     for funcName, stmts := range coverageData {
         var stmtList []int
@@ -421,7 +414,6 @@ func exportCoverageData() error {
     return os.WriteFile("coverage_data.json", data, 0644)
 }
 
-// Print coverage summary
 func printCoverage() {
     coverageMutex.Lock()
     defer coverageMutex.Unlock()
@@ -451,39 +443,29 @@ fn generate_test_runner(instrumentation_data: &InstrumentationData) -> String {
     code.push_str(")\n\n");
     
     code.push_str("func TestMain(m *testing.M) {\n");
-    code.push_str("    // Initialize coverage tracking\n");
     code.push_str("    initCoverage()\n");
     code.push_str("    \n");
-    code.push_str("    // Run all tests\n");
     code.push_str("    code := m.Run()\n");
     code.push_str("    \n");
-    code.push_str("    // Give time for async operations to complete\n");
     code.push_str("    time.Sleep(100 * time.Millisecond)\n");
     code.push_str("    \n");
-    code.push_str("    // Export coverage data\n");
     code.push_str("    if err := exportCoverageData(); err != nil {\n");
     code.push_str("        panic(err)\n");
     code.push_str("    }\n");
     code.push_str("    \n");
-    code.push_str("    // Print summary\n");
     code.push_str("    printCoverage()\n");
     code.push_str("    \n");
     code.push_str("    os.Exit(code)\n");
     code.push_str("}\n\n");
     
     code.push_str("func TestCoverageEnabled(t *testing.T) {\n");
-    code.push_str("    // This test verifies that coverage tracking is working\n");
     code.push_str("    stmt_hit(\"TestCoverageEnabled\", 99999)\n");
     code.push_str("    \n");
-    code.push_str("    // Call your actual functions here to test them\n");
-    code.push_str("    // Example:\n");
     for func_name in instrumentation_data.total_statements_per_function.keys() {
         if !func_name.starts_with("Test") {
             code.push_str(&format!("    // {}()\n", func_name));
         }
     }
-    code.push_str("    \n");
-    code.push_str("    // If you have existing tests, they will run automatically\n");
     code.push_str("}\n");
     
     code

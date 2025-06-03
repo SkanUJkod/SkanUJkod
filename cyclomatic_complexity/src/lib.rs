@@ -1,6 +1,3 @@
-// Cyclomatic Complexity Module
-// Provides an API for analyzing code complexity of Go programs
-
 pub mod analyzer;
 pub mod helpers;
 

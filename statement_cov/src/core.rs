@@ -13,79 +13,62 @@ use crate::helpers::go_utils;
 use crate::instrumentation;
 use crate::instrumentation::InstrumentationData;
 
-/// Represents coverage information for a single function
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct FunctionCoverage {
     pub total_statements: usize,
     pub covered_statements: usize,
     pub coverage_percentage: f64,
-    pub uncovered_statements: Vec<usize>,
     pub uncovered_lines: Vec<usize>,
-    pub uncovered_line_details: Vec<UncoveredLine>,
 }
 
-/// Details about an uncovered line in the code
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct UncoveredLine {
     pub line: usize,
-    pub stmt_type: String,
-    pub stmt_ids: Vec<usize>,
+    pub statement: String,
 }
 
-/// Represents coverage information for an entire project
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProjectCoverage {
-    pub functions: HashMap<String, FunctionCoverage>,
+    pub files_analyzed: usize,
     pub total_statements: usize,
     pub covered_statements: usize,
     pub overall_coverage: f64,
-    pub files_analyzed: usize,
-    pub test_output: Option<String>,
+    pub functions: HashMap<String, FunctionCoverage>,
 }
 
-/// Options for statement coverage analysis
 #[derive(Debug, Clone)]
 pub struct CoverageOptions {
     pub verbose: bool,
+    pub include_test_files: bool,
+    pub min_coverage_threshold: f64,
+    pub fail_on_low_coverage: bool,
+    pub exclude_patterns: Vec<String>,
+    pub simulate_coverage: bool,
+    pub test_args: Vec<String>,
     pub fail_on_error: bool,
     pub timeout_seconds: u64,
-    pub test_args: Vec<String>,
 }
 
 impl Default for CoverageOptions {
     fn default() -> Self {
         Self {
             verbose: false,
+            include_test_files: false,
+            min_coverage_threshold: 80.0,
+            fail_on_low_coverage: true,
+            exclude_patterns: vec![],
+            simulate_coverage: false,
+            test_args: vec![],
             fail_on_error: true,
             timeout_seconds: 300,
-            test_args: vec![],
         }
     }
 }
 
-/// Analyze statement coverage of a Go project using default options
-///
-/// # Arguments
-///
-/// * `project_path` - Path to the Go project to analyze
-///
-/// # Returns
-///
-/// * `Result<ProjectCoverage>` - Analysis results or error
 pub fn analyze_statement_coverage(project_path: &Path) -> Result<ProjectCoverage> {
     analyze_statement_coverage_with_options(project_path, &CoverageOptions::default())
 }
 
-/// Analyze statement coverage of a Go project with custom options
-///
-/// # Arguments
-///
-/// * `project_path` - Path to the Go project to analyze
-/// * `options` - Custom analysis options
-///
-/// # Returns
-///
-/// * `Result<ProjectCoverage>` - Analysis results or error
 pub fn analyze_statement_coverage_with_options(
     project_path: &Path,
     options: &CoverageOptions,

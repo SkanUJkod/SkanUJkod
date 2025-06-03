@@ -17,23 +17,17 @@ fn empty_stmt() -> Stmt {
 fn run_codegen(cfgs: &HashMap<String, ControlFlowGraph>) -> String {
     let mut out = String::new();
 
-    // Iterate deterministically for stable test output.
-    let mut funcs: Vec<_> = cfgs.keys().collect();
-    funcs.sort();
+    for (func_name, cfg) in cfgs {
+        print!("CFG for function '{}': ", func_name);
+        let mut func_blocks: Vec<_> = cfg.blocks.iter().collect();
+        func_blocks.sort_by_key(|(id, _)| *id);
 
-    for func in funcs {
-        if let Some(cfg) = cfgs.get(func) {
-            let mut id = 0;
-            // Sort blocks for deterministic order.
-            let mut block_ids: Vec<_> = cfg.blocks.keys().collect();
-            block_ids.sort();
-            for bid in block_ids {
-                if let Some(block) = cfg.blocks.get(bid) {
-                    for _ in &block.stmts {
-                        out.push_str(&format!("stmt_hit(\"{}\", {})\n", func, id));
-                        id += 1;
-                    }
-                }
+        for (block_id, block) in func_blocks {
+            for (stmt_index, stmt) in block.stmts.iter().enumerate() {
+                println!(
+                    "  Block {}, Statement {}: {}",
+                    block_id, stmt_index, stmt.text
+                );
             }
         }
     }
