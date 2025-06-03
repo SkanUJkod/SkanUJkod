@@ -1,6 +1,21 @@
+[workspace]
+members = [
+    "cfg-lib", 
+    ".",     
+]
+
+
 [package]
 name = "skan-uj-kod"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+
 
 [dependencies]
+anyhow    = "1.0"
+walkdir   = "2.3"
+tempfile  = "3.3"
+go-parser = "0.1.5"
+
+
+cfg_lib = { path = "cfg-lib" }
