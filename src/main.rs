@@ -1,81 +1,167 @@
 use cfg::ast::parse_project;
 use cfg::cfg::build_cfgs_for_file;
 use cfg::export::to_dot;
-use statement_cov::{
-    analyze_statement_coverage_with_options,
-    CoverageOptions,
-};
+use statement_cov::helpers::{CoverageAnalyzer, CoverageConfig};
+use cyclomatic_complexity::analyzer::{analyze_cyclomatic_complexity, print_complexity_report, export_complexity_report, ExportFormat};
 
 use anyhow::Result;
 use std::collections::HashMap;
 use std::env;
-use std::path::Path;
-
-fn print_help() {
-    println!("Statement Coverage Tool for Go Projects\n");
-    println!("Usage:");
-    println!("  skan-uj-kod <path>                      - Print CFG in Debug format");
-    println!("  skan-uj-kod --dot <FuncName> <path>     - Print DOT format for selected function");
-    println!("  skan-uj-kod --dot-all <path>            - Print DOT for all functions");
-    println!("  skan-uj-kod --stmt-cov <path>           - Print overall statement coverage percentage");
-    println!("\nExamples:");
-    println!("  skan-uj-kod --stmt-cov ./my-project");
-    println!("  skan-uj-kod --dot-all ./my-project");
-}
 
 fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
+    // Enhanced CLI:
+    //   skan-uj-kod <path>                -> print CFG in Debug format
+    //   skan-uj-kod --dot <FuncName> <path> -> print DOT format for selected function
+    //   skan-uj-kod --dot-all <path>       -> print DOT for all functions
+    //   skan-uj-kod --stmt-cov <path>      -> print overall statement coverage percentage
+    //   skan-uj-kod --full-cov <path>      -> print per-function coverage
+    //   skan-uj-kod --complexity <path>    -> analyze cyclomatic complexity
+    //   skan-uj-kod --complexity-json <path> -> export complexity analysis as JSON
 
-    if args.len() < 2 {
-        print_help();
+    let mut args = env::args().skip(1).collect::<Vec<_>>();
+    if args.is_empty() {
+        eprintln!(
+            "Usage:\n  \
+            skan-uj-kod <path>\n  \
+            skan-uj-kod --dot <FuncName> <path>\n  \
+            skan-uj-kod --dot-all <path>\n  \
+            skan-uj-kod --stmt-cov <path>\n  \
+            skan-uj-kod --full-cov <path>\n  \
+            skan-uj-kod --complexity <path>\n  \
+            skan-uj-kod --complexity-json <path>"
+        );
         std::process::exit(1);
     }
 
-    if args[1] == "--help" || args[1] == "-h" {
-        print_help();
+    // Cyclomatic complexity analysis
+    if args[0] == "--complexity" {
+        if args.len() != 2 {
+            eprintln!("Need: --complexity <path>");
+            std::process::exit(1);
+        }
+        let root = &args[1];
+        let complexity = analyze_cyclomatic_complexity(std::path::Path::new(root))?;
+        print_complexity_report(&complexity);
         return Ok(());
     }
 
-    match args[1].as_str() {
-        "--stmt-cov" => {
-            if args.len() != 3 {
-                eprintln!("Error: --stmt-cov requires exactly one path argument");
-                std::process::exit(1);
-            }
-            let coverage = analyze_statement_coverage_with_options(Path::new(&args[2]), &CoverageOptions::default())?;
-            println!("{:.2}%", coverage.overall_coverage);
-        }
-        "--dot-all" => {
-            if args.len() != 3 {
-                eprintln!("Error: --dot-all requires exactly one path argument");
-                std::process::exit(1);
-            }
-            let root_path = Path::new(&args[2]);
-            let out_dir = Path::new("out");
-
-            if !out_dir.exists() {
-                std::fs::create_dir_all(out_dir)?;
-            }
-
-            let (fset, objs, files) = parse_project(root_path)?;
-            let mut cfgs_map = HashMap::new();
-
-            for pf in &files {
-                let per_file_map = build_cfgs_for_file(&fset, &objs, &pf.ast);
-                cfgs_map.extend(per_file_map);
-            }
-
-            for (fname, graph) in cfgs_map {
-                let dot = to_dot(&graph, &fname);
-                let filepath = out_dir.join(format!("{}.dot", fname));
-                std::fs::write(filepath, dot)?;
-            }
-
-            println!("✅ DOT files exported to: {}", out_dir.display());
-        }
-        _ => {
-            print_help();
+    // Cyclomatic complexity analysis with JSON export
+    if args[0] == "--complexity-json" {
+        if args.len() != 2 {
+            eprintln!("Need: --complexity-json <path>");
             std::process::exit(1);
+        }
+        let root = &args[1];
+        let complexity = analyze_cyclomatic_complexity(std::path::Path::new(root))?;
+        let output_path = std::path::Path::new("complexity_report.json");
+        export_complexity_report(&complexity, output_path, ExportFormat::Json)?;
+        println!("Complexity report exported to: {}", output_path.display());
+        return Ok(());
+    }
+
+    // Full per-function coverage
+    if args[0] == "--full-cov" {
+        if args.len() != 2 {
+            eprintln!("Need: --full-cov <path>");
+            std::process::exit(1);
+        }
+        let config = CoverageConfig::default();
+        let analyzer = CoverageAnalyzer::new(config);
+        let coverage = analyzer.analyze(std::path::Path::new(&args[1]))?;
+        for (func, func_cov) in &coverage.functions {
+            println!(
+                "Function `{}`: total={} covered={} coverage={:.2}%",
+                func,
+                func_cov.total_statements,
+                func_cov.covered_statements,
+                func_cov.coverage_percentage
+            );
+        }
+        return Ok(());
+    }
+
+    // Overall statement coverage
+    if args[0] == "--stmt-cov" {
+        if args.len() != 2 {
+            eprintln!("Need: --stmt-cov <path>");
+            std::process::exit(1);
+        }
+        let root = &args[1];
+        let config = CoverageConfig::default();
+        let analyzer = CoverageAnalyzer::new(config);
+        let coverage = analyzer.analyze(std::path::Path::new(root))?;
+        println!("{:.2}%", coverage.overall_coverage);
+        return Ok(());
+    }
+
+    let mut dot_mode: Option<String> = None;
+    let mut dot_all_mode = false;
+
+    // DOT export for a single function
+    if args[0] == "--dot" {
+        if args.len() < 3 {
+            eprintln!("Need: --dot <FuncName> <path>");
+            std::process::exit(1);
+        }
+        dot_mode = Some(args[1].clone());
+        args.remove(0);
+        args.remove(0);
+    }
+    // DOT export for all functions
+    else if args[0] == "--dot-all" {
+        if args.len() != 2 {
+            eprintln!("Need: --dot-all <path>");
+            std::process::exit(1);
+        }
+        dot_all_mode = true;
+        args.remove(0);
+    }
+
+    let root = &args[0];
+    let root_path = std::path::Path::new(root);
+
+    let (fset, objs, files) = parse_project(root_path)?;
+
+    if dot_all_mode {
+        let out_dir = std::path::Path::new("out");
+        if !out_dir.exists() {
+            std::fs::create_dir_all(out_dir)?;
+        }
+        let mut cfgs_map = HashMap::new();
+        for pf in &files {
+            let per_file_map = build_cfgs_for_file(&fset, &objs, &pf.ast);
+            cfgs_map.extend(per_file_map);
+        }
+        for (fname, graph) in cfgs_map {
+            let dot = to_dot(&graph, &fname);
+            let filepath = out_dir.join(format!("{}.dot", fname));
+            std::fs::write(filepath, dot)?;
+        }
+        return Ok(());
+    }
+
+    let mut cfgs_map = HashMap::new();
+    for pf in &files {
+        let per_file_map = build_cfgs_for_file(&fset, &objs, &pf.ast);
+        cfgs_map.extend(per_file_map);
+    }
+
+    match &dot_mode {
+        Some(func_name) => {
+            if let Some(graph) = cfgs_map.get(func_name) {
+                let dot = to_dot(graph, func_name);
+                println!("{}", dot);
+                return Ok(());
+            } else {
+                eprintln!("Function not found for DOT export");
+                std::process::exit(2);
+            }
+        }
+        None => {
+            println!("=== CFGs ===");
+            for (fname, graph) in &cfgs_map {
+                println!("--- func {} ---\n{:#?}", fname, graph);
+            }
         }
     }
 
