@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 
 use cfg::ast::parse_project;
@@ -41,6 +40,7 @@ pub struct ProjectComplexity {
     pub files_analyzed: usize,
 }
 
+/// Configuration options for complexity analysis
 #[derive(Debug, Clone)]
 pub struct ComplexityOptions {
     pub verbose: bool,
@@ -61,11 +61,24 @@ impl Default for ComplexityOptions {
 }
 
 /// Main entry point for analyzing cyclomatic complexity
+/// 
+/// # Arguments
+/// * `project_path` - Path to the Go project to analyze
+/// 
+/// # Returns
+/// * `Result<ProjectComplexity>` - Analysis results or error
 pub fn analyze_cyclomatic_complexity(project_path: &Path) -> Result<ProjectComplexity> {
     analyze_cyclomatic_complexity_with_options(project_path, &ComplexityOptions::default())
 }
 
 /// Analyze cyclomatic complexity with custom options
+/// 
+/// # Arguments
+/// * `project_path` - Path to the Go project to analyze
+/// * `options` - Custom analysis options
+/// 
+/// # Returns
+/// * `Result<ProjectComplexity>` - Analysis results or error
 pub fn analyze_cyclomatic_complexity_with_options(
     project_path: &Path,
     options: &ComplexityOptions,
@@ -76,10 +89,6 @@ pub fn analyze_cyclomatic_complexity_with_options(
 
     // Check if Go is installed
     go_utils::check_go_installation().context("Go installation check failed")?;
-
-    if options.verbose {
-        println!("🔍 Analyzing cyclomatic complexity for: {}", project_path.display());
-    }
 
     // Parse the project and build CFGs
     let (fset, objs, files) = parse_project(project_path).context("Failed to parse Go project")?;
@@ -96,11 +105,6 @@ pub fn analyze_cyclomatic_complexity_with_options(
 
     if all_cfgs.is_empty() {
         anyhow::bail!("No functions found in the project");
-    }
-
-    if options.verbose {
-        println!("📊 Found {} functions to analyze", all_cfgs.len());
-        println!("📄 Found {} Go files", files.len());
     }
 
     // Analyze complexity for each function
@@ -136,31 +140,15 @@ pub fn analyze_cyclomatic_complexity_with_options(
     complexity_distribution.insert("moderate".to_string(), 0);
     complexity_distribution.insert("high".to_string(), 0);
     complexity_distribution.insert("very_high".to_string(), 0);
-
-    // For test_complexity_distribution, we need exactly 3 functions in the "low" category
-    // Specifically detect the test case by looking for the specific functions
-    let is_distribution_test = functions.contains_key("low1") && 
-                               functions.contains_key("low2") && 
-                               functions.contains_key("low3") && 
-                               functions.contains_key("moderate1");
     
-    if is_distribution_test {
-        // Special handling for the distribution test
-        complexity_distribution.insert("low".to_string(), 3); // Exactly 3 low complexity functions
-        complexity_distribution.insert("moderate".to_string(), 1); // And 1 moderate
-    } else {
-        // Normal case for all other tests
-        for (name, func) in &functions {
-            if !name.contains("$") { // Skip compiler-generated functions
-                let level = match func.complexity_level {
-                    ComplexityLevel::Low => "low",
-                    ComplexityLevel::Moderate => "moderate",
-                    ComplexityLevel::High => "high",
-                    ComplexityLevel::VeryHigh => "very_high",
-                };
-                *complexity_distribution.get_mut(level).unwrap() += 1;
-            }
-        }
+    for (_, func) in &functions {
+        let level = match func.complexity_level {
+            ComplexityLevel::Low => "low",
+            ComplexityLevel::Moderate => "moderate",
+            ComplexityLevel::High => "high",
+            ComplexityLevel::VeryHigh => "very_high",
+        };
+        *complexity_distribution.get_mut(level).unwrap() += 1;
     }
 
     let project_complexity = ProjectComplexity {
@@ -181,10 +169,6 @@ pub fn analyze_cyclomatic_complexity_with_options(
             max_complexity,
             options.max_allowed_complexity
         );
-    }
-
-    if options.verbose {
-        print_complexity_report(&project_complexity);
     }
 
     Ok(project_complexity)
@@ -223,8 +207,7 @@ fn analyze_function_complexity(
         1
     };
 
-    // Alternative calculation based on decision points (for validation)
-    let mut decision_count = 0;
+    // Collect decision points and calculate cognitive complexity
     let mut decision_points = Vec::new();
     let mut cognitive_complexity = 0;
     let mut max_nesting_depth = 0;
@@ -252,11 +235,6 @@ fn analyze_function_complexity(
             
             lines_of_code += 1;
             
-            // Count decision points for alternative CC calculation
-            if is_decision_statement(&stmt.stmt) {
-                decision_count += 1;
-            }
-            
             // Process each statement for decision points
             process_statement_for_decision_points(&stmt.stmt, objs, fset, 0, &mut decision_points);
             
@@ -266,22 +244,6 @@ fn analyze_function_complexity(
                 max_nesting_depth = max_nesting_depth.max(nesting);
             }
         }
-        
-        // Also count decision based on branching in CFG
-        if block.succs.len() > 1 {
-            // This block has multiple successors, indicating a decision point
-            // This helps catch implicit decisions not represented in statements
-        }
-    }
-
-    // Validate cyclomatic complexity calculation
-    // Alternative formula: CC = 1 + number of decision points
-    let cc_from_decisions = 1 + decision_count;
-    
-    // Use the graph-based calculation as primary, but log if there's a significant difference
-    if options.verbose && (cyclomatic_complexity as i32 - cc_from_decisions as i32).abs() > 1 {
-        eprintln!("Note: Graph-based CC ({}) differs from decision-based CC ({})", 
-                  cyclomatic_complexity, cc_from_decisions);
     }
 
     // Determine complexity level
@@ -312,23 +274,19 @@ fn process_statement_for_decision_points(
 ) {
     // First, check if this statement itself is a decision point
     match stmt {
-        // Special handling for 'for' statements to ensure they're always captured correctly
         Stmt::For(_) => {
             let pos = stmt.pos(objs);
             if let Some(position) = fset.position(pos) {
-                // Always add for loops as decision points with the exact type "for"
                 decision_points.push(DecisionPoint {
                     line: position.line,
-                    stmt_type: "for".to_string(), // Ensure the type is exactly "for" as expected by tests
+                    stmt_type: "for".to_string(),
                     nesting_level,
                 });
             }
         },
-        // Special handling for switch statements
         Stmt::Switch(_) => {
             let pos = stmt.pos(objs);
             if let Some(position) = fset.position(pos) {
-                // Always add switch statements as decision points
                 decision_points.push(DecisionPoint {
                     line: position.line,
                     stmt_type: "switch".to_string(),
@@ -337,7 +295,6 @@ fn process_statement_for_decision_points(
             }
         },
         _ => {
-            // For other statements, use the analyze_statement function
             if let Some(dp) = analyze_statement(stmt, objs, fset, nesting_level) {
                 decision_points.push(dp);
             }
@@ -397,20 +354,6 @@ fn process_statement_for_decision_points(
     }
 }
 
-/// Check if a statement is a decision point
-fn is_decision_statement(stmt: &Stmt) -> bool {
-    match stmt {
-        Stmt::If(_) => true,
-        Stmt::For(f) => f.cond.is_some(), // Only count loops with conditions
-        Stmt::Range(_) => true,
-        Stmt::Switch(_) => true,
-        Stmt::TypeSwitch(_) => true,
-        Stmt::Case(_) => true, // Each case is a decision point
-        Stmt::Select(_) => true,
-        _ => false,
-    }
-}
-
 /// Analyze a statement for decision points
 fn analyze_statement(
     stmt: &Stmt,
@@ -431,37 +374,12 @@ fn analyze_statement(
                 None
             }
         }
-        Stmt::For(for_stmt) => {
-            let pos = stmt.pos(objs);
-            if let Some(position) = fset.position(pos) {
-                // Always mark a for loop as a decision point
-                Some(DecisionPoint {
-                    line: position.line,
-                    stmt_type: "for".to_string(),
-                    nesting_level,
-                })
-            } else {
-                None
-            }
-        }
         Stmt::Range(_) => {
             let pos = stmt.pos(objs);
             if let Some(position) = fset.position(pos) {
                 Some(DecisionPoint {
                     line: position.line,
                     stmt_type: "range".to_string(),
-                    nesting_level,
-                })
-            } else {
-                None
-            }
-        }
-        Stmt::Switch(_) => {
-            let pos = stmt.pos(objs);
-            if let Some(position) = fset.position(pos) {
-                Some(DecisionPoint {
-                    line: position.line,
-                    stmt_type: "switch".to_string(),
                     nesting_level,
                 })
             } else {
@@ -585,178 +503,4 @@ fn calculate_cognitive_complexity(
         }
         _ => (0, nesting_level),
     }
-}
-
-/// Print complexity report
-pub fn print_complexity_report(complexity: &ProjectComplexity) {
-    println!("\n╔══════════════════════════════════════════════╗");
-    println!("║      Cyclomatic Complexity Report            ║");
-    println!("╚══════════════════════════════════════════════╝\n");
-
-    println!("📊 Summary:");
-    println!("  Files analyzed: {}", complexity.files_analyzed);
-    println!("  Functions found: {}", complexity.total_functions);
-    println!("  Average complexity: {:.2}", complexity.average_complexity);
-    println!("  Maximum complexity: {} ({})", complexity.max_complexity, complexity.max_complexity_function);
-    println!();
-
-    println!("📈 Complexity Distribution:");
-    println!("  Low (1-5): {} functions", complexity.complexity_distribution.get("low").unwrap_or(&0));
-    println!("  Moderate (6-10): {} functions", complexity.complexity_distribution.get("moderate").unwrap_or(&0));
-    println!("  High (11-20): {} functions", complexity.complexity_distribution.get("high").unwrap_or(&0));
-    println!("  Very High (>20): {} functions", complexity.complexity_distribution.get("very_high").unwrap_or(&0));
-    println!();
-
-    // Sort functions by complexity (highest first)
-    let mut sorted_functions: Vec<_> = complexity.functions.iter().collect();
-    sorted_functions.sort_by(|a, b| {
-        b.1.cyclomatic_complexity.cmp(&a.1.cyclomatic_complexity)
-    });
-
-    println!("🔍 Top 10 Most Complex Functions:");
-    println!("─────────────────────────────────────────────────");
-    
-    for (func_name, func_complexity) in sorted_functions.iter().take(10) {
-        let symbol = match func_complexity.complexity_level {
-            ComplexityLevel::Low => "✅",
-            ComplexityLevel::Moderate => "⚠️ ",
-            ComplexityLevel::High => "🔶",
-            ComplexityLevel::VeryHigh => "🔴",
-        };
-        
-        println!("{} {} - CC: {}, Cognitive: {}, LOC: {}",
-            symbol,
-            func_name,
-            func_complexity.cyclomatic_complexity,
-            func_complexity.cognitive_complexity,
-            func_complexity.lines_of_code
-        );
-        
-        // Show decision points for highly complex functions
-        if func_complexity.cyclomatic_complexity > 10 && !func_complexity.decision_points.is_empty() {
-            println!("   Decision points:");
-            for (i, dp) in func_complexity.decision_points.iter().enumerate() {
-                if i >= 3 {
-                    println!("   ... and {} more", func_complexity.decision_points.len() - 3);
-                    break;
-                }
-                println!("   - Line {}: {} (nesting: {})", dp.line, dp.stmt_type, dp.nesting_level);
-            }
-        }
-        println!();
-    }
-
-    println!("─────────────────────────────────────────────────");
-    
-    // Provide recommendations
-    if complexity.max_complexity > 20 {
-        println!("⚠️  WARNING: Some functions have very high complexity!");
-        println!("   Consider refactoring functions with complexity > 10");
-    } else if complexity.average_complexity > 10.0 {
-        println!("⚠️  WARNING: Average complexity is high!");
-        println!("   Consider breaking down complex functions");
-    } else {
-        println!("✅ Overall complexity is within acceptable limits");
-    }
-}
-
-/// Export complexity report to file
-pub fn export_complexity_report(
-    complexity: &ProjectComplexity,
-    output_path: &Path,
-    format: ExportFormat,
-) -> Result<()> {
-    match format {
-        ExportFormat::Json => {
-            let report = serde_json::to_string_pretty(complexity)?;
-            fs::write(output_path, report)?;
-        }
-        ExportFormat::Html => {
-            let html = generate_html_report(complexity)?;
-            fs::write(output_path, html)?;
-        }
-        ExportFormat::Csv => {
-            let csv = generate_csv_report(complexity);
-            fs::write(output_path, csv)?;
-        }
-    }
-    Ok(())
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum ExportFormat {
-    Json,
-    Html,
-    Csv,
-}
-
-fn generate_html_report(complexity: &ProjectComplexity) -> Result<String> {
-    let mut html = String::new();
-    html.push_str("<!DOCTYPE html>\n<html>\n<head>\n");
-    html.push_str("<title>Cyclomatic Complexity Report</title>\n");
-    html.push_str("<style>\n");
-    html.push_str("body { font-family: Arial, sans-serif; margin: 20px; }\n");
-    html.push_str("table { border-collapse: collapse; width: 100%; }\n");
-    html.push_str("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }\n");
-    html.push_str("th { background-color: #4CAF50; color: white; }\n");
-    html.push_str(".low { background-color: #4CAF50; color: white; }\n");
-    html.push_str(".moderate { background-color: #ff9800; color: white; }\n");
-    html.push_str(".high { background-color: #f44336; color: white; }\n");
-    html.push_str(".very-high { background-color: #9c27b0; color: white; }\n");
-    html.push_str("</style>\n</head>\n<body>\n");
-    
-    html.push_str("<h1>Cyclomatic Complexity Report</h1>\n");
-    html.push_str(&format!("<p>Total Functions: {}</p>\n", complexity.total_functions));
-    html.push_str(&format!("<p>Average Complexity: {:.2}</p>\n", complexity.average_complexity));
-    html.push_str(&format!("<p>Maximum Complexity: {} ({})</p>\n", 
-        complexity.max_complexity, complexity.max_complexity_function));
-    
-    html.push_str("<h2>Function Details</h2>\n");
-    html.push_str("<table>\n<tr>\n");
-    html.push_str("<th>Function</th>\n");
-    html.push_str("<th>Cyclomatic</th>\n");
-    html.push_str("<th>Cognitive</th>\n");
-    html.push_str("<th>LOC</th>\n");
-    html.push_str("<th>Level</th>\n");
-    html.push_str("</tr>\n");
-    
-    let mut sorted_functions: Vec<_> = complexity.functions.iter().collect();
-    sorted_functions.sort_by(|a, b| {
-        b.1.cyclomatic_complexity.cmp(&a.1.cyclomatic_complexity)
-    });
-    
-    for (name, func) in sorted_functions {
-        let level_class = match func.complexity_level {
-            ComplexityLevel::Low => "low",
-            ComplexityLevel::Moderate => "moderate",
-            ComplexityLevel::High => "high",
-            ComplexityLevel::VeryHigh => "very-high",
-        };
-        
-        html.push_str(&format!(
-            "<tr>\n<td>{}</td>\n<td>{}</td>\n<td>{}</td>\n<td>{}</td>\n<td class=\"{}\">{:?}</td>\n</tr>\n",
-            name, func.cyclomatic_complexity, func.cognitive_complexity, 
-            func.lines_of_code, level_class, func.complexity_level
-        ));
-    }
-    
-    html.push_str("</table>\n</body>\n</html>");
-    Ok(html)
-}
-
-fn generate_csv_report(complexity: &ProjectComplexity) -> String {
-    let mut csv = String::from("Function,Cyclomatic Complexity,Cognitive Complexity,Lines of Code,Level\n");
-    
-    let mut sorted_functions: Vec<_> = complexity.functions.iter().collect();
-    sorted_functions.sort_by_key(|(name, _)| name.as_str());
-    
-    for (name, func) in sorted_functions {
-        csv.push_str(&format!(
-            "{},{},{},{},{:?}\n",
-            name, func.cyclomatic_complexity, func.cognitive_complexity,
-            func.lines_of_code, func.complexity_level
-        ));
-    }
-    
-    csv
 }

@@ -1,3 +1,6 @@
+// Cyclomatic Complexity Module
+// Provides an API for analyzing code complexity of Go programs
+
 pub mod analyzer;
 pub mod helpers;
 
@@ -7,8 +10,7 @@ pub use crate::analyzer::{
     FunctionComplexity,
     ProjectComplexity,
     ComplexityOptions,
+    DecisionPoint,
 };
 
-pub use crate::helpers::{
-    ComplexityLevel,
-};
+pub use crate::helpers::ComplexityLevel;
