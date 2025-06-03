@@ -1,5 +1,6 @@
-use super::result_type::MetricResultType;
-use crate::metrics::{Metric, utils::parse_param_i64};
+use crate::git_metrics::{
+    metrics::Metric, types::result_type::MetricResultType, utils::parsing::parse_param_i64,
+};
 use chrono::DateTime;
 use gix::Commit;
 use std::collections::{HashMap, HashSet};
@@ -14,8 +15,8 @@ impl Metric for CommitsByAuthorInRepo {
         "commits_by_author_in_repo"
     }
 
-    fn default_result(&self) -> super::result_type::MetricResultType {
-        super::result_type::MetricResultType::CountMap(HashMap::new())
+    fn default_result(&self) -> MetricResultType {
+        MetricResultType::CountMap(HashMap::new())
     }
 
     fn compute(
@@ -38,8 +39,8 @@ impl Metric for ContributorsInTimeframe {
         "contributors_in_timeframe"
     }
 
-    fn default_result(&self) -> super::result_type::MetricResultType {
-        super::result_type::MetricResultType::UniqueValues(HashSet::new())
+    fn default_result(&self) -> MetricResultType {
+        MetricResultType::UniqueValues(HashSet::new())
     }
 
     fn compute(
@@ -67,8 +68,8 @@ impl Metric for PercentageOfTotalCommits {
         "percentage_of_total_commits"
     }
 
-    fn default_result(&self) -> super::result_type::MetricResultType {
-        super::result_type::MetricResultType::CountMap(HashMap::new())
+    fn default_result(&self) -> MetricResultType {
+        MetricResultType::CountMap(HashMap::new())
     }
 
     fn dependency(&self) -> Option<&str> {
@@ -94,8 +95,8 @@ impl Metric for FirstLastCommit {
         "first_last_commit"
     }
 
-    fn default_result(&self) -> super::result_type::MetricResultType {
-        super::result_type::MetricResultType::TimeRange(HashMap::new())
+    fn default_result(&self) -> MetricResultType {
+        MetricResultType::TimeRange(HashMap::new())
     }
 
     fn compute(
