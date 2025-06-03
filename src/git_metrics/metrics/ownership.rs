@@ -1,5 +1,6 @@
-use super::result_type::MetricResultType;
-use crate::metrics::{Metric, utils::parse_param_string};
+use crate::git_metrics::{
+    metrics::Metric, types::result_type::MetricResultType, utils::parsing::parse_param_string,
+};
 use gix::Commit;
 use imara_diff::Algorithm::Histogram;
 use imara_diff::intern::InternedInput;
@@ -12,8 +13,8 @@ impl Metric for LinesAddedRemoved {
         "lines_added_removed"
     }
 
-    fn default_result(&self) -> super::result_type::MetricResultType {
-        super::result_type::MetricResultType::CountMap(HashMap::new())
+    fn default_result(&self) -> MetricResultType {
+        MetricResultType::CountMap(HashMap::new())
     }
 
     fn compute(

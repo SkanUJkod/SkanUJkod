@@ -1,15 +1,20 @@
-mod metrics;
-mod repo;
-mod runner;
+mod git_metrics;
 
-use repo::RepoWrapper;
-use runner::run_selected_metrics;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use crate::git_metrics::core::repo::RepoWrapper;
+use crate::git_metrics::core::runner::run_selected_metrics;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repo = RepoWrapper::new(".").unwrap();
-    let selected = vec!["contributors_in_timeframe"];
+    let selected = vec![
+        "commits_by_author_in_repo",
+        "contributors_in_timeframe",
+        "percentage_of_total_commits",
+        "first_last_commit",
+        "lines_added_removed",
+    ];
 
     let mut all_params: HashMap<String, HashMap<String, String>> = HashMap::new();
 
@@ -22,6 +27,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ("start_date".to_string(), start_date.to_string()),
             ("end_date".to_string(), end_date.to_string()),
         ]),
+    );
+
+    all_params.insert(
+        "lines_added_removed".to_string(),
+        HashMap::from([("author".to_string(), "Jakub Magiera".to_string())]),
     );
 
     run_selected_metrics(&repo, &selected, &all_params);

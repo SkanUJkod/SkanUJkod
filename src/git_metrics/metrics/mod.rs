@@ -1,14 +1,12 @@
 pub mod commits;
-pub mod metrics_trait;
 pub mod ownership;
-pub mod result_type;
-pub mod utils;
 
 use commits::{
     CommitsByAuthorInRepo, ContributorsInTimeframe, FirstLastCommit, PercentageOfTotalCommits,
 };
-use metrics_trait::Metric;
 use ownership::LinesAddedRemoved;
+
+use crate::git_metrics::types::metrics_trait::Metric;
 
 pub fn all_metrics() -> Vec<Box<dyn Metric>> {
     vec![
