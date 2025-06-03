@@ -5,33 +5,53 @@ use go_parser::{AstObjects, FileSet};
 use std::collections::HashMap;
 use std::rc::Rc;
 
+fn get_precise_line_info(fset: &FileSet, objs: &AstObjects, stmt: &Stmt) -> (usize, usize) {
+    let pos = stmt.pos(objs);
+    let end_pos = stmt.end(objs);
+
+    let start_line = fset.position(pos).map(|p| p.line).unwrap_or(0);
+    let end_line = fset.position(end_pos).map(|p| p.line).unwrap_or(start_line);
+
+    (start_line, end_line)
+}
+
 impl ControlFlowGraph {
     pub fn build(fset: &FileSet, func: &FuncDecl, objs: &AstObjects) -> Self {
         let mut blocks = HashMap::<usize, BasicBlock>::new();
         let mut next_id = 0;
         let entry = next_id;
         next_id += 1;
+
+        let func_start_line = fset.position(func.pos(objs)).map(|p| p.line).unwrap_or(0);
+
         blocks.insert(
             entry,
             BasicBlock {
                 id: entry,
                 stmts: Vec::new(),
                 succs: Vec::new(),
-                start_line: 0,
-                end_line: 0,
+                start_line: func_start_line,
+                end_line: func_start_line,
             },
         );
 
         let exit_id = next_id;
         next_id += 1;
+
+        let func_end_line = if let Some(body) = &func.body {
+            fset.position(body.end()).map(|p| p.line).unwrap_or(func_start_line)
+        } else {
+            func_start_line
+        };
+
         blocks.insert(
             exit_id,
             BasicBlock {
                 id: exit_id,
                 stmts: vec![],
                 succs: vec![],
-                start_line: 0,
-                end_line: 0,
+                start_line: func_end_line,
+                end_line: func_end_line,
             },
         );
 
@@ -47,8 +67,7 @@ impl ControlFlowGraph {
         let body: &BlockStmt = body_rc.as_ref();
 
         let push_single = |blocks: &mut HashMap<usize, BasicBlock>, id: usize, stmt: Stmt| {
-            let pos = stmt.pos(objs);
-            let line = fset.position(pos).unwrap().line;
+            let (start_line, end_line) = get_precise_line_info(fset, objs, &stmt);
             let stmt_text = format!("{:?}", stmt);
             blocks.insert(
                 id,
@@ -59,8 +78,8 @@ impl ControlFlowGraph {
                         stmt,
                     }],
                     succs: Vec::new(),
-                    start_line: line,
-                    end_line: line,
+                    start_line,
+                    end_line,
                 },
             );
         };

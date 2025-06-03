@@ -17,6 +17,11 @@ use cyclomatic_complexity::{
     ComplexityOptions,
     ProjectComplexity
 };
+use branch_cov::{
+    analyze_branch_coverage_with_options,
+    BranchCoverageOptions,
+    ProjectBranchCoverage
+};
 
 mod cli {
     use super::*;
@@ -99,6 +104,7 @@ mod cli {
             dot <FuncName>        - Print DOT format for selected function\n  \
             dot-all               - Generate DOT files for all functions\n  \
             stmt-cov              - Display statement coverage\n  \
+            branch-cov            - Display branch coverage analysis\n  \
             complexity            - Display cyclomatic complexity analysis\n  \
             help                  - Show this help message\n\n\
             Options:\n  \
@@ -169,6 +175,49 @@ mod cli {
                     );
                 }
                 println!();
+            }
+        }
+    }
+
+    pub fn print_branch_coverage_report(coverage: &ProjectBranchCoverage, detailed: bool) {
+        println!("\n=== Branch Coverage Report ===\n");
+        println!("Files analyzed: {}", coverage.files_analyzed.len());
+        println!("Functions found: {}", coverage.functions.len());
+        println!("Total branches: {}", coverage.total_branches);
+        println!("Covered branches: {}", coverage.covered_branches);
+        println!("Overall coverage: {:.1}%\n", coverage.overall_coverage_percentage);
+
+        if detailed {
+            println!("Function Details:");
+            let mut functions: Vec<_> = coverage.functions.iter().collect();
+            functions.sort_by(|a, b| a.1.coverage_percentage.partial_cmp(&b.1.coverage_percentage).unwrap());
+            
+            for (func_name, func_coverage) in functions {
+                println!("{}", func_name);
+                println!("  Coverage: {:.1}% ({}/{})",
+                    func_coverage.coverage_percentage,
+                    func_coverage.covered_branches,
+                    func_coverage.total_branches
+                );
+                
+                if !func_coverage.uncovered_branches.is_empty() && func_coverage.uncovered_branches.len() <= 5 {
+                    println!("  Uncovered branches:");
+                    for uncovered in &func_coverage.uncovered_branches[..5.min(func_coverage.uncovered_branches.len())] {
+                        println!("    Line {}: {} ({})", uncovered.line, uncovered.branch_type, uncovered.condition);
+                    }
+                } else if !func_coverage.uncovered_branches.is_empty() {
+                    println!("  Uncovered branches: {} (showing first 5)", func_coverage.uncovered_branches.len());
+                    for uncovered in &func_coverage.uncovered_branches[..5] {
+                        println!("    Line {}: {} ({})", uncovered.line, uncovered.branch_type, uncovered.condition);
+                    }
+                    println!("    ...");
+                }
+                println!();
+            }
+
+            if !coverage.uncovered_branches.is_empty() {
+                println!("Overall Uncovered Branches Summary:");
+                println!("Total uncovered: {}", coverage.uncovered_branches.len());
             }
         }
     }
@@ -366,6 +415,28 @@ fn main() -> Result<()> {
                 cli::export_to_json(&complexity, output_path.as_deref())?;
             } else {
                 cli::print_complexity_report(&complexity, verbose);
+            }
+        },
+        
+        "branch-cov" => {
+            let options = BranchCoverageOptions {
+                verbose,
+                include_test_files: false,
+                min_coverage_threshold: 80.0,
+                fail_on_low_coverage: false,
+                exclude_patterns: vec!["*_test.go".to_string(), "vendor/*".to_string()],
+                simulate_coverage: false,
+                test_args: Vec::new(),
+                fail_on_error: false,
+                timeout_seconds: 30,
+            };
+            
+            let coverage = analyze_branch_coverage_with_options(project_path, &options)?;
+            
+            if json_output {
+                cli::export_to_json(&coverage, output_path.as_deref())?;
+            } else {
+                cli::print_branch_coverage_report(&coverage, verbose);
             }
         },
         
