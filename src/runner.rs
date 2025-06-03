@@ -3,6 +3,7 @@ use crate::metrics::{
 };
 use crate::repo::RepoWrapper;
 use gix::Repository;
+use gix::revision::Walk;
 use std::collections::HashMap;
 
 pub fn run_selected_metrics(
@@ -21,39 +22,8 @@ pub fn run_selected_metrics(
     let repo = &repo_wrapper.repo;
     let mut results = init_empty_results(&selected_metrics_with_deps);
 
-    let mut all_commits_info: Vec<_> = get_all_commits(repo).collect();
-    all_commits_info.reverse();
-
-    for i in 0..all_commits_info.len() {
-        let commit_info = all_commits_info[i].as_ref().unwrap();
-        let commit = repo.find_commit(commit_info.id()).unwrap();
-
-        let child_commit = if i + 1 < all_commits_info.len() {
-            let child_info = all_commits_info[i + 1].as_ref().unwrap();
-            Some(repo.find_commit(child_info.id()).unwrap())
-        } else {
-            None
-        };
-
-        for metric in &selected_metrics_with_deps {
-            let default_params = HashMap::new();
-            let params = all_params.get(metric.name()).unwrap_or(&default_params);
-            if let Some(result) = results.get_mut(metric.name()) {
-                metric.run(&commit, child_commit.as_ref(), params, result);
-            }
-        }
-    }
-
-    for metric in &selected_metrics_with_deps {
-        if let Some(dependency_name) = metric.dependencies() {
-            if let Some(dependency_result) = results.get(dependency_name).cloned() {
-                results.insert(metric.name(), dependency_result);
-            }
-        }
-        if let Some(result) = results.get_mut(metric.name()) {
-            metric.calculate(result);
-        }
-    }
+    compute_from_commits(repo, &selected_metrics_with_deps, all_params, &mut results);
+    finalize_metrics(&selected_metrics_with_deps, &mut results);
 
     let selected_metrics_without_deps: Vec<&dyn Metric> = metrics
         .iter()
@@ -67,16 +37,14 @@ pub fn run_selected_metrics(
 fn init_empty_results<'a>(metrics: &'a Vec<&dyn Metric>) -> HashMap<&'a str, MetricResultType> {
     metrics
         .iter()
-        .map(|metric| (metric.name(), metric.default_results()))
+        .map(|metric| (metric.name(), metric.default_result()))
         .collect()
 }
 
-fn get_all_commits(repo: &Repository) -> gix::revision::Walk {
+fn get_all_commits(repo: &Repository) -> Walk {
     let head_commit = repo.head_commit().unwrap();
     let commit = repo.find_commit(head_commit.id()).unwrap();
-    let commits = commit.ancestors().all().unwrap();
-
-    commits
+    commit.ancestors().all().unwrap()
 }
 
 fn resolve_metric_dependencies<'a>(
@@ -91,7 +59,7 @@ fn resolve_metric_dependencies<'a>(
         }
 
         if let Some(metric) = metrics.iter().find(|m| m.name() == metric_name) {
-            if let Some(dep) = metric.dependencies() {
+            if let Some(dep) = metric.dependency() {
                 if !resolved.contains(&dep) && !stack.contains(&dep) {
                     stack.push(dep);
                     resolved.push(dep);
@@ -100,4 +68,50 @@ fn resolve_metric_dependencies<'a>(
         }
     }
     resolved
+}
+
+fn compute_from_commits(
+    repo: &Repository,
+    selected_metrics_with_deps: &[&dyn Metric],
+    all_params: &HashMap<String, HashMap<String, String>>,
+    results: &mut HashMap<&str, MetricResultType>,
+) {
+    let mut all_commits_info: Vec<_> = get_all_commits(repo).collect();
+    all_commits_info.reverse();
+
+    for i in 0..all_commits_info.len() {
+        let commit_info = all_commits_info[i].as_ref().unwrap();
+        let commit = repo.find_commit(commit_info.id()).unwrap();
+
+        let child_commit = if i + 1 < all_commits_info.len() {
+            let child_info = all_commits_info[i + 1].as_ref().unwrap();
+            Some(repo.find_commit(child_info.id()).unwrap())
+        } else {
+            None
+        };
+
+        for metric in selected_metrics_with_deps {
+            let default_params = HashMap::new();
+            let params = all_params.get(metric.name()).unwrap_or(&default_params);
+            if let Some(result) = results.get_mut(metric.name()) {
+                metric.compute(&commit, child_commit.as_ref(), params, result);
+            }
+        }
+    }
+}
+
+fn finalize_metrics(
+    selected_metrics_with_deps: &[&dyn Metric],
+    results: &mut HashMap<&str, MetricResultType>,
+) {
+    for metric in selected_metrics_with_deps {
+        if let Some(dependency_name) = metric.dependency() {
+            if let Some(dependency_result) = results.get(dependency_name).cloned() {
+                results.insert(metric.name(), dependency_result);
+            }
+        }
+        if let Some(result) = results.get_mut(metric.name()) {
+            metric.finalize(result);
+        }
+    }
 }
