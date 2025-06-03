@@ -13,7 +13,7 @@ impl Metric for LinesAddedRemoved {
     }
 
     fn default_results(&self) -> super::result_type::MetricResultType {
-        super::result_type::MetricResultType::Map(HashMap::new())
+        super::result_type::MetricResultType::CountMap(HashMap::new())
     }
 
     fn run(
@@ -23,7 +23,7 @@ impl Metric for LinesAddedRemoved {
         params: &HashMap<String, String>,
         result: &mut MetricResultType,
     ) {
-        if let MetricResultType::Map(lines_map) = result {
+        if let MetricResultType::CountMap(lines_map) = result {
             let Some(child_commit) = child_commit else {
                 return;
             };
