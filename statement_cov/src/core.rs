@@ -13,6 +13,7 @@ use crate::helpers::go_utils;
 use crate::instrumentation;
 use crate::instrumentation::InstrumentationData;
 
+/// Represents coverage information for a single function
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionCoverage {
     pub total_statements: usize,
@@ -22,12 +23,16 @@ pub struct FunctionCoverage {
     pub uncovered_lines: Vec<usize>,
     pub uncovered_line_details: Vec<UncoveredLine>,
 }
+
+/// Details about an uncovered line in the code
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UncoveredLine {
     pub line: usize,
     pub stmt_type: String,
     pub stmt_ids: Vec<usize>,
 }
+
+/// Represents coverage information for an entire project
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectCoverage {
     pub functions: HashMap<String, FunctionCoverage>,
@@ -37,6 +42,8 @@ pub struct ProjectCoverage {
     pub files_analyzed: usize,
     pub test_output: Option<String>,
 }
+
+/// Options for statement coverage analysis
 #[derive(Debug, Clone)]
 pub struct CoverageOptions {
     pub verbose: bool,
@@ -44,6 +51,7 @@ pub struct CoverageOptions {
     pub timeout_seconds: u64,
     pub test_args: Vec<String>,
 }
+
 impl Default for CoverageOptions {
     fn default() -> Self {
         Self {
@@ -55,10 +63,29 @@ impl Default for CoverageOptions {
     }
 }
 
+/// Analyze statement coverage of a Go project using default options
+///
+/// # Arguments
+///
+/// * `project_path` - Path to the Go project to analyze
+///
+/// # Returns
+///
+/// * `Result<ProjectCoverage>` - Analysis results or error
 pub fn analyze_statement_coverage(project_path: &Path) -> Result<ProjectCoverage> {
     analyze_statement_coverage_with_options(project_path, &CoverageOptions::default())
 }
 
+/// Analyze statement coverage of a Go project with custom options
+///
+/// # Arguments
+///
+/// * `project_path` - Path to the Go project to analyze
+/// * `options` - Custom analysis options
+///
+/// # Returns
+///
+/// * `Result<ProjectCoverage>` - Analysis results or error
 pub fn analyze_statement_coverage_with_options(
     project_path: &Path,
     options: &CoverageOptions,
@@ -66,29 +93,38 @@ pub fn analyze_statement_coverage_with_options(
     if !project_path.exists() {
         anyhow::bail!("Project path does not exist: {}", project_path.display());
     }
+
     go_utils::check_go_installation().context("Go installation check failed")?;
+
     let temp_dir = TempDir::new().context("Failed to create temp directory")?;
     let temp_path = temp_dir.path();
+
     if options.verbose {
         println!("🔍 Analyzing project: {}", project_path.display());
         println!("📁 Temporary directory: {}", temp_path.display());
     }
+
     let (fset, objs, files) = parse_project(project_path).context("Failed to parse Go project")?;
+
     if files.is_empty() {
         anyhow::bail!("No Go files found in the project");
     }
+
     let mut cfgs = HashMap::new();
     for pf in &files {
         let file_cfgs = build_cfgs_for_file(&fset, &objs, &pf.ast);
         cfgs.extend(file_cfgs);
     }
+
     if cfgs.is_empty() {
         anyhow::bail!("No functions found in the project");
     }
+
     if options.verbose {
         println!("📊 Found {} functions to analyze", cfgs.len());
         println!("📄 Found {} Go files", files.len());
     }
+
     let instrumentation_data = instrumentation::generate_instrumented_project(
         &cfgs,
         &files,
@@ -97,13 +133,13 @@ pub fn analyze_statement_coverage_with_options(
         project_path,
         temp_path,
     ).context("Failed to instrument project")?;
+
     let (coverage_data, test_output) = run_tests_and_collect_coverage(temp_path, options)?;
+
     let mut coverage = calculate_statement_coverage(&instrumentation_data, &coverage_data)?;
     coverage.files_analyzed = files.len();
     coverage.test_output = test_output;
-    if options.verbose {
-        print_coverage_report(&coverage);
-    }
+
     Ok(coverage)
 }
 
@@ -114,6 +150,7 @@ fn run_tests_and_collect_coverage(
     if options.verbose {
         println!("🧪 Running tests...");
     }
+
     let build_output = Command::new("go")
         .arg("build")
         .arg("./...")
@@ -121,10 +158,12 @@ fn run_tests_and_collect_coverage(
         .env("GO111MODULE", "on")
         .output()
         .context("Failed to build instrumented project")?;
+
     if !build_output.status.success() {
         let stderr = String::from_utf8_lossy(&build_output.stderr);
         anyhow::bail!("Failed to build instrumented project:\n{}", stderr);
     }
+
     let mut test_cmd = Command::new("go");
     test_cmd
         .arg("test")
@@ -136,11 +175,14 @@ fn run_tests_and_collect_coverage(
         .env("GO111MODULE", "on")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+
     for arg in &options.test_args {
         test_cmd.arg(arg);
     }
+
     let mut child = test_cmd.spawn().context("Failed to spawn go test")?;
     let mut test_output = String::new();
+
     if let Some(stdout) = child.stdout.take() {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
@@ -153,10 +195,12 @@ fn run_tests_and_collect_coverage(
             }
         }
     }
+
     let status = child.wait().context("Failed to wait for go test")?;
     if !status.success() && options.fail_on_error {
         anyhow::bail!("Tests failed. Enable verbose mode to see test output.");
     }
+
     let coverage_file = project_path.join("coverage_data.json");
     if !coverage_file.exists() {
         std::thread::sleep(std::time::Duration::from_millis(500));
@@ -169,9 +213,11 @@ fn run_tests_and_collect_coverage(
             );
         }
     }
+
     let data = fs::read_to_string(&coverage_file).context("Failed to read coverage data")?;
     let coverage: HashMap<String, Vec<usize>> =
         serde_json::from_str(&data).context("Failed to parse coverage data")?;
+
     Ok((coverage, Some(test_output)))
 }
 
@@ -182,18 +228,22 @@ fn calculate_statement_coverage(
     let mut functions = HashMap::new();
     let mut total_statements = 0;
     let mut covered_statements = 0;
+
     for (func_name, total_stmts) in &instrumentation_data.total_statements_per_function {
         let mappings = instrumentation_data
             .statement_mappings
             .get(func_name)
             .ok_or_else(|| anyhow::anyhow!("No mappings found for function {}", func_name))?;
+
         let covered_stmt_ids: HashSet<usize> = coverage_data
             .get(func_name)
             .map(|ids| ids.iter().copied().collect())
             .unwrap_or_default();
+
         let covered_count = covered_stmt_ids.len();
         let mut uncovered_statements = Vec::new();
         let mut uncovered_line_map: HashMap<usize, Vec<(usize, String)>> = HashMap::new();
+
         for mapping in mappings {
             if !covered_stmt_ids.contains(&mapping.stmt_id) {
                 uncovered_statements.push(mapping.stmt_id);
@@ -203,6 +253,7 @@ fn calculate_statement_coverage(
                     .push((mapping.stmt_id, mapping.stmt_type.clone()));
             }
         }
+
         let mut uncovered_line_details: Vec<UncoveredLine> = uncovered_line_map
             .into_iter()
             .map(|(line, stmts)| {
@@ -219,16 +270,19 @@ fn calculate_statement_coverage(
                 }
             })
             .collect();
+
         uncovered_line_details.sort_by_key(|d| d.line);
         let uncovered_lines: Vec<usize> = uncovered_line_details
             .iter()
             .map(|d| d.line)
             .collect();
+
         let coverage_percentage = if *total_stmts > 0 {
             (covered_count as f64 / *total_stmts as f64) * 100.0
         } else {
             100.0
         };
+
         functions.insert(
             func_name.clone(),
             FunctionCoverage {
@@ -240,14 +294,17 @@ fn calculate_statement_coverage(
                 uncovered_line_details,
             },
         );
+
         total_statements += total_stmts;
         covered_statements += covered_count;
     }
+
     let overall_coverage = if total_statements > 0 {
         (covered_statements as f64 / total_statements as f64) * 100.0
     } else {
         100.0
     };
+
     Ok(ProjectCoverage {
         functions,
         total_statements,
@@ -256,91 +313,4 @@ fn calculate_statement_coverage(
         files_analyzed: 0,
         test_output: None,
     })
-}
-
-pub fn print_coverage_report(coverage: &ProjectCoverage) {
-    println!("\n╔══════════════════════════════════════════════╗");
-    println!("║        Statement Coverage Report             ║");
-    println!("╚══════════════════════════════════════════════╝\n");
-    println!("📊 Summary:");
-    println!("  Files analyzed: {}", coverage.files_analyzed);
-    println!("  Functions found: {}", coverage.functions.len());
-    println!("  Total statements: {}", coverage.total_statements);
-    println!("  Covered statements: {}", coverage.covered_statements);
-    println!("  Overall coverage: {:.1}%\n", coverage.overall_coverage);
-    let mut functions: Vec<_> = coverage.functions.iter().collect();
-    functions.sort_by(|a, b| {
-        a.1.coverage_percentage
-            .partial_cmp(&b.1.coverage_percentage)
-            .unwrap()
-    });
-    println!("📋 Function Details:");
-    println!("─────────────────────────────────────────────────");
-    for (func_name, func_coverage) in functions {
-        let symbol = if func_coverage.coverage_percentage >= 80.0 {
-            "✅"
-        } else if func_coverage.coverage_percentage >= 50.0 {
-            "⚠️ "
-        } else {
-            "❌"
-        };
-        println!("{} {}", symbol, func_name);
-        println!(
-            "   Coverage: {:.1}% ({}/{})",
-            func_coverage.coverage_percentage,
-            func_coverage.covered_statements,
-            func_coverage.total_statements
-        );
-        if !func_coverage.uncovered_line_details.is_empty() {
-            let details_to_show = func_coverage.uncovered_line_details
-                .iter()
-                .take(5)
-                .collect::<Vec<_>>();
-            println!("   Uncovered:");
-            for detail in &details_to_show {
-                println!(
-                    "     Line {}: {} statement(s) of type '{}'",
-                    detail.line,
-                    detail.stmt_ids.len(),
-                    detail.stmt_type
-                );
-            }
-            if func_coverage.uncovered_line_details.len() > 5 {
-                println!(
-                    "     ... and {} more lines",
-                    func_coverage.uncovered_line_details.len() - 5
-                );
-            }
-        }
-        println!();
-    }
-    println!("─────────────────────────────────────────────────");
-    let grade = match coverage.overall_coverage {
-        x if x >= 90.0 => "A (Excellent)",
-        x if x >= 80.0 => "B (Good)",
-        x if x >= 70.0 => "C (Acceptable)",
-        x if x >= 60.0 => "D (Poor)",
-        _ => "F (Failing)",
-    };
-
-    println!("📜 Overall Grade: {}", grade);
-}
-
-pub fn export_coverage_report(
-    coverage: &ProjectCoverage,
-    output_path: &Path,
-    format: ExportFormat,
-) -> Result<()> {
-    match format {
-        ExportFormat::Json => {
-            let report = serde_json::to_string_pretty(coverage)?;
-            fs::write(output_path, report)?;
-        }
-    }
-    Ok(())
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum ExportFormat {
-    Json,
 }
