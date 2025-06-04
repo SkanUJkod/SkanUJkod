@@ -39,7 +39,9 @@ impl ControlFlowGraph {
         next_id += 1;
 
         let func_end_line = if let Some(body) = &func.body {
-            fset.position(body.end()).map(|p| p.line).unwrap_or(func_start_line)
+            fset.position(body.end())
+                .map(|p| p.line)
+                .unwrap_or(func_start_line)
         } else {
             func_start_line
         };

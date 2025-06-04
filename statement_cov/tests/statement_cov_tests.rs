@@ -11,7 +11,10 @@ use cfg::cfg::types::{BasicBlock, ControlFlowGraph, Statement};
 use go_parser::ast::{EmptyStmt, Stmt};
 
 fn empty_stmt() -> Stmt {
-    Stmt::Empty(Rc::new(EmptyStmt { semi: 0, implicit: true }))
+    Stmt::Empty(Rc::new(EmptyStmt {
+        semi: 0,
+        implicit: true,
+    }))
 }
 
 fn run_codegen(cfgs: &HashMap<String, ControlFlowGraph>) -> String {
@@ -48,7 +51,10 @@ fn generates_stmt_hit_for_each_statement() {
         0,
         BasicBlock {
             id: 0,
-            stmts: vec![Statement { text: "first".into(), stmt: empty_stmt() }],
+            stmts: vec![Statement {
+                text: "first".into(),
+                stmt: empty_stmt(),
+            }],
             succs: vec![1],
             start_line: 0,
             end_line: 0,
@@ -59,7 +65,10 @@ fn generates_stmt_hit_for_each_statement() {
         1,
         BasicBlock {
             id: 1,
-            stmts: vec![Statement { text: "second".into(), stmt: empty_stmt() }],
+            stmts: vec![Statement {
+                text: "second".into(),
+                stmt: empty_stmt(),
+            }],
             succs: vec![],
             start_line: 0,
             end_line: 0,
@@ -77,7 +86,11 @@ fn generates_stmt_hit_for_each_statement() {
         .lines()
         .filter(|l| l.starts_with("stmt_hit(\"foo\","))
         .collect();
-    assert_eq!(all_hits.len(), 2, "There should be exactly 2 stmt_hit calls for foo");
+    assert_eq!(
+        all_hits.len(),
+        2,
+        "There should be exactly 2 stmt_hit calls for foo"
+    );
     assert_eq!(all_hits[0], "stmt_hit(\"foo\", 0)");
     assert_eq!(all_hits[1], "stmt_hit(\"foo\", 1)");
 }
@@ -90,7 +103,10 @@ fn adds_stub_main_when_absent() {
         0,
         BasicBlock {
             id: 0,
-            stmts: vec![Statement { text: "one".into(), stmt: empty_stmt() }],
+            stmts: vec![Statement {
+                text: "one".into(),
+                stmt: empty_stmt(),
+            }],
             succs: vec![],
             start_line: 0,
             end_line: 0,
@@ -102,7 +118,10 @@ fn adds_stub_main_when_absent() {
 
     let generated = run_codegen(&cfgs);
 
-    assert!(generated.contains("func main() {}"), "stub main() should be present");
+    assert!(
+        generated.contains("func main() {}"),
+        "stub main() should be present"
+    );
 }
 
 #[test]
@@ -110,7 +129,10 @@ fn generates_stmt_hit_for_empty_cfg() {
     let cfgs = HashMap::new();
     let generated = run_codegen(&cfgs);
 
-    assert!(generated.contains("func main() {}"), "stub main() should be present");
+    assert!(
+        generated.contains("func main() {}"),
+        "stub main() should be present"
+    );
 }
 
 #[test]
@@ -120,7 +142,10 @@ fn handles_multiple_functions() {
         0,
         BasicBlock {
             id: 0,
-            stmts: vec![Statement { text: "stmt1".into(), stmt: empty_stmt() }],
+            stmts: vec![Statement {
+                text: "stmt1".into(),
+                stmt: empty_stmt(),
+            }],
             succs: vec![1],
             start_line: 0,
             end_line: 0,
@@ -130,14 +155,20 @@ fn handles_multiple_functions() {
         1,
         BasicBlock {
             id: 1,
-            stmts: vec![Statement { text: "stmt2".into(), stmt: empty_stmt() }],
+            stmts: vec![Statement {
+                text: "stmt2".into(),
+                stmt: empty_stmt(),
+            }],
             succs: vec![],
             start_line: 0,
             end_line: 0,
         },
     );
 
-    let cfg1 = ControlFlowGraph { blocks: blocks.clone(), entry: 0 };
+    let cfg1 = ControlFlowGraph {
+        blocks: blocks.clone(),
+        entry: 0,
+    };
     let cfg2 = ControlFlowGraph { blocks, entry: 0 };
 
     let mut cfgs = HashMap::new();

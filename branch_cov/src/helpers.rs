@@ -1,11 +1,11 @@
 use crate::ProjectBranchCoverage;
 use anyhow::{Context, Result};
-use std::path::Path;
-use std::process::Command;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
-use std::path::{PathBuf};
+use std::path::Path;
+use std::path::PathBuf;
+use std::process::Command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SourceLocation {
@@ -93,7 +93,7 @@ pub mod export {
     pub fn to_csv(coverage: &ProjectBranchCoverage) -> String {
         let mut csv = String::new();
         csv.push_str("Function,File,TotalBranches,CoveredBranches,CoveragePercentage\n");
-        
+
         for (func_name, func_coverage) in &coverage.functions {
             csv.push_str(&format!(
                 "{},{},{},{},{:.2}\n",
@@ -104,7 +104,7 @@ pub mod export {
                 func_coverage.coverage_percentage
             ));
         }
-        
+
         csv
     }
 
@@ -116,15 +116,18 @@ pub mod export {
         }
     }
 
-    pub fn save_report(coverage: &ProjectBranchCoverage, output_path: &Path, format: &str) -> Result<()> {
+    pub fn save_report(
+        coverage: &ProjectBranchCoverage,
+        output_path: &Path,
+        format: &str,
+    ) -> Result<()> {
         let content = match format {
             "json" => to_json(coverage)?,
             "csv" => to_csv(coverage),
             _ => anyhow::bail!("Unsupported format: {}", format),
         };
 
-        fs::write(output_path, content)
-            .context("Failed to write coverage report to file")?;
+        fs::write(output_path, content).context("Failed to write coverage report to file")?;
 
         Ok(())
     }
@@ -132,7 +135,7 @@ pub mod export {
 
 pub mod go_utils {
     use super::*;
-    
+
     /// Check if Go is installed on the system
     pub fn check_go_installation() -> Result<String> {
         let output = Command::new("go")
@@ -147,7 +150,7 @@ pub mod go_utils {
         let version = String::from_utf8_lossy(&output.stdout);
         Ok(version.trim().to_string())
     }
-    
+
     /// Check if a path is a Go test file
     pub fn is_test_file(path: &str) -> bool {
         path.ends_with("_test.go")
@@ -166,12 +169,12 @@ pub mod go_utils {
     /// Get all Go files in a directory (recursively)
     pub fn find_go_files(dir: &Path) -> Result<Vec<PathBuf>> {
         let mut go_files = Vec::new();
-        
+
         if dir.is_dir() {
             for entry in fs::read_dir(dir)? {
                 let entry = entry?;
                 let path = entry.path();
-                
+
                 if path.is_dir() {
                     go_files.extend(find_go_files(&path)?);
                 } else if let Some(ext) = path.extension() {
@@ -181,7 +184,7 @@ pub mod go_utils {
                 }
             }
         }
-        
+
         Ok(go_files)
     }
 

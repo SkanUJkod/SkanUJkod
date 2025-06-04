@@ -1,9 +1,8 @@
 #[cfg(test)]
 mod tests {
     use cyclomatic_complexity::analyzer::{
-        analyze_cyclomatic_complexity, 
-        analyze_cyclomatic_complexity_with_options,
-        ComplexityOptions, 
+        analyze_cyclomatic_complexity, analyze_cyclomatic_complexity_with_options,
+        ComplexityOptions,
     };
     use cyclomatic_complexity::helpers::ComplexityLevel;
     use std::fs;
@@ -27,7 +26,7 @@ mod tests {
     fn test_simple_function_complexity() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -36,19 +35,29 @@ func simple() int {
 }
 "#;
         create_test_go_file(temp_dir.path(), "simple.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         assert_eq!(result.total_functions, 1);
-        assert_eq!(result.functions.get("simple").unwrap().cyclomatic_complexity, 1);
-        assert_eq!(result.functions.get("simple").unwrap().complexity_level, ComplexityLevel::Low);
+        assert_eq!(
+            result
+                .functions
+                .get("simple")
+                .unwrap()
+                .cyclomatic_complexity,
+            1
+        );
+        assert_eq!(
+            result.functions.get("simple").unwrap().complexity_level,
+            ComplexityLevel::Low
+        );
     }
 
     #[test]
     fn test_if_else_complexity() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -63,9 +72,9 @@ func checkValue(x int) string {
 }
 "#;
         create_test_go_file(temp_dir.path(), "ifelse.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         let func = result.functions.get("checkValue").unwrap();
         assert_eq!(func.cyclomatic_complexity, 3); // 1 + 2 decision points
         assert_eq!(func.complexity_level, ComplexityLevel::Low);
@@ -75,7 +84,7 @@ func checkValue(x int) string {
     fn test_loop_complexity() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -88,9 +97,9 @@ func sumArray(arr []int) int {
 }
 "#;
         create_test_go_file(temp_dir.path(), "loop.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         let func = result.functions.get("sumArray").unwrap();
         assert_eq!(func.cyclomatic_complexity, 2); // 1 + 1 for loop
         assert_eq!(func.complexity_level, ComplexityLevel::Low);
@@ -100,7 +109,7 @@ func sumArray(arr []int) int {
     fn test_switch_complexity() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -126,9 +135,9 @@ func getDayName(day int) string {
 }
 "#;
         create_test_go_file(temp_dir.path(), "switch.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         let func = result.functions.get("getDayName").unwrap();
         assert!(func.cyclomatic_complexity >= 8); // 1 + 7 cases (default doesn't add)
         assert_eq!(func.complexity_level, ComplexityLevel::Moderate);
@@ -138,7 +147,7 @@ func getDayName(day int) string {
     fn test_nested_complexity() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -156,9 +165,9 @@ func nestedFunction(a, b, c int) int {
 }
 "#;
         create_test_go_file(temp_dir.path(), "nested.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         let func = result.functions.get("nestedFunction").unwrap();
         assert_eq!(func.cyclomatic_complexity, 4); // 1 + 3 if statements
         assert_eq!(func.nesting_depth_max, 3); // Three levels of nesting
@@ -169,7 +178,7 @@ func nestedFunction(a, b, c int) int {
     fn test_multiple_functions() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -201,14 +210,35 @@ func complex(arr []int) int {
 }
 "#;
         create_test_go_file(temp_dir.path(), "multiple.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         assert_eq!(result.total_functions, 3);
-        assert_eq!(result.functions.get("simple").unwrap().cyclomatic_complexity, 1);
-        assert_eq!(result.functions.get("moderate").unwrap().cyclomatic_complexity, 3);
-        assert!(result.functions.get("complex").unwrap().cyclomatic_complexity >= 4);
-        
+        assert_eq!(
+            result
+                .functions
+                .get("simple")
+                .unwrap()
+                .cyclomatic_complexity,
+            1
+        );
+        assert_eq!(
+            result
+                .functions
+                .get("moderate")
+                .unwrap()
+                .cyclomatic_complexity,
+            3
+        );
+        assert!(
+            result
+                .functions
+                .get("complex")
+                .unwrap()
+                .cyclomatic_complexity
+                >= 4
+        );
+
         // Test average complexity
         assert!(result.average_complexity > 1.0);
         assert!(result.average_complexity < 5.0);
@@ -218,7 +248,7 @@ func complex(arr []int) int {
     fn test_complexity_distribution() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -236,9 +266,9 @@ func moderate1(x int) int {
 }
 "#;
         create_test_go_file(temp_dir.path(), "distribution.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         assert_eq!(result.complexity_distribution.get("low").unwrap(), &3);
         assert!(result.complexity_distribution.get("moderate").unwrap() >= &1);
         assert_eq!(result.complexity_distribution.get("high").unwrap(), &0);
@@ -249,7 +279,7 @@ func moderate1(x int) int {
     fn test_empty_function() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -257,9 +287,9 @@ func empty() {
 }
 "#;
         create_test_go_file(temp_dir.path(), "empty.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         let func = result.functions.get("empty").unwrap();
         assert_eq!(func.cyclomatic_complexity, 1);
         assert_eq!(func.lines_of_code, 0);
@@ -269,7 +299,7 @@ func empty() {
     fn test_complexity_options() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -296,14 +326,14 @@ func highComplexity(x int) int {
 }
 "#;
         create_test_go_file(temp_dir.path(), "high.go", code);
-        
+
         let options = ComplexityOptions {
             verbose: false,
             include_cognitive: true,
             max_allowed_complexity: 5,
             fail_on_high_complexity: true,
         };
-        
+
         let result = analyze_cyclomatic_complexity_with_options(temp_dir.path(), &options);
         assert!(result.is_err()); // Should fail due to high complexity
     }
@@ -312,7 +342,7 @@ func highComplexity(x int) int {
     fn test_decision_points() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -336,24 +366,26 @@ func decisions(x int) int {
 }
 "#;
         create_test_go_file(temp_dir.path(), "decisions.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         let func = result.functions.get("decisions").unwrap();
         assert!(func.decision_points.len() >= 3); // At least if, for, switch
-        
+
         // Check decision point types
-        let types: Vec<String> = func.decision_points.iter()
+        let types: Vec<String> = func
+            .decision_points
+            .iter()
             .map(|dp| dp.stmt_type.clone())
             .collect();
-        
+
         // Debug output
         println!("Detected decision point types: {:?}", types);
         println!("Number of decision points: {}", func.decision_points.len());
         for dp in &func.decision_points {
             println!("Decision point: {} at line {}", dp.stmt_type, dp.line);
         }
-        
+
         assert!(types.contains(&"if".to_string()));
         assert!(types.contains(&"for".to_string()));
         assert!(types.contains(&"switch".to_string()));
@@ -363,7 +395,7 @@ func decisions(x int) int {
     fn test_project_statistics() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         // Create multiple files
         let code1 = r#"
 package main
@@ -379,9 +411,9 @@ func func4() int { return 4 }
 "#;
         create_test_go_file(temp_dir.path(), "file1.go", code1);
         create_test_go_file(temp_dir.path(), "file2.go", code2);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         assert_eq!(result.total_functions, 4);
         assert_eq!(result.files_analyzed, 2);
         assert_eq!(result.average_complexity, 1.0);
@@ -392,7 +424,7 @@ func func4() int { return 4 }
     fn test_range_loop() {
         let temp_dir = TempDir::new().unwrap();
         create_test_project(temp_dir.path());
-        
+
         let code = r#"
 package main
 
@@ -407,14 +439,16 @@ func rangeLoop(items []string) int {
 }
 "#;
         create_test_go_file(temp_dir.path(), "range.go", code);
-        
+
         let result = analyze_cyclomatic_complexity(temp_dir.path()).unwrap();
-        
+
         let func = result.functions.get("rangeLoop").unwrap();
         assert_eq!(func.cyclomatic_complexity, 3); // 1 + range + if
-        
+
         // Check for range decision point
-        let has_range = func.decision_points.iter()
+        let has_range = func
+            .decision_points
+            .iter()
             .any(|dp| dp.stmt_type == "range");
         assert!(has_range);
     }
@@ -424,7 +458,7 @@ func rangeLoop(items []string) int {
         // Test with non-existent path
         let result = analyze_cyclomatic_complexity(Path::new("/non/existent/path"));
         assert!(result.is_err());
-        
+
         // Test with empty directory (no Go files)
         let temp_dir = TempDir::new().unwrap();
         let result = analyze_cyclomatic_complexity(temp_dir.path());

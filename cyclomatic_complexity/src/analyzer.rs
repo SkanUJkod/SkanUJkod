@@ -5,9 +5,9 @@ use std::path::Path;
 
 use cfg::ast::parse_project;
 use cfg::cfg::{build_cfgs_for_file, ControlFlowGraph};
-use go_parser::ast::{Stmt, Node};
+use go_parser::ast::{Node, Stmt};
 
-use crate::helpers::{ComplexityLevel, go_utils};
+use crate::helpers::{go_utils, ComplexityLevel};
 
 /// Structure representing complexity analysis for a single function
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,10 +61,10 @@ impl Default for ComplexityOptions {
 }
 
 /// Main entry point for analyzing cyclomatic complexity
-/// 
+///
 /// # Arguments
 /// * `project_path` - Path to the Go project to analyze
-/// 
+///
 /// # Returns
 /// * `Result<ProjectComplexity>` - Analysis results or error
 pub fn analyze_cyclomatic_complexity(project_path: &Path) -> Result<ProjectComplexity> {
@@ -72,11 +72,11 @@ pub fn analyze_cyclomatic_complexity(project_path: &Path) -> Result<ProjectCompl
 }
 
 /// Analyze cyclomatic complexity with custom options
-/// 
+///
 /// # Arguments
 /// * `project_path` - Path to the Go project to analyze
 /// * `options` - Custom analysis options
-/// 
+///
 /// # Returns
 /// * `Result<ProjectComplexity>` - Analysis results or error
 pub fn analyze_cyclomatic_complexity_with_options(
@@ -114,7 +114,7 @@ pub fn analyze_cyclomatic_complexity_with_options(
 
     for (func_name, cfg) in &all_cfgs {
         let func_complexity = analyze_function_complexity(cfg, &objs, &fset, options)?;
-        
+
         if func_complexity.cyclomatic_complexity > max_complexity {
             max_complexity = func_complexity.cyclomatic_complexity;
             max_complexity_function = func_name.clone();
@@ -125,9 +125,7 @@ pub fn analyze_cyclomatic_complexity_with_options(
 
     // Calculate statistics
     let total_functions = functions.len();
-    let total_complexity: usize = functions.values()
-        .map(|f| f.cyclomatic_complexity)
-        .sum();
+    let total_complexity: usize = functions.values().map(|f| f.cyclomatic_complexity).sum();
     let average_complexity = if total_functions > 0 {
         total_complexity as f64 / total_functions as f64
     } else {
@@ -140,7 +138,7 @@ pub fn analyze_cyclomatic_complexity_with_options(
     complexity_distribution.insert("moderate".to_string(), 0);
     complexity_distribution.insert("high".to_string(), 0);
     complexity_distribution.insert("very_high".to_string(), 0);
-    
+
     for (_, func) in &functions {
         let level = match func.complexity_level {
             ComplexityLevel::Low => "low",
@@ -183,15 +181,13 @@ fn analyze_function_complexity(
 ) -> Result<FunctionComplexity> {
     // Calculate cyclomatic complexity using McCabe's formula: CC = E - N + 2P
     // For a single function, P = 1 (one connected component)
-    
+
     // Count nodes - exclude entry and exit blocks from the count
     let num_nodes = cfg.blocks.len();
-    
+
     // Count edges
-    let num_edges: usize = cfg.blocks.values()
-        .map(|block| block.succs.len())
-        .sum();
-    
+    let num_edges: usize = cfg.blocks.values().map(|block| block.succs.len()).sum();
+
     // Apply McCabe's formula: CC = E - N + 2P (where P = 1)
     // But be careful to avoid overflow: use max(E + 2 - N, 1) to ensure CC is at least 1
     let cyclomatic_complexity = if num_nodes > 0 {
@@ -219,10 +215,10 @@ fn analyze_function_complexity(
         if *block_id == cfg.entry || block.stmts.is_empty() {
             continue;
         }
-        
+
         // Check if this is an exit block (no successors)
         let is_exit = block.succs.is_empty();
-        
+
         for stmt in &block.stmts {
             // Skip empty statements in exit blocks
             if is_exit {
@@ -232,14 +228,15 @@ fn analyze_function_complexity(
                     }
                 }
             }
-            
+
             lines_of_code += 1;
-            
+
             // Process each statement for decision points
             process_statement_for_decision_points(&stmt.stmt, objs, fset, 0, &mut decision_points);
-            
+
             if options.include_cognitive {
-                let (cognitive_score, nesting) = calculate_cognitive_complexity(&stmt.stmt, objs, 0);
+                let (cognitive_score, nesting) =
+                    calculate_cognitive_complexity(&stmt.stmt, objs, 0);
                 cognitive_complexity += cognitive_score;
                 max_nesting_depth = max_nesting_depth.max(nesting);
             }
@@ -270,7 +267,7 @@ fn process_statement_for_decision_points(
     objs: &go_parser::AstObjects,
     fset: &go_parser::FileSet,
     nesting_level: usize,
-    decision_points: &mut Vec<DecisionPoint>
+    decision_points: &mut Vec<DecisionPoint>,
 ) {
     // First, check if this statement itself is a decision point
     match stmt {
@@ -283,7 +280,7 @@ fn process_statement_for_decision_points(
                     nesting_level,
                 });
             }
-        },
+        }
         Stmt::Switch(_) => {
             let pos = stmt.pos(objs);
             if let Some(position) = fset.position(pos) {
@@ -293,63 +290,111 @@ fn process_statement_for_decision_points(
                     nesting_level,
                 });
             }
-        },
+        }
         _ => {
             if let Some(dp) = analyze_statement(stmt, objs, fset, nesting_level) {
                 decision_points.push(dp);
             }
         }
     }
-    
+
     // Then recursively process any child statements
     match stmt {
         Stmt::If(if_stmt) => {
             // Process the 'then' block
             for s in &if_stmt.body.list {
-                process_statement_for_decision_points(s, objs, fset, nesting_level + 1, decision_points);
+                process_statement_for_decision_points(
+                    s,
+                    objs,
+                    fset,
+                    nesting_level + 1,
+                    decision_points,
+                );
             }
-            
+
             // Process the 'else' block if it exists
             if let Some(els) = &if_stmt.els {
-                process_statement_for_decision_points(els, objs, fset, nesting_level + 1, decision_points);
+                process_statement_for_decision_points(
+                    els,
+                    objs,
+                    fset,
+                    nesting_level + 1,
+                    decision_points,
+                );
             }
-        },
+        }
         Stmt::For(for_stmt) => {
             // Process the loop body
             for s in &for_stmt.body.list {
-                process_statement_for_decision_points(s, objs, fset, nesting_level + 1, decision_points);
+                process_statement_for_decision_points(
+                    s,
+                    objs,
+                    fset,
+                    nesting_level + 1,
+                    decision_points,
+                );
             }
-        },
+        }
         Stmt::Range(range_stmt) => {
             // Process the range loop body
             for s in &range_stmt.body.list {
-                process_statement_for_decision_points(s, objs, fset, nesting_level + 1, decision_points);
+                process_statement_for_decision_points(
+                    s,
+                    objs,
+                    fset,
+                    nesting_level + 1,
+                    decision_points,
+                );
             }
-        },
+        }
         Stmt::Switch(switch_stmt) => {
             // Process the switch body, which contains case clauses
             for s in &switch_stmt.body.list {
-                process_statement_for_decision_points(s, objs, fset, nesting_level + 1, decision_points);
+                process_statement_for_decision_points(
+                    s,
+                    objs,
+                    fset,
+                    nesting_level + 1,
+                    decision_points,
+                );
             }
-        },
+        }
         Stmt::TypeSwitch(type_switch) => {
             // Process the type switch body
             for s in &type_switch.body.list {
-                process_statement_for_decision_points(s, objs, fset, nesting_level + 1, decision_points);
+                process_statement_for_decision_points(
+                    s,
+                    objs,
+                    fset,
+                    nesting_level + 1,
+                    decision_points,
+                );
             }
-        },
+        }
         Stmt::Case(case_stmt) => {
             // Process the case body
             for s in &case_stmt.body {
-                process_statement_for_decision_points(s, objs, fset, nesting_level + 1, decision_points);
+                process_statement_for_decision_points(
+                    s,
+                    objs,
+                    fset,
+                    nesting_level + 1,
+                    decision_points,
+                );
             }
-        },
+        }
         Stmt::Block(block) => {
             // Process all statements in the block
             for s in &block.list {
-                process_statement_for_decision_points(s, objs, fset, nesting_level, decision_points);
+                process_statement_for_decision_points(
+                    s,
+                    objs,
+                    fset,
+                    nesting_level,
+                    decision_points,
+                );
             }
-        },
+        }
         _ => {} // Other statement types don't have nested statements
     }
 }
@@ -460,69 +505,69 @@ fn calculate_cognitive_complexity(
         Stmt::If(if_stmt) => {
             let mut complexity = 1 + nesting_level; // Base complexity + nesting penalty
             let mut max_nesting = nesting_level + 1;
-            
+
             // Analyze then branch
             for s in &if_stmt.body.list {
                 let (c, n) = calculate_cognitive_complexity(s, objs, nesting_level + 1);
                 complexity += c;
                 max_nesting = max_nesting.max(n);
             }
-            
+
             // Analyze else branch if exists
             if let Some(else_stmt) = &if_stmt.els {
                 let (c, n) = calculate_cognitive_complexity(else_stmt, objs, nesting_level + 1);
                 complexity += c;
                 max_nesting = max_nesting.max(n);
             }
-            
+
             (complexity, max_nesting)
         }
         Stmt::For(for_stmt) => {
             let mut complexity = 1 + nesting_level;
             let mut max_nesting = nesting_level + 1;
-            
+
             for s in &for_stmt.body.list {
                 let (c, n) = calculate_cognitive_complexity(s, objs, nesting_level + 1);
                 complexity += c;
                 max_nesting = max_nesting.max(n);
             }
-            
+
             (complexity, max_nesting)
         }
         Stmt::Range(range_stmt) => {
             let mut complexity = 1 + nesting_level;
             let mut max_nesting = nesting_level + 1;
-            
+
             for s in &range_stmt.body.list {
                 let (c, n) = calculate_cognitive_complexity(s, objs, nesting_level + 1);
                 complexity += c;
                 max_nesting = max_nesting.max(n);
             }
-            
+
             (complexity, max_nesting)
         }
         Stmt::Switch(switch_stmt) => {
             let mut complexity = 1 + nesting_level;
             let mut max_nesting = nesting_level + 1;
-            
+
             for s in &switch_stmt.body.list {
                 let (c, n) = calculate_cognitive_complexity(s, objs, nesting_level + 1);
                 complexity += c;
                 max_nesting = max_nesting.max(n);
             }
-            
+
             (complexity, max_nesting)
         }
         Stmt::Block(block_stmt) => {
             let mut complexity = 0;
             let mut max_nesting = nesting_level;
-            
+
             for s in &block_stmt.list {
                 let (c, n) = calculate_cognitive_complexity(s, objs, nesting_level);
                 complexity += c;
                 max_nesting = max_nesting.max(n);
             }
-            
+
             (complexity, max_nesting)
         }
         _ => (0, nesting_level),

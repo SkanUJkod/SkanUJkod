@@ -2,8 +2,8 @@
 mod tests {
 
     use cfg::ast::parse_project;
-    use cfg::cfg::build_cfgs_for_file;
     use cfg::cfg::ControlFlowGraph;
+    use cfg::cfg::build_cfgs_for_file;
     use go_parser::Token;
     use go_parser::ast::Stmt;
     use std::collections::HashSet;
@@ -42,7 +42,10 @@ mod tests {
 
         write!(temp_file.as_file_mut(), "{}", final_code).expect("Failed to write to temp file");
 
-        temp_file.as_file_mut().flush().expect("Failed to flush temp file");
+        temp_file
+            .as_file_mut()
+            .flush()
+            .expect("Failed to flush temp file");
 
         temp_file.as_file().sync_all().expect("Failed to sync file");
 

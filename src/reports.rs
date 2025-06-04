@@ -1,16 +1,16 @@
 use anyhow::Result;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::collections::HashMap;
 
-use statement_cov::ProjectCoverage as StmtCoverage;
-use cyclomatic_complexity::ProjectComplexity;
 use branch_cov::ProjectBranchCoverage;
-use cfg::{parse_project, build_cfgs_for_file, to_dot};
+use cfg::{build_cfgs_for_file, parse_project, to_dot};
+use cyclomatic_complexity::ProjectComplexity;
+use statement_cov::ProjectCoverage as StmtCoverage;
 
 pub fn generate_html_report(
     stmt_coverage: Option<&StmtCoverage>,
-    branch_coverage: Option<&ProjectBranchCoverage>, 
+    branch_coverage: Option<&ProjectBranchCoverage>,
     complexity: Option<&ProjectComplexity>,
     output_path: &Path,
 ) -> Result<()> {
@@ -96,9 +96,13 @@ pub fn generate_html_report(
 fn generate_stmt_summary(coverage: Option<&StmtCoverage>) -> String {
     match coverage {
         Some(cov) => {
-            let class = if cov.overall_coverage >= 90.0 { "coverage-high" } 
-                       else if cov.overall_coverage >= 70.0 { "coverage-medium" } 
-                       else { "coverage-low" };
+            let class = if cov.overall_coverage >= 90.0 {
+                "coverage-high"
+            } else if cov.overall_coverage >= 70.0 {
+                "coverage-medium"
+            } else {
+                "coverage-low"
+            };
             format!(
                 r#"<div class="metric">
                     <h3>Statement Coverage</h3>
@@ -107,7 +111,7 @@ fn generate_stmt_summary(coverage: Option<&StmtCoverage>) -> String {
                 </div>"#,
                 class, cov.overall_coverage, cov.covered_statements, cov.total_statements
             )
-        },
+        }
         None => String::new(),
     }
 }
@@ -115,9 +119,13 @@ fn generate_stmt_summary(coverage: Option<&StmtCoverage>) -> String {
 fn generate_branch_summary(coverage: Option<&ProjectBranchCoverage>) -> String {
     match coverage {
         Some(cov) => {
-            let class = if cov.overall_coverage_percentage >= 90.0 { "coverage-high" } 
-                       else if cov.overall_coverage_percentage >= 70.0 { "coverage-medium" } 
-                       else { "coverage-low" };
+            let class = if cov.overall_coverage_percentage >= 90.0 {
+                "coverage-high"
+            } else if cov.overall_coverage_percentage >= 70.0 {
+                "coverage-medium"
+            } else {
+                "coverage-low"
+            };
             format!(
                 r#"<div class="metric">
                     <h3>Branch Coverage</h3>
@@ -126,7 +134,7 @@ fn generate_branch_summary(coverage: Option<&ProjectBranchCoverage>) -> String {
                 </div>"#,
                 class, cov.overall_coverage_percentage, cov.covered_branches, cov.total_branches
             )
-        },
+        }
         None => String::new(),
     }
 }
@@ -134,9 +142,13 @@ fn generate_branch_summary(coverage: Option<&ProjectBranchCoverage>) -> String {
 fn generate_complexity_summary(complexity: Option<&ProjectComplexity>) -> String {
     match complexity {
         Some(comp) => {
-            let class = if comp.average_complexity <= 5.0 { "complexity-low" } 
-                       else if comp.average_complexity <= 10.0 { "complexity-medium" } 
-                       else { "complexity-high" };
+            let class = if comp.average_complexity <= 5.0 {
+                "complexity-low"
+            } else if comp.average_complexity <= 10.0 {
+                "complexity-medium"
+            } else {
+                "complexity-high"
+            };
             format!(
                 r#"<div class="metric">
                     <h3>Avg Complexity</h3>
@@ -145,7 +157,7 @@ fn generate_complexity_summary(complexity: Option<&ProjectComplexity>) -> String
                 </div>"#,
                 class, comp.average_complexity, comp.max_complexity, comp.max_complexity_function
             )
-        },
+        }
         None => String::new(),
     }
 }
@@ -156,7 +168,7 @@ fn generate_tab_buttons(
     complexity: Option<&ProjectComplexity>,
 ) -> String {
     let mut buttons = Vec::new();
-    
+
     if stmt_coverage.is_some() {
         buttons.push(r#"<button class="tab-button active" onclick="showTab('stmt-tab')">Statement Coverage</button>"#);
     }
@@ -164,9 +176,11 @@ fn generate_tab_buttons(
         buttons.push(r#"<button class="tab-button" onclick="showTab('branch-tab')">Branch Coverage</button>"#);
     }
     if complexity.is_some() {
-        buttons.push(r#"<button class="tab-button" onclick="showTab('complexity-tab')">Complexity</button>"#);
+        buttons.push(
+            r#"<button class="tab-button" onclick="showTab('complexity-tab')">Complexity</button>"#,
+        );
     }
-    
+
     buttons.join("\n")
 }
 
@@ -176,7 +190,7 @@ fn generate_tab_contents(
     complexity: Option<&ProjectComplexity>,
 ) -> String {
     let mut contents = Vec::new();
-    
+
     if let Some(cov) = stmt_coverage {
         contents.push(generate_stmt_tab(cov));
     }
@@ -186,20 +200,28 @@ fn generate_tab_contents(
     if let Some(comp) = complexity {
         contents.push(generate_complexity_tab(comp));
     }
-    
+
     contents.join("\n")
 }
 
 fn generate_stmt_tab(coverage: &StmtCoverage) -> String {
     let mut functions_html = String::new();
     let mut functions: Vec<_> = coverage.functions.iter().collect();
-    functions.sort_by(|a, b| a.1.coverage_percentage.partial_cmp(&b.1.coverage_percentage).unwrap());
+    functions.sort_by(|a, b| {
+        a.1.coverage_percentage
+            .partial_cmp(&b.1.coverage_percentage)
+            .unwrap()
+    });
 
     for (func_name, func_coverage) in functions {
-        let class = if func_coverage.coverage_percentage >= 90.0 { "coverage-high" } 
-                   else if func_coverage.coverage_percentage >= 70.0 { "coverage-medium" } 
-                   else { "coverage-low" };
-        
+        let class = if func_coverage.coverage_percentage >= 90.0 {
+            "coverage-high"
+        } else if func_coverage.coverage_percentage >= 70.0 {
+            "coverage-medium"
+        } else {
+            "coverage-low"
+        };
+
         functions_html.push_str(&format!(
             r#"<tr>
                 <td>{}</td>
@@ -211,9 +233,12 @@ fn generate_stmt_tab(coverage: &StmtCoverage) -> String {
                 <td class="{}">{:.1}%</td>
                 <td>{}/{}</td>
             </tr>"#,
-            func_name, func_coverage.coverage_percentage, class, 
+            func_name,
             func_coverage.coverage_percentage,
-            func_coverage.covered_statements, func_coverage.total_statements
+            class,
+            func_coverage.coverage_percentage,
+            func_coverage.covered_statements,
+            func_coverage.total_statements
         ));
     }
 
@@ -234,13 +259,21 @@ fn generate_stmt_tab(coverage: &StmtCoverage) -> String {
 fn generate_branch_tab(coverage: &ProjectBranchCoverage) -> String {
     let mut functions_html = String::new();
     let mut functions: Vec<_> = coverage.functions.iter().collect();
-    functions.sort_by(|a, b| a.1.coverage_percentage.partial_cmp(&b.1.coverage_percentage).unwrap());
+    functions.sort_by(|a, b| {
+        a.1.coverage_percentage
+            .partial_cmp(&b.1.coverage_percentage)
+            .unwrap()
+    });
 
     for (func_name, func_coverage) in functions {
-        let class = if func_coverage.coverage_percentage >= 90.0 { "coverage-high" } 
-                   else if func_coverage.coverage_percentage >= 70.0 { "coverage-medium" } 
-                   else { "coverage-low" };
-        
+        let class = if func_coverage.coverage_percentage >= 90.0 {
+            "coverage-high"
+        } else if func_coverage.coverage_percentage >= 70.0 {
+            "coverage-medium"
+        } else {
+            "coverage-low"
+        };
+
         functions_html.push_str(&format!(
             r#"<tr>
                 <td>{}</td>
@@ -252,9 +285,12 @@ fn generate_branch_tab(coverage: &ProjectBranchCoverage) -> String {
                 <td class="{}">{:.1}%</td>
                 <td>{}/{}</td>
             </tr>"#,
-            func_name, func_coverage.coverage_percentage, class,
+            func_name,
             func_coverage.coverage_percentage,
-            func_coverage.covered_branches, func_coverage.total_branches
+            class,
+            func_coverage.coverage_percentage,
+            func_coverage.covered_branches,
+            func_coverage.total_branches
         ));
     }
 
@@ -280,10 +316,10 @@ fn generate_complexity_tab(complexity: &ProjectComplexity) -> String {
     for (name, func) in functions.iter().take(20) {
         let class = match func.cyclomatic_complexity {
             1..=5 => "complexity-low",
-            6..=10 => "complexity-medium", 
+            6..=10 => "complexity-medium",
             _ => "complexity-high",
         };
-        
+
         functions_html.push_str(&format!(
             r#"<tr>
                 <td>{}</td>
@@ -291,8 +327,7 @@ fn generate_complexity_tab(complexity: &ProjectComplexity) -> String {
                 <td>{}</td>
                 <td>{}</td>
             </tr>"#,
-            name, class, func.cyclomatic_complexity,
-            func.cognitive_complexity, func.lines_of_code
+            name, class, func.cyclomatic_complexity, func.cognitive_complexity, func.lines_of_code
         ));
     }
 
@@ -317,28 +352,28 @@ pub fn generate_cfg_html_gallery(
 ) -> Result<()> {
     // Parse project and build CFGs
     let (fset, objs, files) = parse_project(project_path)?;
-    
+
     let mut cfgs_map = HashMap::new();
     for pf in &files {
         let per_file_map = build_cfgs_for_file(&fset, &objs, &pf.ast);
         cfgs_map.extend(per_file_map);
     }
-    
+
     // Create output directory structure
     let output_dir = output_path.parent().unwrap_or(Path::new("."));
     let graphs_dir = output_dir.join("graphs");
     fs::create_dir_all(&graphs_dir)?;
-    
+
     let mut graph_entries = Vec::new();
-    
+
     for (fname, graph) in &cfgs_map {
         let dot_content = to_dot(graph, fname);
-        
+
         if generate_images {
             // Generate SVG image
             let svg_path = graphs_dir.join(format!("{}.svg", fname));
             crate::cli::generate_image_from_dot(&dot_content, &svg_path, crate::ImageFormat::Svg)?;
-            
+
             // Add entry for HTML
             graph_entries.push(GraphEntry {
                 function_name: fname.clone(),
@@ -351,7 +386,7 @@ pub fn generate_cfg_html_gallery(
             // Just save DOT file
             let dot_path = graphs_dir.join(format!("{}.dot", fname));
             fs::write(&dot_path, &dot_content)?;
-            
+
             graph_entries.push(GraphEntry {
                 function_name: fname.clone(),
                 svg_path: format!("graphs/{}.dot", fname),
@@ -361,14 +396,14 @@ pub fn generate_cfg_html_gallery(
             });
         }
     }
-    
+
     // Sort by complexity (most complex first)
     graph_entries.sort_by(|a, b| b.complexity.cmp(&a.complexity));
-    
+
     // Generate HTML
     let html_content = generate_cfg_gallery_html(&graph_entries, generate_images);
     fs::write(output_path, html_content)?;
-    
+
     Ok(())
 }
 
@@ -387,11 +422,17 @@ fn calculate_cfg_complexity(graph: &cfg::ControlFlowGraph) -> usize {
         return 1;
     }
     let edge_count = calculate_edge_count(graph);
-    edge_count.saturating_sub(graph.blocks.len()).saturating_add(2)
+    edge_count
+        .saturating_sub(graph.blocks.len())
+        .saturating_add(2)
 }
 
 fn calculate_edge_count(graph: &cfg::ControlFlowGraph) -> usize {
-    graph.blocks.iter().map(|(_, block)| block.succs.len()).sum()
+    graph
+        .blocks
+        .iter()
+        .map(|(_, block)| block.succs.len())
+        .sum()
 }
 
 fn generate_cfg_gallery_html(entries: &[GraphEntry], has_images: bool) -> String {
@@ -736,7 +777,11 @@ fn generate_cfg_gallery_html(entries: &[GraphEntry], has_images: bool) -> String
 </body>
 </html>"#,
         entries.len(),
-        if entries.is_empty() { 0.0 } else { entries.iter().map(|e| e.complexity).sum::<usize>() as f32 / entries.len() as f32 },
+        if entries.is_empty() {
+            0.0
+        } else {
+            entries.iter().map(|e| e.complexity).sum::<usize>() as f32 / entries.len() as f32
+        },
         entries.iter().map(|e| e.complexity).max().unwrap_or(0),
         graph_cards
     )

@@ -5,7 +5,10 @@ use std::path::{Path, PathBuf};
 
 use cfg::ast::ParsedFile;
 use cfg::cfg::ControlFlowGraph;
-use go_parser::{ast::{Node, Stmt}, AstObjects, FileSet, Token};
+use go_parser::{
+    ast::{Node, Stmt},
+    AstObjects, FileSet, Token,
+};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
@@ -55,14 +58,15 @@ pub fn generate_instrumented_project(
     };
 
     let mut file_to_functions: HashMap<PathBuf, Vec<String>> = HashMap::new();
-    
+
     for (func_name, cfg) in cfgs {
         for (_, block) in &cfg.blocks {
             if let Some(stmt) = block.stmts.first() {
                 let pos = stmt.stmt.pos(objs);
                 if let Some(position) = fset.position(pos) {
                     let file_path = PathBuf::from(position.filename.as_ref());
-                    file_to_functions.entry(file_path)
+                    file_to_functions
+                        .entry(file_path)
                         .or_insert_with(Vec::new)
                         .push(func_name.clone());
                     break;
@@ -76,19 +80,20 @@ pub fn generate_instrumented_project(
             .path
             .strip_prefix(source_path)
             .unwrap_or(&parsed_file.path);
-        
+
         let output_file_path = output_path.join(relative_path);
-        
+
         if let Some(parent) = output_file_path.parent() {
             fs::create_dir_all(parent)?;
         }
 
-        let functions_in_file = file_to_functions.get(&parsed_file.path)
+        let functions_in_file = file_to_functions
+            .get(&parsed_file.path)
             .cloned()
             .unwrap_or_default();
 
         let source_content = fs::read_to_string(&parsed_file.path)?;
-        
+
         let instrumented_content = instrument_file_advanced(
             &source_content,
             &parsed_file.path,
@@ -98,7 +103,7 @@ pub fn generate_instrumented_project(
             &functions_in_file,
             &mut instrumentation_data,
         )?;
-        
+
         fs::write(&output_file_path, instrumented_content)?;
     }
 
@@ -124,19 +129,19 @@ fn instrument_file_advanced(
     let lines: Vec<&str> = source.lines().collect();
     let mut instrumented = String::new();
     let mut next_stmt_id = 0;
-    
+
     let mut instrumentation_points: Vec<InstrumentationPoint> = Vec::new();
-    
+
     for func_name in functions_in_file {
         if let Some(cfg) = cfgs.get(func_name) {
             let mut mappings = Vec::new();
             let mut total_stmts = 0;
-            
+
             for (block_id, block) in &cfg.blocks {
                 if *block_id == cfg.entry || block.stmts.is_empty() {
                     continue;
                 }
-                
+
                 if block.succs.is_empty() && block.stmts.len() == 1 {
                     if let Stmt::Empty(e) = &block.stmts[0].stmt {
                         if e.implicit {
@@ -144,31 +149,31 @@ fn instrument_file_advanced(
                         }
                     }
                 }
-                
+
                 for (stmt_index, stmt) in block.stmts.iter().enumerate() {
                     if let Stmt::Empty(e) = &stmt.stmt {
                         if e.implicit {
                             continue;
                         }
                     }
-                    
+
                     let pos = stmt.stmt.pos(objs);
                     let end_pos = stmt.stmt.end(objs);
-                    
-                    if let (Some(start_position), Some(end_position)) = 
-                        (fset.position(pos), fset.position(end_pos)) {
-                        
+
+                    if let (Some(start_position), Some(end_position)) =
+                        (fset.position(pos), fset.position(end_pos))
+                    {
                         let file_path_str = file_path.to_str().unwrap_or("");
                         if start_position.filename.as_ref() == file_path_str {
                             let insert_point = find_instrumentation_point(
-                                &stmt.stmt, 
+                                &stmt.stmt,
                                 start_position.line,
                                 start_position.column,
                                 &lines,
                                 objs,
-                                fset
+                                fset,
                             );
-                            
+
                             instrumentation_points.push(InstrumentationPoint {
                                 line: insert_point.line,
                                 column: insert_point.column,
@@ -176,7 +181,7 @@ fn instrument_file_advanced(
                                 func_name: func_name.clone(),
                                 original_line: start_position.line,
                             });
-                            
+
                             mappings.push(StatementMapping {
                                 stmt_id: next_stmt_id,
                                 block_id: *block_id,
@@ -188,27 +193,29 @@ fn instrument_file_advanced(
                                 func_name: func_name.clone(),
                                 stmt_type: get_stmt_type(&stmt.stmt),
                             });
-                            
+
                             next_stmt_id += 1;
                             total_stmts += 1;
                         }
                     }
                 }
             }
-            
+
             if !mappings.is_empty() {
-                instrumentation_data.statement_mappings.insert(func_name.clone(), mappings);
-                instrumentation_data.total_statements_per_function.insert(func_name.clone(), total_stmts);
+                instrumentation_data
+                    .statement_mappings
+                    .insert(func_name.clone(), mappings);
+                instrumentation_data
+                    .total_statements_per_function
+                    .insert(func_name.clone(), total_stmts);
             }
         }
     }
-    
-    instrumentation_points.sort_by(|a, b| {
-        a.line.cmp(&b.line).then(a.column.cmp(&b.column))
-    });
-    
+
+    instrumentation_points.sort_by(|a, b| a.line.cmp(&b.line).then(a.column.cmp(&b.column)));
+
     apply_instrumentation(&lines, &instrumentation_points, &mut instrumented)?;
-    
+
     Ok(instrumented)
 }
 
@@ -230,18 +237,14 @@ fn find_instrumentation_point(
     fset: &FileSet,
 ) -> SourceLocation {
     match stmt {
-        Stmt::Block(_) => {
-            SourceLocation {
-                line: start_line,
-                column: start_column,
-            }
-        }
-        Stmt::If(_) => {
-            SourceLocation {
-                line: start_line,
-                column: get_line_indent(lines, start_line - 1),
-            }
-        }
+        Stmt::Block(_) => SourceLocation {
+            line: start_line,
+            column: start_column,
+        },
+        Stmt::If(_) => SourceLocation {
+            line: start_line,
+            column: get_line_indent(lines, start_line - 1),
+        },
         Stmt::Labeled(key) => {
             let label_stmt = &objs.l_stmts[*key];
             if let Some(pos) = fset.position(label_stmt.colon) {
@@ -256,12 +259,10 @@ fn find_instrumentation_point(
                 }
             }
         }
-        _ => {
-            SourceLocation {
-                line: start_line,
-                column: get_line_indent(lines, start_line - 1),
-            }
-        }
+        _ => SourceLocation {
+            line: start_line,
+            column: get_line_indent(lines, start_line - 1),
+        },
     }
 }
 
@@ -304,7 +305,8 @@ fn get_stmt_type(stmt: &Stmt) -> String {
         Stmt::Decl(_) => "decl",
         Stmt::Empty(_) => "empty",
         _ => "unknown",
-    }.to_string()
+    }
+    .to_string()
 }
 
 fn apply_instrumentation(
@@ -314,33 +316,30 @@ fn apply_instrumentation(
 ) -> Result<()> {
     let mut current_col = 1;
     let mut point_idx = 0;
-    
+
     for (line_idx, line_content) in lines.iter().enumerate() {
         let line_num = line_idx + 1;
-        
+
         while point_idx < points.len() && points[point_idx].line == line_num {
             let point = &points[point_idx];
-            
+
             if current_col == 1 && point.column > 0 {
                 let indent = " ".repeat(point.column);
                 output.push_str(&format!(
                     "{}stmt_hit(\"{}\", {}) // line {}\n",
-                    indent,
-                    point.func_name,
-                    point.stmt_id,
-                    point.original_line
+                    indent, point.func_name, point.stmt_id, point.original_line
                 ));
             }
-            
+
             point_idx += 1;
         }
-        
+
         output.push_str(line_content);
         output.push('\n');
-        
+
         current_col = 1;
     }
-    
+
     Ok(())
 }
 
@@ -430,7 +429,8 @@ func printCoverage() {
     
     fmt.Printf("\nTotal: %d statements in %d functions\n", totalStmts, totalFuncs)
 }
-"#.to_string()
+"#
+    .to_string()
 }
 
 fn generate_test_runner(instrumentation_data: &InstrumentationData) -> String {
@@ -441,7 +441,7 @@ fn generate_test_runner(instrumentation_data: &InstrumentationData) -> String {
     code.push_str("    \"testing\"\n");
     code.push_str("    \"time\"\n");
     code.push_str(")\n\n");
-    
+
     code.push_str("func TestMain(m *testing.M) {\n");
     code.push_str("    initCoverage()\n");
     code.push_str("    \n");
@@ -457,7 +457,7 @@ fn generate_test_runner(instrumentation_data: &InstrumentationData) -> String {
     code.push_str("    \n");
     code.push_str("    os.Exit(code)\n");
     code.push_str("}\n\n");
-    
+
     code.push_str("func TestCoverageEnabled(t *testing.T) {\n");
     code.push_str("    stmt_hit(\"TestCoverageEnabled\", 99999)\n");
     code.push_str("    \n");
@@ -467,7 +467,7 @@ fn generate_test_runner(instrumentation_data: &InstrumentationData) -> String {
         }
     }
     code.push_str("}\n");
-    
+
     code
 }
 
@@ -501,13 +501,13 @@ fn copy_non_go_files(src: &Path, dst: &Path) -> Result<()> {
         let path = entry.path();
         let file_name = entry.file_name();
         let file_name_str = file_name.to_string_lossy();
-        
+
         if file_name_str.starts_with('.') {
             continue;
         }
-        
+
         let dest_path = dst.join(&file_name);
-        
+
         if path.is_dir() {
             if file_name_str != "vendor" && file_name_str != ".git" {
                 fs::create_dir_all(&dest_path)?;
@@ -532,7 +532,14 @@ pub fn generate_instrumented_main(cfgs: &HashMap<String, ControlFlowGraph>) -> R
         code.push_str(&format!("func {}() {{\n", func_name));
 
         let mut visited = std::collections::HashSet::new();
-        track_blocks(&mut code, cfg, cfg.entry, &mut visited, func_name, &mut global_stmt_id);
+        track_blocks(
+            &mut code,
+            cfg,
+            cfg.entry,
+            &mut visited,
+            func_name,
+            &mut global_stmt_id,
+        );
 
         code.push_str("}\n\n");
     }
@@ -559,7 +566,10 @@ fn track_blocks(
 
     if let Some(block) = cfg.blocks.get(&block_id) {
         for _stmt in &block.stmts {
-            code.push_str(&format!("    stmt_hit(\"{}\", {})\n", func_name, *stmt_counter));
+            code.push_str(&format!(
+                "    stmt_hit(\"{}\", {})\n",
+                func_name, *stmt_counter
+            ));
             *stmt_counter += 1;
         }
 

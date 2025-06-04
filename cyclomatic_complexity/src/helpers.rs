@@ -1,7 +1,7 @@
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::Command;
-use anyhow::{Context, Result};
 
 /// Complexity level classification
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -26,7 +26,7 @@ impl std::fmt::Display for ComplexityLevel {
 /// Helper utilities for Go projects
 pub mod go_utils {
     use super::*;
-    
+
     /// Check if Go is installed on the system
     pub fn check_go_installation() -> Result<String> {
         let output = Command::new("go")
@@ -41,7 +41,7 @@ pub mod go_utils {
         let version = String::from_utf8_lossy(&output.stdout);
         Ok(version.trim().to_string())
     }
-    
+
     /// Check if a path is a Go test file
     pub fn is_test_file(path: &Path) -> bool {
         path.file_name()

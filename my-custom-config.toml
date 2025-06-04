@@ -1,0 +1,26 @@
+[coverage]
+threshold = 80.0
+timeout_seconds = 30
+exclude_patterns = [
+    "*_test.go",
+    "vendor/*",
+    "testdata/*",
+]
+include_test_files = false
+fail_on_low_coverage = false
+
+[complexity]
+max_complexity = 1
+cognitive_threshold = 15
+lines_of_code_threshold = 50
+
+[output]
+format = "text"
+output_dir = "./reports"
+verbose = false
+colored = true
+
+[analysis]
+parallel_processing = true
+cache_results = true
+incremental_analysis = false

@@ -83,13 +83,13 @@ Generate beautiful, interactive HTML reports with all analysis results:
 
 ```bash
 # Generate comprehensive HTML report
-./target/release/skan-uj-kod full example-go --html
+./target/release/skan-uj-kod full go-code/example-go --html
 
 # Generate HTML report with custom output path
-./target/release/skan-uj-kod full example-go --html --output=./reports/analysis.html
+./target/release/skan-uj-kod full go-code/example-go --html --output=./reports/analysis.html
 
 # Generate HTML report with specific coverage threshold
-./target/release/skan-uj-kod full example-go --html --threshold=85
+./target/release/skan-uj-kod full go-code/example-go --html --threshold=85
 ```
 
 **HTML Report Features:**
@@ -107,12 +107,12 @@ Export structured data for integration with other tools:
 
 ```bash
 # Export comprehensive analysis to JSON
-./target/release/skan-uj-kod full example-go --json --output=analysis.json
+./target/release/skan-uj-kod full go-code/example-go --json --output=analysis.json
 
 # Individual analysis exports
-./target/release/skan-uj-kod complexity example-go --json --output=complexity.json
-./target/release/skan-uj-kod stmt-cov example-go --json --output=coverage.json
-./target/release/skan-uj-kod branch-cov example-go --json --output=branches.json
+./target/release/skan-uj-kod complexity go-code/example-go --json --output=complexity.json
+./target/release/skan-uj-kod stmt-cov go-code/example-go --json --output=coverage.json
+./target/release/skan-uj-kod branch-cov go-code/example-go --json --output=branches.json
 ```
 
 **JSON Structure Example:**
@@ -189,10 +189,10 @@ incremental_analysis = false
 
 ```bash
 # Use custom config file
-./target/release/skan-uj-kod full example-go --config=my-config.toml --html
+./target/release/skan-uj-kod full go-code/example-go --config=my-config.toml --html
 
 # Config settings are applied automatically
-./target/release/skan-uj-kod complexity example-go --config=my-config.toml
+./target/release/skan-uj-kod complexity go-code/example-go --config=my-config.toml
 ```
 
 ## 🎯 Comprehensive Analysis
@@ -201,16 +201,16 @@ Run all analyses at once with intelligent health scoring:
 
 ```bash
 # Basic comprehensive analysis
-./target/release/skan-uj-kod full example-go
+./target/release/skan-uj-kod full go-code/example-go
 
 # Comprehensive analysis with HTML report
-./target/release/skan-uj-kod full example-go --html
+./target/release/skan-uj-kod full go-code/example-go --html
 
 # Comprehensive analysis with custom thresholds
-./target/release/skan-uj-kod full example-go --threshold=90 --html
+./target/release/skan-uj-kod full go-code/example-go --threshold=90 --html
 
 # Verbose comprehensive analysis
-./target/release/skan-uj-kod full example-go --verbose
+./target/release/skan-uj-kod full go-code/example-go --verbose
 ```
 
 **Comprehensive Analysis Output:**
@@ -237,54 +237,54 @@ Recommendations:
 
 ```bash
 # Show CFG for all functions
-./target/release/skan-uj-kod cfg example-go
+./target/release/skan-uj-kod cfg go-code/example-go
 
 # Show CFG with verbose output
-./target/release/skan-uj-kod cfg example-go --verbose
+./target/release/skan-uj-kod cfg go-code/example-go --verbose
 
 # Generate DOT format for a specific function
-./target/release/skan-uj-kod dot getDayName example-go
+./target/release/skan-uj-kod dot getDayName go-code/example-go
 
 # Generate DOT with verbose output
-./target/release/skan-uj-kod dot getDayName example-go --verbose
+./target/release/skan-uj-kod dot getDayName go-code/example-go --verbose
 
 # Generate all functions as DOT files
-./target/release/skan-uj-kod dot-all example-go
+./target/release/skan-uj-kod dot-all go-code/example-go
 
 # Export CFG data to JSON
-./target/release/skan-uj-kod cfg example-go --json --output=cfg-data.json
+./target/release/skan-uj-kod cfg go-code/example-go --json --output=cfg-data.json
 ```
 
 ### Image Generation Examples
 
 ```bash
 # Generate PNG for specific function
-./target/release/skan-uj-kod dot getDayName example-go --image=png --output=getDayName.png
+./target/release/skan-uj-kod dot getDayName go-code/example-go --image=png --output=getDayName.png
 
 # Generate SVG for documentation
-./target/release/skan-uj-kod dot complexFlow example-go --image=svg --output=complexFlow.svg
+./target/release/skan-uj-kod dot complexFlow go-code/example-go --image=svg --output=complexFlow.svg
 
 # Generate PDF for printing
-./target/release/skan-uj-kod dot calculateGrade example-go --image=pdf --output=calculateGrade.pdf
+./target/release/skan-uj-kod dot calculateGrade go-code/example-go --image=pdf --output=calculateGrade.pdf
 
 # Generate all functions as SVG images
-./target/release/skan-uj-kod dot-all example-go --image=svg
+./target/release/skan-uj-kod dot-all go-code/example-go --image=svg
 
 # Generate all functions with custom output directory
-mkdir graphs && ./target/release/skan-uj-kod dot-all example-go --image=svg --output=graphs/
+mkdir graphs && ./target/release/skan-uj-kod dot-all go-code/example-go --image=svg --output=graphs/
 ```
 
 ### Testing CFG Module
 
 ```bash
-# Test different functions from example-go
-./target/release/skan-uj-kod cfg example-go --verbose
-./target/release/skan-uj-kod dot findMax example-go --verbose
-./target/release/skan-uj-kod dot minMax example-go --image=svg --output=minMax.svg
-./target/release/skan-uj-kod dot sumArray example-go --image=png --output=sumArray.png
+# Test different functions from go-code/example-go
+./target/release/skan-uj-kod cfg go-code/example-go --verbose
+./target/release/skan-uj-kod dot findMax go-code/example-go --verbose
+./target/release/skan-uj-kod dot minMax go-code/example-go --image=svg --output=minMax.svg
+./target/release/skan-uj-kod dot sumArray go-code/example-go --image=png --output=sumArray.png
 
 # Export and view CFG data
-./target/release/skan-uj-kod cfg example-go --json --output=cfg-test.json
+./target/release/skan-uj-kod cfg go-code/example-go --json --output=cfg-test.json
 cat cfg-test.json
 ```
 
@@ -294,13 +294,13 @@ Generate beautiful interactive HTML galleries with all function graphs:
 
 ```bash
 # Generate HTML gallery with SVG images
-./target/release/skan-uj-kod cfg-gallery example-go --images
+./target/release/skan-uj-kod cfg-gallery go-code/example-go --images
 
 # Generate HTML gallery with custom output path
-./target/release/skan-uj-kod cfg-gallery example-go --images --output=reports/cfg_gallery.html
+./target/release/skan-uj-kod cfg-gallery go-code/example-go --images --output=reports/cfg_gallery.html
 
 # Generate gallery with DOT files only (no images)
-./target/release/skan-uj-kod cfg-gallery example-go --output=cfg_gallery.html
+./target/release/skan-uj-kod cfg-gallery go-code/example-go --output=cfg_gallery.html
 
 # Open the generated gallery in browser (macOS)
 open reports/cfg_gallery.html
@@ -329,30 +329,30 @@ Create a test script to run all modules:
 #!/bin/bash
 # test-all-modules.sh
 
-echo "🔍 Testing SkanUJkod modules with example-go"
-echo "============================================="
+echo "🔍 Testing SkanUJkod modules with go-code/example-go"
+echo "=================================================="
 
 # Build first
 cargo build --release
 
 echo "📊 Testing Statement Coverage..."
-./target/release/skan-uj-kod stmt-cov example-go --threshold=65 --verbose
+./target/release/skan-uj-kod stmt-cov go-code/example-go --threshold=65 --verbose
 
 echo "🌿 Testing Branch Coverage..."
-./target/release/skan-uj-kod branch-cov example-go --threshold=20 --verbose
+./target/release/skan-uj-kod branch-cov go-code/example-go --threshold=20 --verbose
 
 echo "🔄 Testing Complexity Analysis..."
-./target/release/skan-uj-kod complexity example-go --threshold=8 --verbose
+./target/release/skan-uj-kod complexity go-code/example-go --threshold=8 --verbose
 
 echo "🔀 Testing CFG Generation..."
-./target/release/skan-uj-kod cfg example-go --verbose
-./target/release/skan-uj-kod dot getDayName example-go --image=svg --output=test-getDayName.svg
+./target/release/skan-uj-kod cfg go-code/example-go --verbose
+./target/release/skan-uj-kod dot getDayName go-code/example-go --image=svg --output=test-getDayName.svg
 
 echo "🎨 Testing CFG HTML Gallery..."
-./target/release/skan-uj-kod cfg-gallery example-go --images --output=reports/test-gallery.html
+./target/release/skan-uj-kod cfg-gallery go-code/example-go --images --output=reports/test-gallery.html
 
 echo "🎯 Testing Full Analysis..."
-./target/release/skan-uj-kod full example-go --html --output=reports/test-full.html
+./target/release/skan-uj-kod full go-code/example-go --html --output=reports/test-full.html
 
 echo "✅ All tests completed!"
 echo "📄 Check reports/test-full.html for comprehensive analysis"

@@ -3,7 +3,7 @@ use tempfile::TempDir;
 
 #[cfg(test)]
 mod tests {
-    use super::*; 
+    use super::*;
 
     #[test]
     fn test_branch_coverage_analysis() {
@@ -52,7 +52,7 @@ func testFunction(a int, b int) int {
 
         // Run branch coverage analysis
         let result = analyze_branch_coverage(&test_project_path);
-        
+
         // The analysis might fail due to Go installation or other issues in test environment
         // but we can at least verify the function doesn't panic
         match result {
@@ -64,7 +64,10 @@ func testFunction(a int, b int) int {
             }
             Err(e) => {
                 // Expected in test environments without Go or in CI
-                println!("Branch coverage analysis failed (expected in test env): {}", e);
+                println!(
+                    "Branch coverage analysis failed (expected in test env): {}",
+                    e
+                );
             }
         }
     }
@@ -91,7 +94,7 @@ func testFunction(a int, b int) int {
 
         let json = serde_json::to_string(&branch_info).expect("Serialization failed");
         let deserialized: BranchInfo = serde_json::from_str(&json).expect("Deserialization failed");
-        
+
         assert_eq!(branch_info.branch_id, deserialized.branch_id);
         assert_eq!(branch_info.line, deserialized.line);
         assert_eq!(branch_info.branch_type, deserialized.branch_type);
@@ -102,17 +105,20 @@ func testFunction(a int, b int) int {
     #[test]
     fn test_project_branch_coverage_serialization() {
         use std::collections::HashMap;
-        
+
         let mut functions = HashMap::new();
-        functions.insert("test_func".to_string(), FunctionBranchCoverage {
-            total_branches: 4,
-            covered_branches: 3,
-            coverage_percentage: 75.0,
-            branches: vec![],
-            uncovered_branches: vec![],
-            function_name: "test_func".to_string(),
-            file_path: "main.go".to_string(),
-        });
+        functions.insert(
+            "test_func".to_string(),
+            FunctionBranchCoverage {
+                total_branches: 4,
+                covered_branches: 3,
+                coverage_percentage: 75.0,
+                branches: vec![],
+                uncovered_branches: vec![],
+                function_name: "test_func".to_string(),
+                file_path: "main.go".to_string(),
+            },
+        );
 
         let project_coverage = ProjectBranchCoverage {
             functions,
@@ -125,12 +131,22 @@ func testFunction(a int, b int) int {
         };
 
         let json = serde_json::to_string(&project_coverage).expect("Serialization failed");
-        let deserialized: ProjectBranchCoverage = serde_json::from_str(&json).expect("Deserialization failed");
-        
+        let deserialized: ProjectBranchCoverage =
+            serde_json::from_str(&json).expect("Deserialization failed");
+
         assert_eq!(project_coverage.total_branches, deserialized.total_branches);
-        assert_eq!(project_coverage.covered_branches, deserialized.covered_branches);
-        assert_eq!(project_coverage.overall_coverage_percentage, deserialized.overall_coverage_percentage);
-        assert_eq!(project_coverage.files_analyzed.len(), deserialized.files_analyzed.len());
+        assert_eq!(
+            project_coverage.covered_branches,
+            deserialized.covered_branches
+        );
+        assert_eq!(
+            project_coverage.overall_coverage_percentage,
+            deserialized.overall_coverage_percentage
+        );
+        assert_eq!(
+            project_coverage.files_analyzed.len(),
+            deserialized.files_analyzed.len()
+        );
     }
 
     #[test]

@@ -1,13 +1,13 @@
 use anyhow::{Context, Result};
+use cfg::ast::{parse_project_with_options, ParseOptions};
+use cfg::cfg::build_cfgs_for_file;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
 use tempfile::TempDir;
-use cfg::ast::parse_project;
-use cfg::cfg::build_cfgs_for_file;
 
 use crate::helpers::go_utils;
 use crate::instrumentation;
@@ -92,7 +92,14 @@ pub fn analyze_statement_coverage_with_options(
         println!("📁 Temporary directory: {}", temp_path.display());
     }
 
-    let (fset, objs, files) = parse_project(project_path).context("Failed to parse Go project")?;
+    // Parse project with filtering options
+    let parse_options = ParseOptions {
+        exclude_patterns: options.exclude_patterns.clone(),
+        include_test_files: options.include_test_files,
+    };
+
+    let (fset, objs, files) = parse_project_with_options(project_path, &parse_options)
+        .context("Failed to parse Go project")?;
 
     if files.is_empty() {
         anyhow::bail!("No Go files found in the project");
@@ -120,7 +127,8 @@ pub fn analyze_statement_coverage_with_options(
         &objs,
         project_path,
         temp_path,
-    ).context("Failed to instrument project")?;
+    )
+    .context("Failed to instrument project")?;
 
     let (coverage_data, test_output) = run_tests_and_collect_coverage(temp_path, options)?;
 
@@ -261,10 +269,7 @@ fn calculate_statement_coverage(
             .collect();
 
         uncovered_line_details.sort_by_key(|d| d.line);
-        let uncovered_lines: Vec<usize> = uncovered_line_details
-            .iter()
-            .map(|d| d.line)
-            .collect();
+        let uncovered_lines: Vec<usize> = uncovered_line_details.iter().map(|d| d.line).collect();
 
         let coverage_percentage = if *total_stmts > 0 {
             (covered_count as f64 / *total_stmts as f64) * 100.0

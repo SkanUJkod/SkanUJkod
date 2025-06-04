@@ -89,12 +89,10 @@ impl Config {
 
     pub fn load_or_default(path: Option<&std::path::Path>) -> Self {
         match path {
-            Some(p) if p.exists() => {
-                Self::load_from_file(p).unwrap_or_else(|_| {
-                    eprintln!("Warning: Failed to load config file, using defaults");
-                    Self::default()
-                })
-            }
+            Some(p) if p.exists() => Self::load_from_file(p).unwrap_or_else(|_| {
+                eprintln!("Warning: Failed to load config file, using defaults");
+                Self::default()
+            }),
             _ => Self::default(),
         }
     }
