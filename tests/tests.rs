@@ -19,31 +19,31 @@ fn main() {
 
 #[test]
 fn test_fun_counter() {
-    let (f, o) = parse_file("./main.go");
+    let (f, o) = parse_file("./go-files/main.go");
     assert_eq!(fun_counter(&f), 5);
 }
 
 #[test]
 fn test_type_counter() {
-    let (f, o) = parse_file("./main.go");
+    let (f, o) = parse_file("./go-files/main.go");
     assert_eq!(typ_counter(&f, &o), 3);
 }
 #[test]
 fn test_fun_name_length() {
-    let (f, o) = parse_file("./main.go");
+    let (f, o) = parse_file("./go-files/main.go");
     let (funNames, informationFun) = fun_name(&f, &o, r"_");
     assert_eq!(funNames.len(), 5);
 }
 #[test]
 fn test_struct_name_length() {
-    let (f, o) = parse_file("./main.go");;
+    let (f, o) = parse_file("./go-files/main.go");;
     let (funNames, informationFun) = struct_name(&f, &o, r"_");
     assert_eq!(funNames.len(), 3);
 }
 
 #[test]
 fn test_variable_name_length() {
-    let (f, o) = parse_file("./main.go");
+    let (f, o) = parse_file("./go-files/main.go");
     let (funNames, informationFun) = variable_name(&f, &o, r"_");
     assert_eq!(funNames.len(), 11);
 }
@@ -52,7 +52,7 @@ fn test_variable_name_length() {
 // Test for function names which include "_" in their name
 #[test]
 fn test_fun_name() {
-    let (f, o) = parse_file("./main.go");;
+    let (f, o) = parse_file("./go-files/main.go");;
     let (funNames, informationFun) = fun_name(&f, &o, r"_");
     assert_eq!(funNames.len(), 5);
     for funName in funNames.iter() {
@@ -64,7 +64,7 @@ fn test_fun_name() {
 //camelCase test for function names
 #[test]
 fn test_fun_name2(){
-    let (f, o) = parse_file("./main.go");;
+    let (f, o) = parse_file("./go-files/main.go");;
     let (funNames, informationFun) = fun_name(&f, &o, r"_");
     assert_eq!(funNames.len(), 5);
     for funName in funNames.iter() {
