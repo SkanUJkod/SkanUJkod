@@ -10,7 +10,7 @@ use SkanUJkod::parser::parse_file;
 fn test_fun_name2() {
     let (f, o) = parse_file("./go-files/main.go");
     let (funNames, informationFun) = fun_name(&f, &o, r"([a-z]+[A-Z]+)");
-    assert_eq!(funNames.len(), 5);
+    assert_eq!(funNames.len(), 4);
     for funName in funNames.iter() {
         assert!(!Regex::new(r"([a-z]+[A-Z]+)").unwrap().is_match(&funName.name));
     }

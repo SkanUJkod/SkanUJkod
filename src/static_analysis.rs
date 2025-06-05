@@ -10,7 +10,7 @@ use std::mem::{self, discriminant};
 pub fn fun_counter(file: &go_parser::ast::File) -> u32 { 
     return file.decls.iter().filter(|decl| matches!(decl, go_parser::ast::Decl::Func(_))).count() as u32;
 }
-//counter number of types in the file 
+//counter number of types in the file (by type I mean class but go does not have classes)
 pub fn typ_counter<'a>(file: &'a go_parser::ast::File, o: &'a go_parser::AstObjects) -> u32 {
     return o.entities.vec().iter().
     filter(|entity| matches!(&entity.kind, go_parser::scope::EntityKind::Typ)).count() as u32;	

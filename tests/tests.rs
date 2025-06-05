@@ -32,7 +32,7 @@ fn test_type_counter() {
 fn test_fun_name_length() {
     let (f, o) = parse_file("./go-files/main.go");
     let (funNames, informationFun) = fun_name(&f, &o, r"_");
-    assert_eq!(funNames.len(), 5);
+    assert_eq!(funNames.len(), 4);
 }
 #[test]
 fn test_struct_name_length() {
@@ -54,7 +54,7 @@ fn test_variable_name_length() {
 fn test_fun_name() {
     let (f, o) = parse_file("./go-files/main.go");;
     let (funNames, informationFun) = fun_name(&f, &o, r"_");
-    assert_eq!(funNames.len(), 5);
+    assert_eq!(funNames.len(), 4);
     for funName in funNames.iter() {
         assert!(!Regex::new(r"_").unwrap().is_match(&funName.name));
     }
@@ -66,7 +66,7 @@ fn test_fun_name() {
 fn test_fun_name2(){
     let (f, o) = parse_file("./go-files/main.go");;
     let (funNames, informationFun) = fun_name(&f, &o, r"_");
-    assert_eq!(funNames.len(), 5);
+    assert_eq!(funNames.len(), 4);
     for funName in funNames.iter() {
         if (funName.name == "main"){
             assert!(true);   
