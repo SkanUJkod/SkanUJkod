@@ -36,17 +36,17 @@ impl GoParser {
         let mut root = AstNode::new("File");
 
         let package_node = AstNode::new("Package");
-        let _ = root.add_child(package_node);
+        root.add_child(package_node);
 
         for &import_key in &go_node.imports {
             let spec = &objs.specs[import_key];
             let import_spec_node = Self::convert_spec(spec, objs);
-            let _ = root.add_child(import_spec_node);
+            root.add_child(import_spec_node);
         }
 
         for decl in &go_node.decls {
             let decl_node = Self::convert_decl(decl, objs);
-            let _ = root.add_child(decl_node);
+            root.add_child(decl_node);
         }
         root
     }
@@ -56,7 +56,7 @@ impl GoParser {
             Spec::Import(import_spec) => {
                 let path_literal_value = import_spec.path.token.to_string();
                 let mut import_node = AstNode::new("Import");
-                let _ = import_node.add_child(AstNode::new(&path_literal_value));
+                import_node.add_child(AstNode::new(&path_literal_value));
 
                 if let Some(alias_key) = &import_spec.name {
                     let alias_name = &objs.idents[*alias_key].name;
@@ -72,13 +72,13 @@ impl GoParser {
 
                     if let Some(typ) = &value_spec.typ {
                         let type_node = Self::convert_expr(typ, objs);
-                        let _ = name_node.add_child(type_node);
+                        name_node.add_child(type_node);
                     }
-                    let _ = value_node.add_child(name_node);
+                    value_node.add_child(name_node);
                 }
                 for value in &value_spec.values {
                     let value_node_child = Self::convert_expr(value, objs);
-                    let _ = value_node.add_child(value_node_child);
+                    value_node.add_child(value_node_child);
                 }
                 value_node
             }
@@ -86,7 +86,7 @@ impl GoParser {
                 let type_name = &objs.idents[type_spec.name].name;
                 let mut type_node = AstNode::with_name("TypeSpec", type_name);
                 let typ_expr_node = Self::convert_expr(&type_spec.typ, objs);
-                let _ = type_node.add_child(typ_expr_node);
+                type_node.add_child(typ_expr_node);
                 type_node
             }
         }
@@ -102,16 +102,16 @@ impl GoParser {
 
                 let mut signature_node = AstNode::new("Signature");
                 let params_node = Self::convert_params(&func_type.params, objs);
-                let _ = signature_node.add_child(params_node);
+                signature_node.add_child(params_node);
                 if let Some(results) = &func_type.results {
                     let results_node = Self::convert_params(results, objs);
-                    let _ = signature_node.add_child(results_node);
+                    signature_node.add_child(results_node);
                 }
-                let _ = func_node.add_child(signature_node);
+                func_node.add_child(signature_node);
 
                 if let Some(body_block) = &func.body {
                     let body_node = Self::convert_stmt_list(&body_block.list, objs);
-                    let _ = func_node.add_child(body_node);
+                    func_node.add_child(body_node);
                 }
 
                 func_node
@@ -120,7 +120,7 @@ impl GoParser {
                 let mut gen_node = AstNode::new("Generic");
                 for spec_key in &gen_decl.specs {
                     let spec = &objs.specs[*spec_key];
-                    let _ = gen_node.add_child(Self::convert_spec(spec, objs));
+                    gen_node.add_child(Self::convert_spec(spec, objs));
                 }
                 gen_node
             }
@@ -138,7 +138,7 @@ impl GoParser {
                 &objs.idents[field.names[0]].name
             };
             let parameter_node = AstNode::new(&format!("Parameter: {field_name}"));
-            let _ = params_node.add_child(parameter_node);
+            params_node.add_child(parameter_node);
         }
         params_node
     }
@@ -153,11 +153,11 @@ impl GoParser {
                 let mut assign_node = AstNode::new("Assign");
                 for expr in &assign.lhs {
                     let lhs_node = Self::convert_expr(expr, objs);
-                    let _ = assign_node.add_child(lhs_node);
+                    assign_node.add_child(lhs_node);
                 }
                 for expr in &assign.rhs {
                     let rhs_node = Self::convert_expr(expr, objs);
-                    let _ = assign_node.add_child(rhs_node);
+                    assign_node.add_child(rhs_node);
                 }
                 assign_node
             }
@@ -166,36 +166,36 @@ impl GoParser {
                 let labeled = &objs.l_stmts[*labeled_key];
                 let mut labeled_node = AstNode::new("Labeled");
                 let label_name = &objs.idents[labeled.label].name;
-                let _ = labeled_node.add_child(AstNode::with_name("Label", label_name));
+                labeled_node.add_child(AstNode::with_name("Label", label_name));
                 let stmt_node = Self::convert_stmt(&labeled.stmt, objs);
-                let _ = labeled_node.add_child(stmt_node);
+                labeled_node.add_child(stmt_node);
                 labeled_node
             }
             Stmt::Send(send_stmt) => {
                 let mut send_node = AstNode::new("Send");
-                let _ = send_node.add_child(Self::convert_expr(&send_stmt.chan, objs));
-                let _ = send_node.add_child(Self::convert_expr(&send_stmt.val, objs));
+                send_node.add_child(Self::convert_expr(&send_stmt.chan, objs));
+                send_node.add_child(Self::convert_expr(&send_stmt.val, objs));
                 send_node
             }
             Stmt::IncDec(inc_dec_stmt) => {
                 let mut inc_dec_node = AstNode::new("IncDec");
-                let _ = inc_dec_node.add_child(Self::convert_expr(&inc_dec_stmt.expr, objs));
+                inc_dec_node.add_child(Self::convert_expr(&inc_dec_stmt.expr, objs));
                 inc_dec_node
             }
             Stmt::Go(go_stmt) => {
                 let mut go_node = AstNode::new("Go");
-                let _ = go_node.add_child(Self::convert_expr(&go_stmt.call, objs));
+                go_node.add_child(Self::convert_expr(&go_stmt.call, objs));
                 go_node
             }
             Stmt::Defer(defer_stmt) => {
                 let mut defer_node = AstNode::new("Defer");
-                let _ = defer_node.add_child(Self::convert_expr(&defer_stmt.call, objs));
+                defer_node.add_child(Self::convert_expr(&defer_stmt.call, objs));
                 defer_node
             }
             Stmt::Return(return_stmt) => {
                 let mut return_node = AstNode::new("Return");
                 for expr in &return_stmt.results {
-                    let _ = return_node.add_child(Self::convert_expr(expr, objs));
+                    return_node.add_child(Self::convert_expr(expr, objs));
                 }
                 return_node
             }
@@ -209,18 +209,18 @@ impl GoParser {
             Stmt::Block(block_stmt) => {
                 let mut block_node = AstNode::new("Block");
                 let inner_block_node = Self::convert_stmt_list(&block_stmt.list, objs);
-                let _ = block_node.add_child(inner_block_node);
+                block_node.add_child(inner_block_node);
                 block_node
             }
             Stmt::If(if_stmt) => {
                 let mut if_node = AstNode::new("If");
                 if let Some(init_stmt) = &if_stmt.init {
-                    let _ = if_node.add_child(Self::convert_stmt(init_stmt, objs));
+                    if_node.add_child(Self::convert_stmt(init_stmt, objs));
                 }
-                let _ = if_node.add_child(Self::convert_expr(&if_stmt.cond, objs));
-                let _ = if_node.add_child(Self::convert_stmt_list(&if_stmt.body.list, objs));
+                if_node.add_child(Self::convert_expr(&if_stmt.cond, objs));
+                if_node.add_child(Self::convert_stmt_list(&if_stmt.body.list, objs));
                 if let Some(else_stmt) = &if_stmt.els {
-                    let _ = if_node.add_child(Self::convert_stmt(else_stmt, objs));
+                    if_node.add_child(Self::convert_stmt(else_stmt, objs));
                 }
                 if_node
             }
@@ -228,21 +228,21 @@ impl GoParser {
                 let mut case_node = AstNode::new("Case");
                 if let Some(list) = &case_stmt.list {
                     for expr in list {
-                        let _ = case_node.add_child(Self::convert_expr(expr, objs));
+                        case_node.add_child(Self::convert_expr(expr, objs));
                     }
                 }
                 for stmt in &case_stmt.body {
-                    let _ = case_node.add_child(Self::convert_stmt(stmt, objs));
+                    case_node.add_child(Self::convert_stmt(stmt, objs));
                 }
                 case_node
             }
             Stmt::Switch(switch_stmt) => {
                 let mut switch_node = AstNode::new("Switch");
                 if let Some(init_stmt) = &switch_stmt.init {
-                    let _ = switch_node.add_child(Self::convert_stmt(init_stmt, objs));
+                    switch_node.add_child(Self::convert_stmt(init_stmt, objs));
                 }
                 if let Some(tag_expr) = &switch_stmt.tag {
-                    let _ = switch_node.add_child(Self::convert_expr(tag_expr, objs));
+                    switch_node.add_child(Self::convert_expr(tag_expr, objs));
                 }
                 let _ =
                     switch_node.add_child(Self::convert_stmt_list(&switch_stmt.body.list, objs));
@@ -251,21 +251,21 @@ impl GoParser {
             Stmt::TypeSwitch(type_switch_stmt) => {
                 let mut type_switch_node = AstNode::new("TypeSwitch");
                 if let Some(init_stmt) = &type_switch_stmt.init {
-                    let _ = type_switch_node.add_child(Self::convert_stmt(init_stmt, objs));
+                    type_switch_node.add_child(Self::convert_stmt(init_stmt, objs));
                 }
                 let _ =
                     type_switch_node.add_child(Self::convert_stmt(&type_switch_stmt.assign, objs));
-                let _ = type_switch_node
+                type_switch_node
                     .add_child(Self::convert_stmt_list(&type_switch_stmt.body.list, objs));
                 type_switch_node
             }
             Stmt::Comm(comm_stmt) => {
                 let mut comm_node = AstNode::new("Comm");
                 if let Some(comm) = &comm_stmt.comm {
-                    let _ = comm_node.add_child(Self::convert_stmt(comm, objs));
+                    comm_node.add_child(Self::convert_stmt(comm, objs));
                 }
                 for stmt in &comm_stmt.body {
-                    let _ = comm_node.add_child(Self::convert_stmt(stmt, objs));
+                    comm_node.add_child(Self::convert_stmt(stmt, objs));
                 }
                 comm_node
             }
@@ -278,27 +278,27 @@ impl GoParser {
             Stmt::For(for_stmt) => {
                 let mut for_node = AstNode::new("For");
                 if let Some(init_stmt) = &for_stmt.init {
-                    let _ = for_node.add_child(Self::convert_stmt(init_stmt, objs));
+                    for_node.add_child(Self::convert_stmt(init_stmt, objs));
                 }
                 if let Some(cond_expr) = &for_stmt.cond {
-                    let _ = for_node.add_child(Self::convert_expr(cond_expr, objs));
+                    for_node.add_child(Self::convert_expr(cond_expr, objs));
                 }
                 if let Some(post_stmt) = &for_stmt.post {
-                    let _ = for_node.add_child(Self::convert_stmt(post_stmt, objs));
+                    for_node.add_child(Self::convert_stmt(post_stmt, objs));
                 }
-                let _ = for_node.add_child(Self::convert_stmt_list(&for_stmt.body.list, objs));
+                for_node.add_child(Self::convert_stmt_list(&for_stmt.body.list, objs));
                 for_node
             }
             Stmt::Range(range_stmt) => {
                 let mut range_node = AstNode::new("Range");
                 if let Some(key_expr) = &range_stmt.key {
-                    let _ = range_node.add_child(Self::convert_expr(key_expr, objs));
+                    range_node.add_child(Self::convert_expr(key_expr, objs));
                 }
                 if let Some(val_expr) = &range_stmt.val {
-                    let _ = range_node.add_child(Self::convert_expr(val_expr, objs));
+                    range_node.add_child(Self::convert_expr(val_expr, objs));
                 }
-                let _ = range_node.add_child(Self::convert_expr(&range_stmt.expr, objs));
-                let _ = range_node.add_child(Self::convert_stmt_list(&range_stmt.body.list, objs));
+                range_node.add_child(Self::convert_expr(&range_stmt.expr, objs));
+                range_node.add_child(Self::convert_stmt_list(&range_stmt.body.list, objs));
                 range_node
             }
             Stmt::Bad(_) => AstNode::new("BadStatement"),
@@ -322,11 +322,11 @@ impl GoParser {
 
                 if let Some(func_type_result) = &func_type.results {
                     let result_node = Self::convert_params(func_type_result, objs);
-                    let _ = func_node.add_child(result_node);
+                    func_node.add_child(result_node);
                 }
 
                 let body_node = Self::convert_stmt_list(&func_lit.body.list, objs);
-                let _ = func_node.add_child(body_node);
+                func_node.add_child(body_node);
 
                 func_node
             }
@@ -334,44 +334,44 @@ impl GoParser {
                 let mut composite_node = AstNode::new("CompositeLit");
                 if let Some(typ) = &composite_lit.typ {
                     let typ_node = Self::convert_expr(typ, objs);
-                    let _ = composite_node.add_child(typ_node);
+                    composite_node.add_child(typ_node);
                 }
                 for elt in &composite_lit.elts {
                     let elt_node = Self::convert_expr(elt, objs);
-                    let _ = composite_node.add_child(elt_node);
+                    composite_node.add_child(elt_node);
                 }
                 composite_node
             }
             Expr::Paren(paren_expr) => {
                 let inner_expr_node = Self::convert_expr(&paren_expr.expr, objs);
                 let mut paren_node = AstNode::new("Paren");
-                let _ = paren_node.add_child(inner_expr_node);
+                paren_node.add_child(inner_expr_node);
                 paren_node
             }
             Expr::Selector(selector_expr) => {
                 let mut selector_node = AstNode::new("Selector");
-                let _ = selector_node.add_child(Self::convert_expr(&selector_expr.expr, objs));
+                selector_node.add_child(Self::convert_expr(&selector_expr.expr, objs));
                 let sel_name = &objs.idents[selector_expr.sel].name;
-                let _ = selector_node.add_child(AstNode::with_name("Field", sel_name));
+                selector_node.add_child(AstNode::with_name("Field", sel_name));
                 selector_node
             }
             Expr::Index(index_expr) => {
                 let mut index_node = AstNode::new("Index");
-                let _ = index_node.add_child(Self::convert_expr(&index_expr.expr, objs));
-                let _ = index_node.add_child(Self::convert_expr(&index_expr.index, objs));
+                index_node.add_child(Self::convert_expr(&index_expr.expr, objs));
+                index_node.add_child(Self::convert_expr(&index_expr.index, objs));
                 index_node
             }
             Expr::Slice(slice_expr) => {
                 let mut slice_node = AstNode::new("Slice");
-                let _ = slice_node.add_child(Self::convert_expr(&slice_expr.expr, objs));
+                slice_node.add_child(Self::convert_expr(&slice_expr.expr, objs));
                 if let Some(low) = &slice_expr.low {
-                    let _ = slice_node.add_child(Self::convert_expr(low, objs));
+                    slice_node.add_child(Self::convert_expr(low, objs));
                 }
                 if let Some(high) = &slice_expr.high {
-                    let _ = slice_node.add_child(Self::convert_expr(high, objs));
+                    slice_node.add_child(Self::convert_expr(high, objs));
                 }
                 if let Some(max) = &slice_expr.max {
-                    let _ = slice_node.add_child(Self::convert_expr(max, objs));
+                    slice_node.add_child(Self::convert_expr(max, objs));
                 }
                 slice_node
             }
@@ -380,54 +380,54 @@ impl GoParser {
                 let _ =
                     type_assert_node.add_child(Self::convert_expr(&type_assert_expr.expr, objs));
                 if let Some(typ) = &type_assert_expr.typ {
-                    let _ = type_assert_node.add_child(Self::convert_expr(typ, objs));
+                    type_assert_node.add_child(Self::convert_expr(typ, objs));
                 }
                 type_assert_node
             }
             Expr::Call(call_expr) => {
                 let mut call_node = AstNode::new("Call");
-                let _ = call_node.add_child(Self::convert_expr(&call_expr.func, objs));
+                call_node.add_child(Self::convert_expr(&call_expr.func, objs));
                 for arg in &call_expr.args {
-                    let _ = call_node.add_child(Self::convert_expr(arg, objs));
+                    call_node.add_child(Self::convert_expr(arg, objs));
                 }
                 call_node
             }
             Expr::Star(star_expr) => {
                 let mut star_node = AstNode::new("Star");
-                let _ = star_node.add_child(Self::convert_expr(&star_expr.expr, objs));
+                star_node.add_child(Self::convert_expr(&star_expr.expr, objs));
                 star_node
             }
             Expr::Unary(unary_expr) => {
                 let op = format!("{:?}", unary_expr.op);
                 let mut unary_node = AstNode::with_name("Unary", &op);
-                let _ = unary_node.add_child(Self::convert_expr(&unary_expr.expr, objs));
+                unary_node.add_child(Self::convert_expr(&unary_expr.expr, objs));
                 unary_node
             }
             Expr::Binary(binary_expr) => {
                 let op = format!("{:?}", binary_expr.op);
                 let mut binary_node = AstNode::with_name("Binary", &op);
-                let _ = binary_node.add_child(Self::convert_expr(&binary_expr.expr_a, objs));
-                let _ = binary_node.add_child(Self::convert_expr(&binary_expr.expr_b, objs));
+                binary_node.add_child(Self::convert_expr(&binary_expr.expr_a, objs));
+                binary_node.add_child(Self::convert_expr(&binary_expr.expr_b, objs));
                 binary_node
             }
             Expr::KeyValue(key_value_expr) => {
                 let mut key_value_node = AstNode::new("KeyValue");
-                let _ = key_value_node.add_child(Self::convert_expr(&key_value_expr.key, objs));
-                let _ = key_value_node.add_child(Self::convert_expr(&key_value_expr.val, objs));
+                key_value_node.add_child(Self::convert_expr(&key_value_expr.key, objs));
+                key_value_node.add_child(Self::convert_expr(&key_value_expr.val, objs));
                 key_value_node
             }
             Expr::Array(array_type) => {
                 let mut array_node = AstNode::new("ArrayType");
                 if let Some(len) = &array_type.len {
-                    let _ = array_node.add_child(Self::convert_expr(len, objs));
+                    array_node.add_child(Self::convert_expr(len, objs));
                 }
-                let _ = array_node.add_child(Self::convert_expr(&array_type.elt, objs));
+                array_node.add_child(Self::convert_expr(&array_type.elt, objs));
                 array_node
             }
             Expr::Struct(struct_type) => {
                 let mut struct_node = AstNode::new("StructType");
                 for field_key in &struct_type.fields.list {
-                    let _ = struct_node.add_child(Self::convert_field(*field_key, objs));
+                    struct_node.add_child(Self::convert_field(*field_key, objs));
                 }
                 struct_node
             }
@@ -435,35 +435,35 @@ impl GoParser {
                 let func_type = &objs.ftypes[*func_type_key];
                 let mut func_node = AstNode::new("FuncType");
                 let params_node = Self::convert_params(&func_type.params, objs);
-                let _ = func_node.add_child(params_node);
+                func_node.add_child(params_node);
                 if let Some(results) = &func_type.results {
                     let results_node = Self::convert_params(results, objs);
-                    let _ = func_node.add_child(results_node);
+                    func_node.add_child(results_node);
                 }
                 func_node
             }
             Expr::Interface(interface_type) => {
                 let mut interface_node = AstNode::new("InterfaceType");
                 for field_key in &interface_type.methods.list {
-                    let _ = interface_node.add_child(Self::convert_field(*field_key, objs));
+                    interface_node.add_child(Self::convert_field(*field_key, objs));
                 }
                 interface_node
             }
             Expr::Map(map_type) => {
                 let mut map_node = AstNode::new("MapType");
-                let _ = map_node.add_child(Self::convert_expr(&map_type.key, objs));
-                let _ = map_node.add_child(Self::convert_expr(&map_type.val, objs));
+                map_node.add_child(Self::convert_expr(&map_type.key, objs));
+                map_node.add_child(Self::convert_expr(&map_type.val, objs));
                 map_node
             }
             Expr::Chan(chan_type) => {
                 let mut chan_node = AstNode::new("ChanType");
-                let _ = chan_node.add_child(Self::convert_expr(&chan_type.val, objs));
+                chan_node.add_child(Self::convert_expr(&chan_type.val, objs));
                 chan_node
             }
             Expr::Ellipsis(ellipsis) => {
                 let mut ellipsis_node = AstNode::new("Ellipsis");
                 if let Some(elt) = &ellipsis.elt {
-                    let _ = ellipsis_node.add_child(Self::convert_expr(elt, objs));
+                    ellipsis_node.add_child(Self::convert_expr(elt, objs));
                 }
                 ellipsis_node
             }
@@ -478,15 +478,15 @@ impl GoParser {
 
         for name_key in &field.names {
             let name = &objs.idents[*name_key].name;
-            let _ = field_node.add_child(AstNode::with_name("Name", name));
+            field_node.add_child(AstNode::with_name("Name", name));
         }
 
         let type_node = Self::convert_expr(&field.typ, objs);
-        let _ = field_node.add_child(type_node);
+        field_node.add_child(type_node);
 
         if let Some(tag) = &field.tag {
             let tag_node = Self::convert_expr(tag, objs);
-            let _ = field_node.add_child(tag_node);
+            field_node.add_child(tag_node);
         }
 
         field_node
@@ -496,7 +496,7 @@ impl GoParser {
         let mut block_node = AstNode::new("Block");
         for stmt in stmts {
             let stmt_node = Self::convert_stmt(stmt, objs);
-            let _ = block_node.add_child(stmt_node);
+            block_node.add_child(stmt_node);
         }
         block_node
     }

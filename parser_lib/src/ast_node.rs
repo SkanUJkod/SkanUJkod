@@ -55,7 +55,7 @@ impl AstNode {
         1 + self
             .children
             .iter()
-            .map(AstNode::recursive_count) // Directly call the method instead of using a closure
+            .map(Self::recursive_count) // Directly call the method instead of using a closure
             .sum::<usize>()
     }
 
