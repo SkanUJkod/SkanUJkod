@@ -20,6 +20,7 @@ impl AstNode {
         }
     }
 
+    #[must_use]
     pub fn with_name(kind: &str, name: &str) -> Self {
         Self {
             kind: kind.to_string(),
@@ -39,8 +40,7 @@ impl AstNode {
         }
     }
 
-    #[must_use]
-    pub fn add_child(&mut self, child: AstNode) {
+    pub fn add_child(&mut self, child: Self) {
         self.children.push(child);
     }
 
@@ -55,7 +55,7 @@ impl AstNode {
         1 + self
             .children
             .iter()
-            .map(|child| child.recursive_count())
+            .map(AstNode::recursive_count) // Directly call the method instead of using a closure
             .sum::<usize>()
     }
 
@@ -96,12 +96,12 @@ impl AstNode {
     }
 
     // Querying Methods
-    pub fn find_nodes<F>(&self, condition: F) -> Vec<AstNode>
+    pub fn find_nodes<F>(&self, condition: F) -> Vec<Self>
     where
         F: Fn(&Self) -> bool,
     {
         let mut result = Vec::new();
-        self.breadth_first_traversal(|node| {
+        self.breadth_first_traversal(|node: &AstNode| {
             if condition(node) {
                 result.push(node.clone());
             }
@@ -109,6 +109,7 @@ impl AstNode {
         result
     }
 
+    #[must_use]
     pub fn find_nodes_by_kind(&self, kind: &str) -> Vec<Self> {
         self.find_nodes(|node| node.kind == kind)
     }

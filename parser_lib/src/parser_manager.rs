@@ -2,6 +2,7 @@ use crate::ast_node::AstNode;
 use std::collections::HashMap;
 
 pub trait ParserTrait {
+    #[allow(clippy::missing_errors_doc)]
     fn parse(&mut self, file_path: &str, source_code: &str) -> Result<AstNode, String>;
     fn get_errors(&self) -> Vec<String>;
 }
@@ -24,7 +25,6 @@ impl<T: ParserTrait> ParserManager<T> {
         }
     }
 
-    #[must_use]
     pub fn add_parser(&mut self, language: String, parser: T) {
         self.parsers.insert(language, parser);
     }
