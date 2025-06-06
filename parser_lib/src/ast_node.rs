@@ -100,8 +100,8 @@ impl AstNode {
     where
         F: Fn(&Self) -> bool,
     {
-        let mut result = Vec::new();
-        self.breadth_first_traversal(|node: &AstNode| {
+        let mut result: Vec<AstNode> = Vec::new();
+        self.breadth_first_traversal(|node: &Self| {
             if condition(node) {
                 result.push(node.clone());
             }

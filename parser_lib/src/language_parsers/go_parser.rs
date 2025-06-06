@@ -244,8 +244,7 @@ impl GoParser {
                 if let Some(tag_expr) = &switch_stmt.tag {
                     switch_node.add_child(Self::convert_expr(tag_expr, objs));
                 }
-                let _ =
-                    switch_node.add_child(Self::convert_stmt_list(&switch_stmt.body.list, objs));
+                switch_node.add_child(Self::convert_stmt_list(&switch_stmt.body.list, objs));
                 switch_node
             }
             Stmt::TypeSwitch(type_switch_stmt) => {
@@ -253,8 +252,7 @@ impl GoParser {
                 if let Some(init_stmt) = &type_switch_stmt.init {
                     type_switch_node.add_child(Self::convert_stmt(init_stmt, objs));
                 }
-                let _ =
-                    type_switch_node.add_child(Self::convert_stmt(&type_switch_stmt.assign, objs));
+                type_switch_node.add_child(Self::convert_stmt(&type_switch_stmt.assign, objs));
                 type_switch_node
                     .add_child(Self::convert_stmt_list(&type_switch_stmt.body.list, objs));
                 type_switch_node
@@ -271,8 +269,7 @@ impl GoParser {
             }
             Stmt::Select(select_stmt) => {
                 let mut select_node = AstNode::new("Select");
-                let _ =
-                    select_node.add_child(Self::convert_stmt_list(&select_stmt.body.list, objs));
+                select_node.add_child(Self::convert_stmt_list(&select_stmt.body.list, objs));
                 select_node
             }
             Stmt::For(for_stmt) => {
@@ -377,8 +374,7 @@ impl GoParser {
             }
             Expr::TypeAssert(type_assert_expr) => {
                 let mut type_assert_node = AstNode::new("TypeAssert");
-                let _ =
-                    type_assert_node.add_child(Self::convert_expr(&type_assert_expr.expr, objs));
+                type_assert_node.add_child(Self::convert_expr(&type_assert_expr.expr, objs));
                 if let Some(typ) = &type_assert_expr.typ {
                     type_assert_node.add_child(Self::convert_expr(typ, objs));
                 }
