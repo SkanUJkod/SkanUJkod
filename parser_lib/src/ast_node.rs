@@ -6,7 +6,7 @@ pub struct AstNode {
     pub kind: String,
     pub name: Option<String>,
     pub type_info: Option<String>,
-    pub children: Vec<AstNode>,
+    pub children: Vec<Self>,
 }
 
 impl AstNode {
@@ -100,7 +100,7 @@ impl AstNode {
     where
         F: Fn(&Self) -> bool,
     {
-        let mut result: Vec<AstNode> = Vec::new();
+        let mut result: Vec<Self> = Vec::new();
         self.breadth_first_traversal(|node: &Self| {
             if condition(node) {
                 result.push(node.clone());
