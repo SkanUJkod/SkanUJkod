@@ -9,9 +9,16 @@ pub struct GoParser {
     file_set: FileSet,
 }
 
+impl Default for GoParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GoParser {
+    #[must_use]
     pub fn new() -> Self {
-        GoParser {
+        Self {
             objs: AstObjects::new(),
             error_list: ErrorList::new(),
             file_set: FileSet::new(),
@@ -125,17 +132,18 @@ impl GoParser {
         let mut params_node = AstNode::new("Parameters");
         for field_key in &params.list {
             let field = &objs.fields[*field_key];
-            let field_name = if !field.names.is_empty() {
-                &objs.idents[field.names[0]].name
-            } else {
+            let field_name = if field.names.is_empty() {
                 "Unnamed"
+            } else {
+                &objs.idents[field.names[0]].name
             };
-            let param_node = AstNode::new(&format!("Param: {}", field_name));
-            params_node.add_child(param_node);
+            let parameter_node = AstNode::new(&format!("Parameter: {field_name}"));
+            params_node.add_child(parameter_node);
         }
         params_node
     }
 
+    #[allow(clippy::too_many_lines)]
     fn convert_stmt(stmt: &Stmt, objs: &AstObjects) -> AstNode {
         match stmt {
             Stmt::Decl(decl) => Self::convert_decl(decl, objs),
@@ -192,11 +200,10 @@ impl GoParser {
                 return_node
             }
             Stmt::Branch(branch_stmt) => {
-                let label_str = if let Some(label) = &branch_stmt.label {
-                    &objs.idents[*label].name
-                } else {
-                    "NoLabel"
-                };
+                let label_str = branch_stmt
+                    .label
+                    .as_ref()
+                    .map_or("NoLabel", |label| &objs.idents[*label].name);
                 AstNode::with_name("Branch", label_str)
             }
             Stmt::Block(block_stmt) => {
@@ -295,6 +302,7 @@ impl GoParser {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn convert_expr(expr: &Expr, objs: &AstObjects) -> AstNode {
         match expr {
             Expr::Ident(ident_key) => {
@@ -505,7 +513,7 @@ impl ParserTrait for GoParser {
 
         if let Some(ast_file) = maybe_file {
             if self.error_list.len() == 0 {
-                let wrapped_ast = GoParser::wrap_node(&ast_file, &self.objs);
+                let wrapped_ast = Self::wrap_node(&ast_file, &self.objs);
                 Ok(wrapped_ast)
             } else {
                 Err("Parsing encountered errors.".to_string())

@@ -10,8 +10,9 @@ pub struct AstNode {
 }
 
 impl AstNode {
+    #[must_use]
     pub fn new(kind: &str) -> Self {
-        AstNode {
+        Self {
             kind: kind.to_string(),
             name: None,
             type_info: None,
@@ -20,7 +21,7 @@ impl AstNode {
     }
 
     pub fn with_name(kind: &str, name: &str) -> Self {
-        AstNode {
+        Self {
             kind: kind.to_string(),
             name: Some(name.to_string()),
             type_info: None,
@@ -28,8 +29,9 @@ impl AstNode {
         }
     }
 
+    #[must_use]
     pub fn with_name_and_type(kind: &str, name: &str, type_info: &str) -> Self {
-        AstNode {
+        Self {
             kind: kind.to_string(),
             name: Some(name.to_string()),
             type_info: Some(type_info.to_string()),
@@ -37,14 +39,18 @@ impl AstNode {
         }
     }
 
+    #[must_use]
     pub fn add_child(&mut self, child: AstNode) {
         self.children.push(child);
     }
 
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn child_count(&self) -> usize {
         self.children.len()
     }
 
+    #[must_use]
     pub fn recursive_count(&self) -> usize {
         1 + self
             .children
@@ -56,7 +62,7 @@ impl AstNode {
     // Traversal Methods
     pub fn pre_order_traversal<F>(&self, visit: &mut F)
     where
-        F: FnMut(&AstNode),
+        F: FnMut(&Self),
     {
         visit(self);
         for child in &self.children {
@@ -66,7 +72,7 @@ impl AstNode {
 
     pub fn post_order_traversal<F>(&self, visit: &mut F)
     where
-        F: FnMut(&AstNode),
+        F: FnMut(&Self),
     {
         for child in &self.children {
             child.post_order_traversal(visit);
@@ -76,7 +82,7 @@ impl AstNode {
 
     pub fn breadth_first_traversal<F>(&self, mut visit: F)
     where
-        F: FnMut(&AstNode),
+        F: FnMut(&Self),
     {
         let mut queue = VecDeque::new();
         queue.push_back(self);
@@ -92,7 +98,7 @@ impl AstNode {
     // Querying Methods
     pub fn find_nodes<F>(&self, condition: F) -> Vec<AstNode>
     where
-        F: Fn(&AstNode) -> bool,
+        F: Fn(&Self) -> bool,
     {
         let mut result = Vec::new();
         self.breadth_first_traversal(|node| {
@@ -103,7 +109,7 @@ impl AstNode {
         result
     }
 
-    pub fn find_nodes_by_kind(&self, kind: &str) -> Vec<AstNode> {
+    pub fn find_nodes_by_kind(&self, kind: &str) -> Vec<Self> {
         self.find_nodes(|node| node.kind == kind)
     }
 
@@ -119,6 +125,7 @@ impl AstNode {
         }
     }
 
+    #[allow(clippy::missing_errors_doc)]
     pub fn write_tree<W: Write + ?Sized>(&self, writer: &mut W) -> io::Result<()> {
         self.write_tree_with_indent(writer, 0)
     }
@@ -130,10 +137,10 @@ impl AstNode {
     ) -> io::Result<()> {
         write!(writer, "{}{}", "  ".repeat(level), self.kind)?;
         if let Some(ref name) = self.name {
-            write!(writer, " Name: {}", name)?;
+            write!(writer, " Name: {name}")?;
         }
         if let Some(ref type_info) = self.type_info {
-            write!(writer, " Type: {}", type_info)?;
+            write!(writer, " Type: {type_info}")?;
         }
         writeln!(writer)?;
         for child in &self.children {
