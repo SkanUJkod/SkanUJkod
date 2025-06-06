@@ -16,7 +16,7 @@ mod tests {
 
     #[test]
     fn test_parse_go_file() {
-        let file_path = "../test_go_project/simple.go";
+        let file_path = "test_go_project/simple.go";
         let source_code = match read_file(file_path) {
             Ok(code) => code,
             Err(e) => panic!("Failed to read file: {}", e),
