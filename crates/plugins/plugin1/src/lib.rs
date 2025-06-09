@@ -1,6 +1,6 @@
 use abi_stable::{rvec, std_types::RVec};
 use plugin_interface::{
-    BoxedPFResult, BoxedUserParam, PFConnector, PFDependencies, PFType, Plugin, Plugin_Ref,
+    BoxedPFResult, BoxedUserParam, PFConnector, PFDependencies, PFType, Plugin, PluginRef,
     PluginFunction, QualPFID, UserParameters,
 };
 use std::fmt::{self, Display};
@@ -10,7 +10,7 @@ use abi_stable::{
 };
 
 #[export_root_module]
-pub fn get_library() -> Plugin_Ref {
+pub fn get_library() -> PluginRef {
     Plugin { funcs: new_pf_vec }.leak_into_prefix()
 }
 

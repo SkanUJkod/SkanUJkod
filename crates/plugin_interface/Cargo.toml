@@ -3,7 +3,6 @@ name = "plugin_interface"
 version = "0.1.0"
 authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
 edition = "2024"
-crate-type="dylib"
 
 [dependencies.abi_stable]
 # git = "https://github.com/kidq330/abi_stable.git"

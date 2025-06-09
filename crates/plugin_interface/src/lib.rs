@@ -42,18 +42,18 @@ pub struct PFConnector {
 }
 
 /// This struct is the root module,
-/// which must be converted to `Plugin_Ref` to be passed through ffi.
+/// which must be converted to `PluginRef` to be passed through ffi.
 ///
-/// The `#[sabi(kind(Prefix(prefix_ref = Plugin_Ref)))]`
+/// The `#[sabi(kind(Prefix(prefix_ref = PluginRef)))]`
 /// attribute tells `StableAbi` to create an ffi-safe static reference type
-/// for `Plugin` called `Plugin_Ref`.
+/// for `Plugin` called `PluginRef`.
 ///
 /// The `#[sabi(missing_field(panic))]` attribute specifies that trying to
 /// access a field that doesn't exist must panic with a message saying that
 /// the field is inaccessible.
 #[repr(C)]
 #[derive(StableAbi)]
-#[sabi(kind(Prefix(prefix_ref = Plugin_Ref)))]
+#[sabi(kind(Prefix(prefix_ref = PluginRef)))]
 #[sabi(missing_field(panic))]
 pub struct Plugin {
     #[sabi(last_prefix_field)]
@@ -61,8 +61,8 @@ pub struct Plugin {
 }
 
 /// The RootModule trait defines how to load the root module of a library.
-impl RootModule for Plugin_Ref {
-    abi_stable::declare_root_module_statics! {Plugin_Ref}
+impl RootModule for PluginRef {
+    abi_stable::declare_root_module_statics! {PluginRef}
 
     const BASE_NAME: &'static str = "plugin";
     const NAME: &'static str = "plugin";

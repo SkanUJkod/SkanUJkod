@@ -1,6 +1,6 @@
 use abi_stable::{rvec, std_types::RVec};
 use plugin_interface::{
-    BoxedPFResult, PFConnector, PFDependencies, PFType, Plugin, Plugin_Ref, PluginFunction,
+    BoxedPFResult, PFConnector, PFDependencies, PFType, Plugin, PluginRef, PluginFunction,
     QualPFID, UserParameters,
 };
 use plugin1::ParseResult;
@@ -8,7 +8,7 @@ use plugin1::ParseResult;
 use abi_stable::{DynTrait, export_root_module, prefix_type::PrefixTypeTrait, sabi_extern_fn};
 
 #[export_root_module]
-pub fn get_library() -> Plugin_Ref {
+pub fn get_library() -> PluginRef {
     Plugin { funcs: new_pf_vec2 }.leak_into_prefix()
 }
 
