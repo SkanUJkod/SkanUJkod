@@ -93,6 +93,86 @@ cargo test
 ./target/debug/skan-uj-kod list
 ```
 
+### 5. Quick Test Drive
+
+Try these commands to see SkanUJkod in action:
+
+```bash
+# Create a simple Go test project
+mkdir -p test-project
+cat > test-project/main.go << 'EOF'
+package main
+
+import "fmt"
+
+func main() {
+    x := 10
+    if x > 5 {
+        fmt.Println("x is greater than 5")
+        if x > 8 {
+            fmt.Println("x is also greater than 8")
+        }
+    } else {
+        fmt.Println("x is not greater than 5")
+    }
+    
+    for i := 0; i < 3; i++ {
+        fmt.Printf("Iteration %d\n", i)
+    }
+}
+EOF
+
+cat > test-project/go.mod << 'EOF'
+module test-project
+
+go 1.19
+EOF
+
+# Now test different analyses on this project:
+
+# 1. Generate Control Flow Graph
+./target/debug/skan-uj-kod cfg --project-path ./test-project --output cfg.dot
+echo "CFG saved to cfg.dot - you can visualize it with Graphviz!"
+
+# 2. Check Cyclomatic Complexity
+./target/debug/skan-uj-kod complexity --project-path ./test-project --max-complexity 5
+echo "This should show complexity analysis for the main function"
+
+# 3. Run Branch Coverage Analysis
+./target/debug/skan-uj-kod branch-cov --project-path ./test-project --threshold 0.8
+
+# 4. Run Statement Coverage Analysis  
+./target/debug/skan-uj-kod statement-cov --project-path ./test-project --threshold 0.9
+
+# 5. Run all analyses at once
+mkdir -p analysis-results
+./target/debug/skan-uj-kod all --project-path ./test-project --output-dir ./analysis-results
+echo "All results saved to analysis-results/ directory"
+
+# 6. View the CFG with Graphviz (if installed)
+# dot -Tpng cfg.dot -o cfg.png && open cfg.png
+
+# Clean up test project
+# rm -rf test-project analysis-results cfg.dot
+```
+
+### 6. Test with Real Go Project
+
+```bash
+# Clone a real Go project to test with
+git clone https://github.com/gin-gonic/gin.git test-gin
+cd test-gin
+
+# Run SkanUJkod on it
+../target/debug/skan-uj-kod complexity --project-path . --max-complexity 10 --exclude "*_test.go"
+
+# Generate CFG for specific package
+../target/debug/skan-uj-kod cfg --project-path . --output gin-cfg.dot --exclude "*_test.go"
+
+cd ..
+# rm -rf test-gin  # Clean up when done
+```
+
 ## Contributing Workflow
 
 ### Branch Strategy
@@ -115,39 +195,46 @@ git push origin feature/amazing-new-feature
 
 ### Branch Naming Convention
 
-- `feature/description` - New features
-- `bugfix/description` - Bug fixes
-- `docs/description` - Documentation updates
-- `refactor/description` - Code refactoring
-- `test/description` - Test improvements
+Branches should follow this pattern: `type/short-description`
+
+| **Type**   | **Description**                             |
+| ---------- | ------------------------------------------- |
+| `feature`  | New functionality                           |
+| `bug`      | Bug fixes                                   |
+| `chore`    | Maintenance tasks (e.g., dependency bumps)  |
+| `test`     | Adding or updating tests                    |
+| `docs`     | Documentation updates                       |
+| `refactor` | Code refactoring without functional changes |
+
+**Examples:**
+```bash
+feature/add-verbose-flag
+bug/fix-parse-error
+chore/bump-dependencies
+docs/update-readme
+test/add-coverage-tests
+refactor/simplify-instrumentation
+```
 
 ### Commit Message Format
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
+We use this **literal template** for commit messages:
 
 ```
-type(scope): description
-
-[optional body]
-
-[optional footer]
+TYPE(SCOPE): description (#issue)
 ```
 
-**Types:**
-- `feat` - New feature
-- `fix` - Bug fix
-- `docs` - Documentation changes
-- `style` - Code style changes (formatting, etc.)
-- `refactor` - Code refactoring
-- `test` - Adding or updating tests
-- `chore` - Maintenance tasks
+**Types:** `FEAT`, `BUG`, `CHORE`, `TEST`, `DOCS`, `REFACTOR`
+**Scope:** Module or area, e.g., `CLI`, `coverage`, `parser`
 
 **Examples:**
 ```
-feat(plugin): add data flow analysis plugin
-fix(parser): handle empty function bodies correctly
-docs(readme): update installation instructions
-test(cfg): add edge case tests for complex control flow
+FEAT(CLI): add --verbose flag for detailed output (#1)
+BUG(Parser): prevent panic on empty input (#2)
+DOCS(README): update installation instructions (#3)
+REFACTOR(AST): extract instrumentation into helper module (#4)
+TEST(Coverage): add tests for statement coverage function (#5)
+CHORE(Deps): bump go_parser to v0.1.6 (#6)
 ```
 
 ## Code Standards
@@ -207,6 +294,71 @@ When developing plugins:
    - Include comprehensive unit tests
    - Test with real Go projects
    - Test error conditions
+
+### Quick Plugin Development Example
+
+Here's how to create a simple plugin quickly:
+
+```bash
+# 1. Create new plugin
+cd crates/plugins
+cargo new --lib my_analysis_plugin
+cd my_analysis_plugin
+
+# 2. Set up Cargo.toml (copy structure from existing plugins)
+cp ../cfg_plugin/Cargo.toml .
+sed -i '' 's/cfg_plugin/my_analysis_plugin/g' Cargo.toml
+
+# 3. Implement basic plugin structure
+cat > src/lib.rs << 'EOF'
+use abi_stable::{export_root_module, sabi_extern_fn, rvec};
+use plugin_interface::*;
+
+#[export_root_module]
+pub fn get_library() -> PluginRef {
+    Plugin { funcs: new_pf_vec }.leak_into_prefix()
+}
+
+#[sabi_extern_fn] 
+fn new_pf_vec() -> RVec<PFConnector> {
+    rvec![
+        PFConnector {
+            pf: PluginFunction(my_analysis),
+            pf_type: PFType {
+                pf_dependencies: rvec![],
+                user_params: rvec!["project_path".into()]
+            },
+            pf_id: QualPFID {
+                plugin_id: "my_analysis_plugin".into(),
+                pf_id: "my_analysis".into()
+            }
+        }
+    ]
+}
+
+#[sabi_extern_fn]
+fn my_analysis(
+    _pf_results: PFDependencies,
+    user_params: &UserParameters
+) -> BoxedPFResult<'static> {
+    // Your analysis implementation here
+    println!("Running my analysis!");
+    let result = "Analysis complete".to_string();
+    Box::new(result).into()
+}
+EOF
+
+# 4. Build the plugin
+cargo build
+cd ../../..
+
+# 5. Test the plugin
+cargo build
+./target/debug/skan-uj-kod list  # Should show your plugin
+
+# 6. Add CLI command (optional)
+# Edit src/commands/mod.rs and src/cli.rs to add your command
+```
 
 ## Testing Guidelines
 
@@ -535,6 +687,112 @@ We appreciate all contributions! Contributors will be:
 - Listed in the project's contributor list
 - Recognized in release notes for significant contributions
 - Invited to join the maintainer team for sustained contributions
+
+## Common Development Scenarios & Commands
+
+### Debugging Build Issues
+
+```bash
+# Clean and rebuild everything
+cargo clean
+cargo build --release
+./build_plugins.sh
+
+# Check for specific plugin issues
+cargo build --package cfg_plugin --verbose
+
+# Debug plugin loading
+RUST_LOG=debug ./target/debug/skan-uj-kod list
+```
+
+### Testing Changes
+
+```bash
+# Run specific tests while developing
+cargo test --package cfg_plugin -- --nocapture
+
+# Test CLI changes
+./target/debug/skan-uj-kod cfg --project-path ./test-project --output /tmp/test.dot
+
+# Run comprehensive tests
+./test_all_functionality.sh
+
+# Performance testing with larger project
+time ./target/release/skan-uj-kod all --project-path /path/to/large/go/project --output-dir /tmp/results
+```
+
+### Working with Git
+
+```bash
+# Keep your fork updated
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+
+# Rebase feature branch
+git checkout feature/my-feature  
+git rebase main
+
+# Squash commits before PR
+git rebase -i HEAD~3  # Interactive rebase for last 3 commits
+```
+
+### Code Quality Checks
+
+```bash
+# Format code
+cargo fmt
+
+# Comprehensive linting
+cargo clippy -- -D warnings -D clippy::pedantic
+
+# Check documentation
+cargo doc --no-deps --document-private-items
+
+# Security audit
+cargo audit
+
+# Check for unused dependencies
+cargo machete
+```
+
+### Plugin Testing Workflow
+
+```bash
+# Test plugin in isolation
+cd crates/plugins/my_plugin
+cargo test
+
+# Test plugin integration
+cd ../../..
+cargo build
+export PLUGINS_DIR=./target/debug
+./target/debug/skan-uj-kod list | grep my_plugin
+
+# Test with real Go code
+echo 'package main; func main() { println("test") }' > /tmp/test.go
+echo 'module test\ngo 1.19' > /tmp/go.mod
+./target/debug/skan-uj-kod my-command --project-path /tmp
+```
+
+### Troubleshooting Common Issues
+
+```bash
+# Plugin not found
+ls -la $PLUGINS_DIR/*.dylib
+export PLUGINS_DIR=./target/debug  # Make sure this is set
+
+# ABI compatibility issues  
+cargo clean && cargo build --release
+
+# Go parsing errors
+./target/debug/skan-uj-kod cfg --project-path ./problematic-project 2>&1 | head -20
+
+# Performance issues
+time ./target/release/skan-uj-kod cfg --project-path ./large-project
+RUST_LOG=info ./target/release/skan-uj-kod cfg --project-path ./large-project
+```
 
 ## Release Process
 
