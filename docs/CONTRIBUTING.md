@@ -22,6 +22,7 @@ Thank you for your interest in contributing to SkanUJkod! This guide will help y
 ### Prerequisites
 
 Ensure you have the following installed:
+
 - **Rust** (1.70.0 or later) - [Install Rust](https://rustup.rs/)
 - **Go** (1.19 or later) - [Install Go](https://golang.org/doc/install)
 - **Git** - For version control
@@ -115,7 +116,7 @@ func main() {
     } else {
         fmt.Println("x is not greater than 5")
     }
-    
+
     for i := 0; i < 3; i++ {
         fmt.Printf("Iteration %d\n", i)
     }
@@ -141,7 +142,7 @@ echo "This should show complexity analysis for the main function"
 # 3. Run Branch Coverage Analysis
 ./target/debug/skan-uj-kod branch-cov --project-path ./test-project --threshold 0.8
 
-# 4. Run Statement Coverage Analysis  
+# 4. Run Statement Coverage Analysis
 ./target/debug/skan-uj-kod statement-cov --project-path ./test-project --threshold 0.9
 
 # 5. Run all analyses at once
@@ -207,6 +208,7 @@ Branches should follow this pattern: `type/short-description`
 | `refactor` | Code refactoring without functional changes |
 
 **Examples:**
+
 ```bash
 feature/add-verbose-flag
 bug/fix-parse-error
@@ -228,6 +230,7 @@ TYPE(SCOPE): description (#issue)
 **Scope:** Module or area, e.g., `CLI`, `coverage`, `parser`
 
 **Examples:**
+
 ```
 FEAT(CLI): add --verbose flag for detailed output (#1)
 BUG(Parser): prevent panic on empty input (#2)
@@ -257,16 +260,19 @@ cargo fmt && cargo clippy -- -D warnings && cargo test
 ### Code Quality Guidelines
 
 1. **Follow Rust conventions**:
+
    - Use `snake_case` for functions and variables
    - Use `PascalCase` for types and traits
    - Use `SCREAMING_SNAKE_CASE` for constants
 
 2. **Documentation**:
+
    - Document all public APIs with rustdoc
    - Include examples in documentation
    - Keep comments up-to-date
 
 3. **Error Handling**:
+
    - Use `Result` types for fallible operations
    - Provide meaningful error messages
    - Use `anyhow` for error context
@@ -281,11 +287,13 @@ cargo fmt && cargo clippy -- -D warnings && cargo test
 When developing plugins:
 
 1. **ABI Stability**:
+
    - Only use ABI-stable types in public interfaces
    - Test with different Rust versions
    - Follow plugin interface patterns
 
 2. **Error Handling**:
+
    - Never panic in plugin code
    - Handle all error cases gracefully
    - Provide clear error messages
@@ -319,7 +327,7 @@ pub fn get_library() -> PluginRef {
     Plugin { funcs: new_pf_vec }.leak_into_prefix()
 }
 
-#[sabi_extern_fn] 
+#[sabi_extern_fn]
 fn new_pf_vec() -> RVec<PFConnector> {
     rvec![
         PFConnector {
@@ -388,6 +396,7 @@ cargo test -- --nocapture
 ### Writing Tests
 
 #### Unit Tests
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -418,6 +427,7 @@ mod tests {
 ```
 
 #### Integration Tests
+
 ```rust
 // tests/integration_test.rs
 use std::process::Command;
@@ -459,11 +469,13 @@ open coverage/tarpaulin-report.html
 ### Plugin Contribution Process
 
 1. **Plan the Plugin**:
+
    - Identify the analysis need
    - Design the plugin interface
    - Consider dependencies and outputs
 
 2. **Implement the Plugin**:
+
    - Follow [Plugin Development Guide](PLUGIN_DEVELOPMENT.md)
    - Implement core analysis logic
    - Add comprehensive tests
@@ -494,7 +506,8 @@ open coverage/tarpaulin-report.html
 ### Writing Documentation
 
 #### Rustdoc
-```rust
+
+````rust
 /// Analyzes the control flow graph for cyclomatic complexity.
 ///
 /// # Arguments
@@ -524,9 +537,10 @@ pub fn analyze_complexity(
 ) -> Result<ComplexityResult> {
     // Implementation
 }
-```
+````
 
 #### User Documentation
+
 - Clear, step-by-step instructions
 - Real-world examples
 - Troubleshooting guides
@@ -551,13 +565,16 @@ pub fn analyze_complexity(
 ### Issue Types
 
 #### Bug Reports
+
 Use the bug report template:
+
 ```markdown
 **Describe the bug**
 A clear description of the bug.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Run command '...'
 2. With input '...'
 3. See error
@@ -566,6 +583,7 @@ Steps to reproduce the behavior:
 What you expected to happen.
 
 **Environment:**
+
 - OS: [e.g., macOS 12.0]
 - Rust version: [e.g., 1.70.0]
 - SkanUJkod version: [e.g., 0.1.0]
@@ -575,7 +593,9 @@ Any other context about the problem.
 ```
 
 #### Feature Requests
+
 Use the feature request template:
+
 ```markdown
 **Is your feature request related to a problem?**
 A clear description of the problem.
@@ -616,26 +636,31 @@ Any other context about the feature request.
 
 ```markdown
 ## Description
+
 Brief description of changes and their purpose.
 
 ## Type of Change
+
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
 - [ ] Manual testing performed
 
 ## Checklist
+
 - [ ] Code follows project style guidelines
 - [ ] Self-review completed
 - [ ] Documentation updated
 - [ ] Tests pass
 
 ## Additional Notes
+
 Any additional information about the changes.
 ```
 
@@ -684,6 +709,7 @@ We are committed to providing a welcoming and inclusive environment:
 ## Recognition
 
 We appreciate all contributions! Contributors will be:
+
 - Listed in the project's contributor list
 - Recognized in release notes for significant contributions
 - Invited to join the maintainer team for sustained contributions
@@ -731,7 +757,7 @@ git merge upstream/main
 git push origin main
 
 # Rebase feature branch
-git checkout feature/my-feature  
+git checkout feature/my-feature
 git rebase main
 
 # Squash commits before PR
@@ -783,7 +809,7 @@ echo 'module test\ngo 1.19' > /tmp/go.mod
 ls -la $PLUGINS_DIR/*.dylib
 export PLUGINS_DIR=./target/debug  # Make sure this is set
 
-# ABI compatibility issues  
+# ABI compatibility issues
 cargo clean && cargo build --release
 
 # Go parsing errors
@@ -799,6 +825,7 @@ RUST_LOG=info ./target/release/skan-uj-kod cfg --project-path ./large-project
 ### Version Numbering
 
 We follow [Semantic Versioning](https://semver.org/):
+
 - `MAJOR.MINOR.PATCH`
 - Major: Breaking changes
 - Minor: New features (backward compatible)

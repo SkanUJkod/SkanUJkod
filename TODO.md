@@ -122,6 +122,7 @@
 - [x] Dynamic plugin loading
 - [x] Basic dependency resolution
 - [x] CLI interface with clap
+- [x] **CFG case sensitivity fix** - Function names with mixed case now properly handled in DOT output
 
 ### Basic Functionality ✅
 - [x] CFG generation with DOT output

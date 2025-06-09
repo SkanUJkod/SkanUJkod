@@ -14,6 +14,42 @@ fn sanitize(name: &str) -> String {
         .collect()
 }
 
+/// Sanitize function names for use in DOT identifiers
+/// This ensures case-sensitive function names work properly in DOT format
+pub fn sanitize_function_name(name: &str) -> String {
+    // DOT format is case-sensitive, but we need to ensure identifiers are valid
+    // Valid DOT identifiers: [a-zA-Z_][a-zA-Z0-9_]*
+    let mut result = String::new();
+    
+    for (i, c) in name.chars().enumerate() {
+        if i == 0 {
+            // First character must be letter or underscore
+            if c.is_alphabetic() || c == '_' {
+                result.push(c);
+            } else {
+                result.push('_');
+                if c.is_alphanumeric() {
+                    result.push(c);
+                }
+            }
+        } else {
+            // Subsequent characters can be alphanumeric or underscore
+            if c.is_alphanumeric() || c == '_' {
+                result.push(c);
+            } else {
+                result.push('_');
+            }
+        }
+    }
+    
+    // Ensure we have at least one character
+    if result.is_empty() {
+        result = "unnamed".to_string();
+    }
+    
+    result
+}
+
 pub fn to_dot(cfg: &ControlFlowGraph) -> String {
     let mut out = String::new();
     

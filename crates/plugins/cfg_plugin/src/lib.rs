@@ -172,12 +172,14 @@ fn build_cfg_pf(pf_results: PFDependencies, _user_params: &UserParameters) -> Bo
     
     for parsed_file in &parsed_project.files {
         let file_cfgs = build_cfgs_for_file(&parsed_project.file_set, &parsed_project.ast_objects, &parsed_file.ast);
-        // Convert HashMap to Vec for compatibility
-        let cfg_vec: Vec<ControlFlowGraph> = file_cfgs.into_values().collect();
-        cfgs.push((
-            parsed_file.path.to_string_lossy().to_string(),
-            cfg_vec
-        ));
+        // Convert HashMap to Vec of (function_name, cfg) tuples to preserve function names
+        let cfg_vec: Vec<(String, ControlFlowGraph)> = file_cfgs.into_iter().collect();
+        for (func_name, cfg) in cfg_vec {
+            cfgs.push((
+                format!("{}::{}", parsed_file.path.to_string_lossy(), func_name),
+                vec![cfg]
+            ));
+        }
     }
 
     DynTrait::from_value(CFGResult { cfgs })
@@ -205,10 +207,20 @@ fn export_dot_pf(pf_results: PFDependencies, user_params: &UserParameters) -> Bo
     // Create DOT output for all CFGs
     let mut dot_content = String::from("digraph G {\n");
     
-    for (filename, cfgs) in &cfg_data.cfgs {
+    for (file_and_func, cfgs) in &cfg_data.cfgs {
         for (i, cfg) in cfgs.iter().enumerate() {
-            dot_content.push_str(&format!("  subgraph cluster_{}_{}  {{\n", filename.replace(['/', '.', '-'], "_"), i));
-            dot_content.push_str(&format!("    label=\"{}:{}\";\n", filename, i));
+            // Extract function name from "filename::function_name" format
+            let display_name = if file_and_func.contains("::") {
+                file_and_func.clone()
+            } else {
+                format!("{}::{}", file_and_func, i)
+            };
+            
+            // Create safe identifier for DOT subgraph
+            let safe_id = crate::export::sanitize_function_name(&file_and_func.replace("::", "_"));
+            
+            dot_content.push_str(&format!("  subgraph cluster_{}_{} {{\n", safe_id, i));
+            dot_content.push_str(&format!("    label=\"{}\";\n", display_name.replace('\"', "\\\"")));
             dot_content.push_str(&to_dot(cfg));
             dot_content.push_str("  }\n");
         }
