@@ -65,19 +65,71 @@ pub fn run_branch_coverage_analysis(
 }
 
 fn format_branch_coverage_output(result: &plugin_interface::BoxedPFResult, threshold: f64) -> Result<String, Box<dyn std::error::Error>> {
-    // Format the branch coverage results in a human-readable way
-    let output = format!(
-        r#"Branch Coverage Analysis Report
-===============================
-
-Coverage Threshold: {:.1}%
-Result: {:?}
-
-Analysis completed successfully.
-"#,
-        threshold * 100.0,
-        result
-    );
+    // Try to extract the coverage data from the result
+    let mut output = String::new();
+    
+    // Header
+    output.push_str("Branch Coverage Analysis Report\n");
+    output.push_str("===============================\n\n");
+    
+    // Threshold
+    output.push_str(&format!("📊 Coverage Threshold: {:.1}%\n\n", threshold * 100.0));
+    
+    // Try to extract structured data from the result
+    let result_str = format!("{:?}", result);
+    
+    // Parse key information from the debug output
+    if let Some(start) = result_str.find("overall_coverage_percentage: ") {
+        if let Some(end) = result_str[start..].find(',') {
+            let coverage_str = &result_str[start + 30..start + end];
+            if let Ok(coverage) = coverage_str.parse::<f64>() {
+                let status_icon = if coverage >= threshold * 100.0 { "✅" } else { "❌" };
+                output.push_str(&format!("🌿 Overall Coverage: {:.2}% {}\n", coverage, status_icon));
+            }
+        }
+    }
+    
+    // Extract total and covered branches
+    if let Some(start) = result_str.find("total_branches: ") {
+        if let Some(end) = result_str[start..].find(',') {
+            let total_str = &result_str[start + 16..start + end];
+            if let Ok(total) = total_str.parse::<usize>() {
+                output.push_str(&format!("🌿 Total Branches: {}\n", total));
+            }
+        }
+    }
+    
+    if let Some(start) = result_str.find("covered_branches: ") {
+        if let Some(end) = result_str[start..].find(',') {
+            let covered_str = &result_str[start + 18..start + end];
+            if let Ok(covered) = covered_str.parse::<usize>() {
+                output.push_str(&format!("✅ Covered Branches: {}\n", covered));
+            }
+        }
+    }
+    
+    // Extract files analyzed
+    if let Some(start) = result_str.find("files_analyzed: [") {
+        if let Some(end) = result_str[start..].find(']') {
+            let files_section = &result_str[start + 17..start + end];
+            let file_count = files_section.matches('"').count() / 2;
+            output.push_str(&format!("📁 Files Analyzed: {}\n", file_count));
+        }
+    }
+    
+    // Extract uncovered branches count
+    if let Some(start) = result_str.find("uncovered_branches: [") {
+        let uncovered_section = &result_str[start + 21..];
+        let uncovered_count = uncovered_section.matches("UncoveredBranch").count();
+        if uncovered_count > 0 {
+            output.push_str(&format!("⚠️  Uncovered Branches: {}\n", uncovered_count));
+        } else {
+            output.push_str("🎉 All branches covered!\n");
+        }
+    }
+    
+    output.push_str("\n");
+    output.push_str("✅ Analysis completed successfully.\n");
     
     Ok(output)
 }

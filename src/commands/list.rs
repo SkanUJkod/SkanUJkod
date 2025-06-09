@@ -1,14 +1,14 @@
 use crate::plugin_manager::PluginManager;
+use crate::ui::UI;
 
 pub fn list_available_plugins(plugin_manager: &PluginManager) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Available Plugins and Functions");
-    println!("===============================\n");
+    UI::print_plugins_header();
     
     let connectors = plugin_manager.list_plugins();
     
     if connectors.is_empty() {
-        println!("No plugins found!");
-        println!("Make sure PLUGINS_DIR environment variable points to a directory containing plugin files.");
+        UI::print_warning("No plugins found!");
+        UI::print_info("Make sure PLUGINS_DIR environment variable points to a directory containing plugin files.");
         return Ok(());
     }
     
@@ -22,36 +22,24 @@ pub fn list_available_plugins(plugin_manager: &PluginManager) -> Result<(), Box<
     }
     
     for (plugin_id, functions) in &plugins {
-        println!("🔌 Plugin: {}", plugin_id);
-        println!("   Functions:");
+        UI::print_plugin_info(plugin_id, functions.len());
         
         for function in functions {
-            println!("   • {}::{}", 
-                   function.pf_id.plugin_id, 
-                   function.pf_id.pf_id);
-            
-            // Show dependencies
-            if !function.pf_type.pf_dependencies.is_empty() {
-                println!("     Dependencies:");
-                for dep in &function.pf_type.pf_dependencies {
-                    println!("     - {}::{}", dep.plugin_id, dep.pf_id);
-                }
-            }
-            
-            // Show required user parameters
-            if !function.pf_type.user_params.is_empty() {
-                println!("     Required Parameters:");
-                for param in &function.pf_type.user_params {
-                    println!("     - {}", param);
-                }
-            }
-            
-            println!();
+            let dependencies: Vec<String> = function.pf_type.pf_dependencies.iter()
+                .map(|dep| format!("{}::{}", dep.plugin_id, dep.pf_id))
+                .collect();
+                
+            let params: Vec<String> = function.pf_type.user_params.iter()
+                .map(|p| p.to_string())
+                .collect();
+                
+            UI::print_function_details(&function.pf_id.pf_id, &dependencies, &params);
         }
-        println!();
     }
     
-    println!("Total: {} plugins with {} functions", plugins.len(), connectors.len());
+    println!();
+    UI::print_kv("Total plugins", &plugins.len().to_string());
+    UI::print_kv("Total functions", &connectors.len().to_string());
     
     Ok(())
 }

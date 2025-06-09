@@ -1,25 +1,37 @@
 use clap::Parser;
 use std::process;
+use std::time::Instant;
 
 mod cli;
 mod plugin_manager;
 mod commands;
+mod ui;
 
 use cli::{Cli, Commands};
 use plugin_manager::PluginManager;
+use ui::UI;
 
 fn main() {
+    let start_time = Instant::now();
     let cli = Cli::parse();
+
+    // Show banner
+    UI::print_banner();
 
     // Initialize plugin manager
     let plugins_dir = std::env::var("PLUGINS_DIR")
         .unwrap_or_else(|_| "./target/debug".to_string());
     
+    UI::print_info(&format!("Loading plugins from: {}", plugins_dir));
+    
     let mut plugin_manager = match PluginManager::new(&plugins_dir) {
-        Ok(manager) => manager,
+        Ok(manager) => {
+            UI::print_success("Plugin manager initialized");
+            manager
+        },
         Err(e) => {
-            eprintln!("Error: Failed to initialize plugin manager: {}", e);
-            eprintln!("Make sure PLUGINS_DIR environment variable is set or plugins exist in ./target/debug");
+            UI::print_error(&format!("Failed to initialize plugin manager: {}", e));
+            UI::print_error("Make sure PLUGINS_DIR environment variable is set or plugins exist in ./target/debug");
             process::exit(1);
         }
     };
@@ -81,8 +93,15 @@ fn main() {
         }
     };
 
-    if let Err(e) = result {
-        eprintln!("Error: {}", e);
-        process::exit(1);
+    // Handle result and show completion
+    match result {
+        Ok(_) => {
+            let duration = start_time.elapsed();
+            UI::print_completion(duration);
+        },
+        Err(e) => {
+            UI::print_error(&format!("Analysis failed: {}", e));
+            process::exit(1);
+        }
     }
 }

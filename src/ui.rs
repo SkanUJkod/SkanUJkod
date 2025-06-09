@@ -1,5 +1,4 @@
 use colored::Colorize;
-use indicatif::{ProgressBar, ProgressStyle};
 use std::time::Duration;
 
 /// Beautiful console output utilities for SkanUJkod
@@ -68,18 +67,6 @@ impl UI {
     }
 
     /// Create and return a progress bar
-    pub fn create_progress_bar(len: u64, message: &str) -> ProgressBar {
-        let pb = ProgressBar::new(len);
-        pb.set_style(
-            ProgressStyle::default_bar()
-                .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} {msg}")
-                .unwrap()
-                .progress_chars("█▉▊▋▌▍▎▏  ")
-        );
-        pb.set_message(message.to_string());
-        pb
-    }
-
     /// Show plugin execution progress
     pub fn print_plugin_execution(plugin_name: &str, function_name: &str) {
         println!("  {} Executing: {}", 
@@ -98,65 +85,10 @@ impl UI {
         Self::print_success(&format!("Results written to: {}", path.bright_white()));
     }
 
-    /// Print statistics
-    pub fn print_stats(stats: &[(&str, String)]) {
-        println!();
-        Self::print_subsection("Statistics");
-        for (key, value) in stats {
-            Self::print_kv(key, value);
-        }
-    }
-
-    /// Print table header
-    pub fn print_table_header(headers: &[&str]) {
-        let separator = "─".repeat(80).bright_black();
-        println!("  {}", separator);
-        
-        let header_str = headers.iter()
-            .map(|h| format!("{:20}", h.bright_cyan().bold()))
-            .collect::<Vec<_>>()
-            .join("");
-        println!("  {}", header_str);
-        
-        println!("  {}", separator);
-    }
-
-    /// Print table row
-    pub fn print_table_row(cells: &[&str]) {
-        let row_str = cells.iter()
-            .map(|c| format!("{:20}", c.white()))
-            .collect::<Vec<_>>()
-            .join("");
-        println!("  {}", row_str);
-    }
-
     /// Print completion message
     pub fn print_completion(duration: Duration) {
         println!();
         Self::print_success(&format!("Analysis completed in {:.2}s", duration.as_secs_f64()));
-        println!();
-    }
-
-    /// Print CFG specific information
-    pub fn print_cfg_info(total_functions: usize, filtered_functions: usize, filter: Option<&str>) {
-        Self::print_subsection("CFG Analysis Details");
-        
-        if let Some(f) = filter {
-            Self::print_kv("Filter Applied", f);
-            Self::print_kv("Functions Found", &total_functions.to_string());
-            Self::print_kv("Functions Matching", &filtered_functions.to_string());
-            
-            if filtered_functions == 0 {
-                Self::print_warning(&format!("No functions found matching filter '{}'", f));
-            } else if filtered_functions == 1 {
-                Self::print_success("Found matching function");
-            } else {
-                Self::print_info(&format!("Found {} matching functions", filtered_functions));
-            }
-        } else {
-            Self::print_kv("Total Functions", &total_functions.to_string());
-            Self::print_info("No filter applied - analyzing all functions");
-        }
         println!();
     }
 
@@ -216,22 +148,5 @@ impl UI {
         }
         
         println!();
-    }
-}
-
-/// Helper trait for colorizing analysis results
-pub trait StatusColorize {
-    fn colorize_status(&self) -> String;
-}
-
-impl StatusColorize for str {
-    fn colorize_status(&self) -> String {
-        use colored::Colorize;
-        match self {
-            s if s.contains("Success") || s.contains("✓") => s.green().to_string(),
-            s if s.contains("Warning") || s.contains("⚠") => s.yellow().to_string(),
-            s if s.contains("Error") || s.contains("Failed") || s.contains("✗") => s.red().to_string(),
-            s => s.white().to_string(),
-        }
     }
 }

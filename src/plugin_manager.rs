@@ -4,6 +4,7 @@ use abi_stable::{
 use plugin_interface::{
     BoxedPFResult, BoxedUserParam, PFConnector, PFDependencies, PluginRef, QualPFID, UserParameters
 };
+use crate::ui::UI;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -11,7 +12,6 @@ use std::fs;
 pub struct PluginManager {
     connectors: Vec<PFConnector>,
     pf_to_idx: HashMap<QualPFID, usize>,
-    plugins_dir: PathBuf,
 }
 
 impl PluginManager {
@@ -45,7 +45,6 @@ impl PluginManager {
         Ok(PluginManager {
             connectors,
             pf_to_idx,
-            plugins_dir: plugins_path.to_path_buf(),
         })
     }
 
@@ -119,9 +118,7 @@ impl PluginManager {
         for &idx in &topo_order {
             let connector = &self.connectors[idx];
             
-            println!("Executing: {}::{}", 
-                   connector.pf_id.plugin_id, 
-                   connector.pf_id.pf_id);
+            UI::print_plugin_execution(&connector.pf_id.plugin_id, &connector.pf_id.pf_id);
             
             // Prepare dependencies
             let dependencies = results

@@ -1,4 +1,5 @@
 use crate::plugin_manager::PluginManager;
+use crate::ui::UI;
 use std::path::Path;
 use std::fs;
 
@@ -9,84 +10,94 @@ pub fn run_all_analyses(
     include_tests: bool,
     exclude_patterns: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Running all available analyses on: {}", project_path.display());
+    UI::print_analysis_summary("All Analyses", &project_path.display().to_string(), None);
     
     // Validate inputs
+    UI::print_subsection("Validating project");
     if !project_path.exists() {
         return Err(format!("Project path '{}' does not exist", project_path.display()).into());
     }
+    UI::print_success("Project path exists");
     
     let go_mod_path = project_path.join("go.mod");
     if !go_mod_path.exists() {
         return Err(format!("No go.mod found in '{}'. Not a Go project?", project_path.display()).into());
     }
+    UI::print_success("Go project detected");
     
     // Create output directory if specified
     if let Some(dir) = output_dir {
         fs::create_dir_all(dir)?;
+        UI::print_kv("Output directory", &dir.display().to_string());
     }
     
     let mut results = Vec::new();
     
     // 1. CFG Analysis
-    println!("\n=== Running CFG Analysis ===");
+    UI::print_subsection("CFG Analysis");
     match run_cfg_analysis(plugin_manager, project_path, output_dir, include_tests, exclude_patterns) {
         Ok(_result) => {
             results.push(("CFG Analysis", "✓ Success".to_string()));
+            UI::print_success("CFG Analysis completed");
         }
         Err(e) => {
             results.push(("CFG Analysis", format!("✗ Failed: {}", e)));
-            eprintln!("CFG Analysis failed: {}", e);
+            UI::print_error(&format!("CFG Analysis failed: {}", e));
         }
     }
     
     // 2. Branch Coverage Analysis
-    println!("\n=== Running Branch Coverage Analysis ===");
+    UI::print_subsection("Branch Coverage Analysis");
     match run_branch_coverage_analysis(plugin_manager, project_path, output_dir, include_tests, exclude_patterns) {
         Ok(_result) => {
             results.push(("Branch Coverage", "✓ Success".to_string()));
+            UI::print_success("Branch Coverage Analysis completed");
         }
         Err(e) => {
             results.push(("Branch Coverage", format!("✗ Failed: {}", e)));
-            eprintln!("Branch Coverage Analysis failed: {}", e);
+            UI::print_error(&format!("Branch Coverage Analysis failed: {}", e));
         }
     }
     
     // 3. Statement Coverage Analysis
-    println!("\n=== Running Statement Coverage Analysis ===");
+    UI::print_subsection("Statement Coverage Analysis");
     match run_statement_coverage_analysis(plugin_manager, project_path, output_dir, include_tests, exclude_patterns) {
         Ok(_result) => {
             results.push(("Statement Coverage", "✓ Success".to_string()));
+            UI::print_success("Statement Coverage Analysis completed");
         }
         Err(e) => {
             results.push(("Statement Coverage", format!("✗ Failed: {}", e)));
-            eprintln!("Statement Coverage Analysis failed: {}", e);
+            UI::print_error(&format!("Statement Coverage Analysis failed: {}", e));
         }
     }
     
     // 4. Cyclomatic Complexity Analysis
-    println!("\n=== Running Cyclomatic Complexity Analysis ===");
+    UI::print_subsection("Cyclomatic Complexity Analysis");
     match run_complexity_analysis(plugin_manager, project_path, output_dir, include_tests, exclude_patterns) {
         Ok(_result) => {
             results.push(("Cyclomatic Complexity", "✓ Success".to_string()));
+            UI::print_success("Cyclomatic Complexity Analysis completed");
         }
         Err(e) => {
             results.push(("Cyclomatic Complexity", format!("✗ Failed: {}", e)));
-            eprintln!("Cyclomatic Complexity Analysis failed: {}", e);
+            UI::print_error(&format!("Cyclomatic Complexity Analysis failed: {}", e));
         }
     }
     
     // Generate summary report
+    UI::print_all_analysis_summary(&results);
+    
     let summary = generate_summary_report(&results);
     
     match output_dir {
         Some(dir) => {
             let summary_path = dir.join("analysis_summary.txt");
             fs::write(&summary_path, &summary)?;
-            println!("\nAll analyses completed. Summary written to: {}", summary_path.display());
+            UI::print_file_output(&summary_path.display().to_string());
         }
         None => {
-            println!("\n{}", summary);
+            // Summary already printed by UI::print_all_analysis_summary
         }
     }
     
