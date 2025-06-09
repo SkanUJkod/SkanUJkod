@@ -3,10 +3,16 @@
 ## 🚨 Critical Issues / High Priority
 
 ### Architecture & Core
-- [ ] **Fix ABI parameter passing** - Currently hardcoded to avoid crashes
-  - The plugin system works but parameters aren't properly passed between plugins
-  - Need to investigate `UserParameters` serialization/deserialization
-  - Location: `src/plugin_manager.rs` and plugin implementations
+- [x] **Fix ABI parameter passing** - COMPLETED ✅
+  - Fixed parameter passing between CLI and plugins
+  - Issue was incorrect parameter access using string literals instead of RString::from()
+  - Fixed in `crates/plugins/cfg_plugin/src/lib.rs` lines ~170 and ~240
+  - CLI function filtering now works: `./skan-uj-kod cfg --project-path . --function main`
+  
+- [ ] **Debug plugin execution output** - IN PROGRESS 🔄
+  - Function filtering logic works but debug output from plugin functions not visible
+  - Need to investigate stderr/stdout handling in plugin context
+  - Location: `crates/plugins/cfg_plugin/src/lib.rs` build_cfg_pf and export_dot_pf functions
 
 ### Output Formats
 - [ ] **Implement JSON export for CFG plugin**
@@ -18,6 +24,18 @@
   - Location: `crates/plugins/cfg_plugin/src/export.rs`
 
 ### Plugin Functionality
+- [x] **Add CLI function filtering for CFG analysis** - COMPLETED ✅
+  - Added `--function <name>` parameter to CFG command
+  - Implements exact function name matching
+  - CLI: `./skan-uj-kod cfg --project-path . --function main`
+  - Location: `src/cli.rs`, `src/commands/cfg.rs`, `crates/plugins/cfg_plugin/src/lib.rs`
+  
+- [ ] **Improve CFG graph readability** - PENDING 🔄
+  - Current CFG graphs have too many connections and unnecessary "Empty" blocks
+  - Need to simplify graph structure and reduce complexity
+  - Consider node merging and edge optimization
+  - Location: `crates/plugins/cfg_plugin/src/cfg.rs` and `src/export.rs`
+
 - [ ] **Complete coverage analysis implementations**
   - Branch and statement coverage plugins currently return mock data
   - Need real Go code instrumentation and test execution
@@ -137,31 +155,25 @@
 - [x] CI/CD pipeline with GitHub Actions
 - [x] ABI fix verification tests
 
-## 🛠 Development Notes
+## ✅ Recent Accomplishments
 
-### Architecture Decisions
-- Using `abi_stable` for plugin ABI compatibility
-- Rust workspace for modular development
-- Dynamic library loading for plugins
-- Topological sorting for plugin dependencies
+### Function Filtering Implementation (2025-06-09)
+- **CLI Parameter Addition**: Added `--function <name>` option to CFG command
+- **Parameter Passing Fix**: Fixed ABI parameter passing from CLI to plugins  
+- **Plugin Chain Updates**: Updated build_cfg_pf and export_dot_pf to accept function_filter parameter
+- **Exact Matching**: Implemented exact function name matching (not substring matching)
+- **Cross-component Integration**: Updated src/cli.rs, src/main.rs, src/commands/cfg.rs, and plugin implementations
 
-### Key Files to Understand
-- `src/plugin_manager.rs` - Core plugin loading and execution
-- `crates/plugin_interface/src/lib.rs` - Plugin API definitions
-- `src/cli.rs` - Command-line interface
-- Plugin implementations in `crates/plugins/*/src/lib.rs`
+**Technical Details:**
+- Fixed parameter access using `user_params.get(&RString::from("function_filter"))` instead of string literals
+- Added function_filter to user_params list in plugin connector configuration
+- Verified CLI shows "Filtering for function: <name>" and parameter reaches plugin chain
+- Testing: `./target/release/skan-uj-kod cfg --project-path ../go-code/example-go --function main`
 
-### Dependencies
-- `abi_stable` - Cross-version ABI compatibility
-- `clap` - Command-line argument parsing
-- `serde/serde_json` - Serialization
-- `tempfile` - Temporary file handling for tests
-
-### Testing Strategy
-- Unit tests for individual components
-- Integration tests with `test_all_functionality.sh`
-- Plugin-specific tests in each plugin crate
-- Real Go project testing for validation
+**Next Steps:**
+- Investigate debug output visibility from plugin functions
+- Address CFG graph complexity (too many Empty blocks and connections)
+- Consider implementing partial function name matching as alternative to exact matching
 
 ---
 

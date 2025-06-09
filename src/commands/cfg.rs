@@ -9,10 +9,14 @@ pub fn run_cfg_analysis(
     project_path: &Path,
     output_path: Option<&Path>,
     format: &OutputFormat,
+    function_filter: Option<&str>,
     include_tests: bool,
     exclude_patterns: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("Running CFG analysis on: {}", project_path.display());
+    if let Some(func) = function_filter {
+        println!("Filtering for function: {}", func);
+    }
     
     // Validate project path
     if !project_path.exists() {
@@ -26,8 +30,19 @@ pub fn run_cfg_analysis(
     }
     
     // Prepare user parameters
-    let user_params = plugin_manager.create_user_params();
-    // Don't add any parameters for now to test if the issue is with parameter passing
+    let mut user_params = plugin_manager.create_user_params();
+    
+    // Add function filter if specified
+    if let Some(func) = function_filter {
+        plugin_manager.add_string_param(&mut user_params, "function_filter", func);
+    }
+    
+    // Add output path for DOT export
+    if let Some(output) = output_path {
+        plugin_manager.add_string_param(&mut user_params, "output_path", output.to_string_lossy().as_ref());
+    }
+    
+    // Don't add other parameters for now to avoid ABI issues
     // plugin_manager.add_string_param(&mut user_params, "project_path", 
     //                                project_path.to_string_lossy().as_ref());
     // plugin_manager.add_bool_param(&mut user_params, "include_test_files", include_tests);
@@ -71,14 +86,17 @@ pub fn run_cfg_analysis(
 }
 
 fn format_cfg_output(result: &plugin_interface::BoxedPFResult, format: &OutputFormat) -> Result<String, Box<dyn std::error::Error>> {
-    // For now, we'll extract the result as a string
-    // In a real implementation, you'd need to properly deserialize the result
-    // based on the plugin's return type
-    
     match format {
         OutputFormat::Dot => {
-            // Assume the result contains DOT format data
-            Ok(format!("// CFG in DOT format\n// Result: {:?}", result))
+            // For DOT format, the plugin writes directly to output.dot file
+            // We need to read the actual file content instead of just showing metadata
+            match fs::read_to_string("output.dot") {
+                Ok(content) => Ok(content),
+                Err(_) => {
+                    // Fallback to showing result metadata if file reading fails
+                    Ok(format!("// CFG in DOT format\n// Result: {:?}", result))
+                }
+            }
         }
         OutputFormat::Json => {
             // Convert to JSON representation

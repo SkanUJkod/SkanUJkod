@@ -36,6 +36,10 @@ pub enum Commands {
         #[arg(short, long, default_value = "dot")]
         format: OutputFormat,
         
+        /// Specific function to analyze (optional, analyzes all if not specified)
+        #[arg(short = 'n', long)]
+        function: Option<String>,
+        
         /// Include test files in analysis
         #[arg(long, default_value = "false")]
         include_tests: bool,

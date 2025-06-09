@@ -26,12 +26,13 @@ fn main() {
 
     // Execute the appropriate command
     let result = match &cli.command {
-        Commands::Cfg { project_path, output, format, include_tests, exclude } => {
+        Commands::Cfg { project_path, output, format, function, include_tests, exclude } => {
             commands::cfg::run_cfg_analysis(
                 &mut plugin_manager,
                 project_path,
                 output.as_deref(),
                 format,
+                function.as_deref(),
                 *include_tests,
                 exclude,
             )

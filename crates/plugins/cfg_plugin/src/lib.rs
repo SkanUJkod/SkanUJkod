@@ -46,7 +46,7 @@ fn new_pf_vec() -> RVec<PFConnector> {
                     plugin_id: "cfg_plugin".into(),
                     pf_id: "parse_project".into()
                 }],
-                user_params: rvec![]
+                user_params: rvec!["function_filter".into()]
             },
             pf_id: QualPFID {
                 plugin_id: "cfg_plugin".into(),
@@ -61,7 +61,7 @@ fn new_pf_vec() -> RVec<PFConnector> {
                     plugin_id: "cfg_plugin".into(),
                     pf_id: "build_cfg".into()
                 }],
-                user_params: rvec!["output_path".into()]
+                user_params: rvec!["output_path".into(), "function_filter".into()]
             },
             pf_id: QualPFID {
                 plugin_id: "cfg_plugin".into(),
@@ -154,7 +154,14 @@ fn parse_project_pf(_pf_results: PFDependencies, user_params: &UserParameters) -
 }
 
 #[sabi_extern_fn]
-fn build_cfg_pf(pf_results: PFDependencies, _user_params: &UserParameters) -> BoxedPFResult<'static> {
+fn build_cfg_pf(pf_results: PFDependencies, user_params: &UserParameters) -> BoxedPFResult<'static> {
+    // Force output to stderr immediately
+    eprintln!("=== BUILD_CFG_PF CALLED ===");
+    std::io::stderr().flush().ok();
+    
+    eprintln!("build_cfg_pf called! Starting CFG building...");
+    std::io::stderr().flush().ok();
+    
     // Get parsed project from dependencies
     let parsed_project_id = QualPFID {
         plugin_id: "cfg_plugin".into(),
@@ -168,6 +175,15 @@ fn build_cfg_pf(pf_results: PFDependencies, _user_params: &UserParameters) -> Bo
         parsed_result.unchecked_downcast_as::<ParsedProjectResult>() 
     };
 
+    // Check if we should filter by function name
+    let function_filter = user_params.get(&RString::from("function_filter"))
+        .map(|f| unsafe { f.unchecked_downcast_as::<RString>() }.as_str());
+
+    println!("BUILD_CFG_PF: function_filter = {:?}", function_filter);
+    eprintln!("BUILD_CFG_PF: function_filter = {:?}", function_filter);
+    std::io::stdout().flush().ok();
+    std::io::stderr().flush().ok();
+
     let mut cfgs = Vec::new();
     
     for parsed_file in &parsed_project.files {
@@ -175,6 +191,20 @@ fn build_cfg_pf(pf_results: PFDependencies, _user_params: &UserParameters) -> Bo
         // Convert HashMap to Vec of (function_name, cfg) tuples to preserve function names
         let cfg_vec: Vec<(String, ControlFlowGraph)> = file_cfgs.into_iter().collect();
         for (func_name, cfg) in cfg_vec {
+            eprintln!("Processing function: {}", func_name);
+            
+            // Apply function filter if specified
+            if let Some(filter) = function_filter {
+                eprintln!("FILTER CHECK: '{}' == '{}' ? {}", func_name, filter, func_name == filter);
+                if func_name != filter {
+                    eprintln!("SKIPPING function {} (doesn't match filter {})", func_name, filter);
+                    continue; // Skip this function if it doesn't match the filter
+                }
+                eprintln!("INCLUDING function {} (matches filter {})", func_name, filter);
+            } else {
+                eprintln!("NO FILTER - including function: {}", func_name);
+            }
+            
             cfgs.push((
                 format!("{}::{}", parsed_file.path.to_string_lossy(), func_name),
                 vec![cfg]
@@ -182,11 +212,31 @@ fn build_cfg_pf(pf_results: PFDependencies, _user_params: &UserParameters) -> Bo
         }
     }
 
+    eprintln!("Total CFGs after filtering: {}", cfgs.len());
+    
+    // Debug: print all function names that were included
+    for (func_name, _) in &cfgs {
+        eprintln!("INCLUDED FUNCTION: {}", func_name);
+    }
+    
+    // Add a special marker to the result to indicate filtering happened
+    if function_filter.is_some() {
+        eprintln!("FILTERING WAS APPLIED - cfgs count: {}", cfgs.len());
+    } else {
+        eprintln!("NO FILTERING APPLIED - cfgs count: {}", cfgs.len());
+    }
+
     DynTrait::from_value(CFGResult { cfgs })
 }
 
 #[sabi_extern_fn]
 fn export_dot_pf(pf_results: PFDependencies, user_params: &UserParameters) -> BoxedPFResult<'static> {
+    eprintln!("=== EXPORT_DOT_PF CALLED ===");
+    std::io::stderr().flush().ok();
+    
+    eprintln!("export_dot_pf called!");
+    eprintln!("user_params size: {}", user_params.len());
+    
     // Get CFG result from dependencies
     let cfg_result_id = QualPFID {
         plugin_id: "cfg_plugin".into(),
@@ -200,14 +250,19 @@ fn export_dot_pf(pf_results: PFDependencies, user_params: &UserParameters) -> Bo
         cfg_result.unchecked_downcast_as::<CFGResult>() 
     };
 
-    let output_path = user_params.get("output_path")
+    println!("CFG data contains {} entries", cfg_data.cfgs.len());
+
+    let output_path = user_params.get(&RString::from("output_path"))
         .map(|p| unsafe { p.unchecked_downcast_as::<RString>() }.as_str())
         .unwrap_or("output.dot");
+
+    println!("Output path: {}", output_path);
 
     // Create DOT output for all CFGs
     let mut dot_content = String::from("digraph G {\n");
     
     for (file_and_func, cfgs) in &cfg_data.cfgs {
+        println!("Processing: {}", file_and_func);
         for (i, cfg) in cfgs.iter().enumerate() {
             // Extract function name from "filename::function_name" format
             let display_name = if file_and_func.contains("::") {
@@ -228,8 +283,14 @@ fn export_dot_pf(pf_results: PFDependencies, user_params: &UserParameters) -> Bo
     
     dot_content.push_str("}\n");
 
+    println!("Generated DOT content length: {}", dot_content.len());
+    println!("First 200 chars: {}", &dot_content[..dot_content.len().min(200)]);
+
     let success = match std::fs::write(output_path, dot_content) {
-        Ok(_) => true,
+        Ok(_) => {
+            println!("Successfully wrote to {}", output_path);
+            true
+        }
         Err(e) => {
             eprintln!("Error writing DOT file: {}", e);
             false

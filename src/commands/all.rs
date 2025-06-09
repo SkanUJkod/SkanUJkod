@@ -106,6 +106,7 @@ fn run_cfg_analysis(
         project_path,
         output_path.as_deref(),
         &crate::cli::OutputFormat::Dot,
+        None, // No function filter for "all" command
         include_tests,
         exclude_patterns,
     )
