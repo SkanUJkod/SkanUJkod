@@ -2,7 +2,7 @@ use abi_stable::DynTrait;
 use abi_stable::std_types::{RHashMap, RString, Tuple2};
 
 use abi_stable::library::lib_header_from_path;
-use plugin_interface::{BoxedPFResult, PFDependencies, Plugin_Ref, QualPFID, UserParameters};
+use plugin_interface::{BoxedPFResult, PFDependencies, PluginRef, QualPFID, UserParameters};
 use std::collections::HashMap;
 
 fn main() {
@@ -30,7 +30,7 @@ fn main() {
             assert!(path.is_file());
             dbg!(&path);
             let header = lib_header_from_path(&path).unwrap();
-            let lib = header.init_root_module::<Plugin_Ref>().unwrap();
+            let lib = header.init_root_module::<PluginRef>().unwrap();
             lib.funcs()()
         })
         .collect::<Vec<_>>();
