@@ -93,6 +93,7 @@ impl Entity {
     }
 }
 
+#[derive(Debug)]
 pub struct Scope {
     pub outer: Option<ScopeKey>,
     pub entities: Map<String, EntityKey>,
