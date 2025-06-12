@@ -1,6 +1,37 @@
 [package]
 name = "skan-uj-kod"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+
+[workspace]
+members = [ 
+    "crates/go-parser",
+    "crates/go-types", 
+    "crates/kernel", 
+    "crates/plugin_interface", 
+    "crates/plugins/plugin1",
+    "crates/plugins/plugin2",
+    "crates/plugins/cfg_plugin",
+    "crates/plugins/branch_cov_plugin",
+    "crates/plugins/cyclomatic_complexity_plugin",
+    "crates/plugins/statement_cov_plugin"
+]
 
 [dependencies]
+abi_stable = { git = "https://github.com/rodrimati1992/abi_stable_crates.git" }
+plugin_interface = { path = "crates/plugin_interface" }
+clap = { version = "4.0", features = ["derive"] }
+serde_json = "1.0"
+colored = "2.0"
+indicatif = "0.17"
+
+[dev-dependencies]
+tempfile = "3.0"
+
+[[bin]]
+name = "skan-uj-kod"
+path = "src/main.rs"
+
+[[bin]]
+name = "opaque_example"
+path = "crates/kernel/src/main.rs"
