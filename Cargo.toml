@@ -9,10 +9,17 @@ members = [
     "crates/go-types", 
     "crates/kernel", 
     "crates/plugin_interface", 
-    "crates/plugins/parse_file/iface",
-    "crates/plugins/parse_file/libimpl",
+    # "crates/plugins/parse_file/iface",
+    # "crates/plugins/parse_file/libimpl",
+    "crates/plugins/parse_dir/iface",
+    "crates/plugins/parse_dir/libimpl",
     "crates/plugins/count_funcs/iface",
     "crates/plugins/count_funcs/libimpl"
+]
+exclude = [
+    "crates/plugins/parse_file/iface",
+    "crates/plugins/parse_file/libimpl",
+
 ]
 
 [dependencies.abi_stable]

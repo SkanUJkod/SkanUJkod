@@ -514,6 +514,7 @@ impl Node for File {
     }
 }
 
+#[derive(Debug)]
 pub struct Package {
     name: String,
     scope: ScopeKey,
@@ -537,6 +538,10 @@ impl Package {
 
     pub fn files_mut(&mut self) -> &mut HashMap<String, Box<File>> {
         &mut self.files
+    }
+
+    pub fn files(&self) -> &HashMap<String, Box<File>> {
+        &self.files
     }
 }
 

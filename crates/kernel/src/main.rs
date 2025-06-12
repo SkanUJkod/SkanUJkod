@@ -16,7 +16,7 @@ fn main() {
 
     let user_params = {
         let mut user_params: UserParameters = RHashMap::new();
-        user_params.insert("file_path".into(), boxed_source_path);
+        user_params.insert("project_path".into(), boxed_source_path);
         user_params
     };
 

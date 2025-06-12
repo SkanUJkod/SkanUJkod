@@ -1,19 +1,22 @@
-pub type CountFuncsResult = u32;
+use std::collections::HashMap;
+
+pub type CountFuncsResult = usize;
 
 pub struct CountFuncsDeps<'a> {
-    pub parse_file_result: &'a parse_file_lib::ParseFileResult,
+    pub parse_dir_result: &'a parse_dir_lib::ParseDirResult,
 }
 
 pub struct CountFuncsParams {}
 
 pub fn count_funcs(deps: CountFuncsDeps, _params: CountFuncsParams) -> CountFuncsResult {
-    count_funcs_priv(&deps.parse_file_result.file)
+    count_funcs_priv(&deps.parse_dir_result.result)
 }
 
-fn count_funcs_priv(file: &go_parser::ast::File) -> u32 {
-    file.decls
+fn count_funcs_priv(packages: &HashMap<String, go_parser::ast::Package>) -> CountFuncsResult {
+    packages
         .iter()
+        .flat_map(|(_name, package)| package.files())
+        .flat_map(|(_filename, boxed_file)| &boxed_file.decls)
         .filter(|decl| matches!(decl, go_parser::ast::Decl::Func(_)))
-        .map(|_| 1)
-        .sum()
+        .count()
 }

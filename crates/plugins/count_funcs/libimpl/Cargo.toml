@@ -20,5 +20,5 @@ features = ["impls"]
 [dependencies.go-parser]
 path = "../../../go-parser"
 
-[dependencies.parse_file_lib]
-path = "../../parse_file/libimpl"
+[dependencies.parse_dir_lib]
+path = "../../parse_dir/libimpl"
