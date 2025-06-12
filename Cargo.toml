@@ -1,25 +1,19 @@
 [package]
-<<<<<<< HEAD
-name = "skan-uj-kod"
+
+name = "SkanUJkod"
+
 version = "0.1.0"
 edition = "2024"
 
-<<<<<<< HEAD
+
 [workspace]
 members = [
     "crates/go-parser",
     "crates/go-types"
 ]
-=======
-[dependencies]
-go-parser = "0.1.5"
->>>>>>> bfe4b88 (grammar)
-=======
-name = "SkanUJkod"
-version = "0.1.0"
-edition = "2024"
+
+
 
 [dependencies]
 go-parser = "0.1.5"
 regex = "1.11.1"
->>>>>>> a7c227c (fun_counter refactor)
