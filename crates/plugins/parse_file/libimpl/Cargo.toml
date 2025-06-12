@@ -6,7 +6,7 @@ edition = "2024"
 
 [lib]
 name = "parse_file_lib"
-crate-type = ["lib", "cdylib"]
+crate-type = ["lib"]
 
 [dependencies.abi_stable]
 # git = "https://github.com/kidq330/abi_stable.git"
