@@ -1,6 +1,0 @@
-[package]
-name = "skan-uj-kod"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
