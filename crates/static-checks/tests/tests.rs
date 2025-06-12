@@ -7,15 +7,15 @@ use regex::Regex;
 use SkanUJkod::parser::parse_file;
 
 
-fn main() {
+// fn main() {
 
 
-    test_fun_counter();
-    test_type_counter();
-    test_fun_name_length();
-    test_struct_name_length();
-    test_variable_name_length();
-}
+//     test_fun_counter();
+//     test_type_counter();
+//     test_fun_name_length();
+//     test_struct_name_length();
+//     test_variable_name_length();
+// }
 
 #[test]
 fn test_fun_counter() {

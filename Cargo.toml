@@ -1,19 +1,27 @@
 [package]
-
-name = "SkanUJkod"
-
+name = "skan-uj-kod"
 version = "0.1.0"
 edition = "2024"
 
-
 [workspace]
-members = [
+members = [ 
     "crates/go-parser",
-    "crates/go-types"
+    "crates/go-types", 
+    "crates/kernel", 
+    "crates/plugin_interface", 
+    "crates/plugins/plugin1",
+    "crates/plugins/plugin2"
 ]
 
+[dependencies.abi_stable]
+# git = "https://github.com/kidq330/abi_stable.git"
+# branch = "waive_executable_identity"
+git = "https://github.com/rodrimati1992/abi_stable_crates.git"
 
 
-[dependencies]
-go-parser = "0.1.5"
-regex = "1.11.1"
+[dependencies.plugin_interface]
+path = "crates/plugin_interface"
+
+[[bin]]
+name = "opaque_example"
+path = "crates/kernel/src/main.rs"
