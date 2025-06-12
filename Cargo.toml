@@ -10,7 +10,8 @@ members = [
     "crates/kernel", 
     "crates/plugin_interface", 
     "crates/plugins/plugin1",
-    "crates/plugins/plugin2"
+    "crates/plugins/plugin2",
+    "crates/plugins/git_metrics"
 ]
 
 [dependencies.abi_stable]
@@ -21,6 +22,9 @@ git = "https://github.com/rodrimati1992/abi_stable_crates.git"
 
 [dependencies.plugin_interface]
 path = "crates/plugin_interface"
+
+[dependencies.git_metrics]
+path = "crates/plugins/git_metrics"
 
 [[bin]]
 name = "opaque_example"

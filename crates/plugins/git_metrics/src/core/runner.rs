@@ -1,10 +1,10 @@
-use crate::git_metrics::core::repo::RepoWrapper;
-use crate::git_metrics::metrics::all_metrics;
-use crate::git_metrics::types::metrics_trait::Metric;
-use crate::git_metrics::types::result_type::MetricResultType;
-use crate::git_metrics::utils::printer::print_results;
-use gix::Repository;
+use crate::core::repo::RepoWrapper;
+use crate::metrics::all_metrics;
+use crate::types::metrics_trait::Metric;
+use crate::types::result_type::MetricResultType;
+use crate::utils::printer::print_results;
 use gix::revision::Walk;
+use gix::Repository;
 use std::collections::HashMap;
 
 pub fn run_selected_metrics(

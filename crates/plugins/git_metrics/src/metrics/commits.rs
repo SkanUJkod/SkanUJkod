@@ -1,4 +1,4 @@
-use crate::git_metrics::{
+use crate::{
     metrics::Metric, types::result_type::MetricResultType, utils::parsing::parse_param_i64,
 };
 use chrono::DateTime;

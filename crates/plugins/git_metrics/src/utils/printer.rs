@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::git_metrics::types::{metrics_trait::Metric, result_type::MetricResultType};
+use crate::types::{metrics_trait::Metric, result_type::MetricResultType};
 
 pub fn print_results(metrics: &Vec<&dyn Metric>, all_results: &HashMap<&str, MetricResultType>) {
     for metric in metrics {

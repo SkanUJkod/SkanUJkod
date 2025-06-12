@@ -6,7 +6,7 @@ use commits::{
 };
 use ownership::LinesAddedRemoved;
 
-use crate::git_metrics::types::metrics_trait::Metric;
+use crate::types::metrics_trait::Metric;
 
 pub fn all_metrics() -> Vec<Box<dyn Metric>> {
     vec![

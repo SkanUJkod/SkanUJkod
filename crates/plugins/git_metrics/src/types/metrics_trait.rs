@@ -1,7 +1,7 @@
 use gix::Commit;
 use std::collections::HashMap;
 
-use crate::git_metrics::types::result_type::MetricResultType;
+use crate::types::result_type::MetricResultType;
 
 pub trait Metric {
     fn name(&self) -> &'static str;
