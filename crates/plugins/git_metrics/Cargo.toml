@@ -1,0 +1,13 @@
+[package]
+name = "git_metrics"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "git_metrics"
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+gix = "0.71.0"
+chrono="0.4.40"
+imara-diff = "0.1.8"
