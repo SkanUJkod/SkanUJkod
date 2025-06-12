@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use std::collections::{HashMap, HashSet};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum MetricResultType {
     CountMap(HashMap<String, u32>),
     TimeRange(HashMap<String, (DateTime<Utc>, DateTime<Utc>)>),

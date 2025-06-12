@@ -2,8 +2,8 @@ use crate::{
     metrics::Metric, types::result_type::MetricResultType, utils::parsing::parse_param_string,
 };
 use gix::Commit;
-use imara_diff::intern::InternedInput;
 use imara_diff::Algorithm::Histogram;
+use imara_diff::intern::InternedInput;
 use std::{collections::HashMap, ops::Range, str};
 
 pub struct LinesAddedRemoved;

@@ -3,17 +3,18 @@ use crate::metrics::all_metrics;
 use crate::types::metrics_trait::Metric;
 use crate::types::result_type::MetricResultType;
 use crate::utils::printer::print_results;
-use gix::revision::Walk;
 use gix::Repository;
+use gix::revision::Walk;
 use std::collections::HashMap;
 
 pub fn run_selected_metrics(
     repo_wrapper: &RepoWrapper,
     selected: &[&str],
     all_params: &HashMap<String, HashMap<String, String>>,
-) {
+) -> HashMap<String, MetricResultType> {
     let metrics = all_metrics();
     let selected_with_deps = resolve_metric_dependencies(&metrics, selected);
+
     let selected_metrics_with_deps: Vec<&dyn Metric> = metrics
         .iter()
         .filter(|metric| selected_with_deps.contains(&metric.name()))
@@ -33,12 +34,14 @@ pub fn run_selected_metrics(
         .collect();
 
     print_results(&selected_metrics_without_deps, &results);
+
+    results
 }
 
-fn init_empty_results<'a>(metrics: &'a Vec<&dyn Metric>) -> HashMap<&'a str, MetricResultType> {
+fn init_empty_results<'a>(metrics: &'a Vec<&dyn Metric>) -> HashMap<String, MetricResultType> {
     metrics
         .iter()
-        .map(|metric| (metric.name(), metric.default_result()))
+        .map(|metric| (metric.name().to_string(), metric.default_result()))
         .collect()
 }
 
@@ -75,7 +78,7 @@ fn compute_from_commits(
     repo: &Repository,
     selected_metrics_with_deps: &[&dyn Metric],
     all_params: &HashMap<String, HashMap<String, String>>,
-    results: &mut HashMap<&str, MetricResultType>,
+    results: &mut HashMap<String, MetricResultType>,
 ) {
     let mut all_commits_info: Vec<_> = get_all_commits(repo).collect();
     all_commits_info.reverse();
@@ -103,12 +106,12 @@ fn compute_from_commits(
 
 fn finalize_metrics(
     selected_metrics_with_deps: &[&dyn Metric],
-    results: &mut HashMap<&str, MetricResultType>,
+    results: &mut HashMap<String, MetricResultType>,
 ) {
     for metric in selected_metrics_with_deps {
         if let Some(dependency_name) = metric.dependency() {
             if let Some(dependency_result) = results.get(dependency_name).cloned() {
-                results.insert(metric.name(), dependency_result);
+                results.insert(metric.name().to_string(), dependency_result);
             }
         }
         if let Some(result) = results.get_mut(metric.name()) {
