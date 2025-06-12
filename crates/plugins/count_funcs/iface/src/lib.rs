@@ -1,9 +1,10 @@
 use abi_stable::{rvec, std_types::RVec};
+use count_funcs_lib::{CountFuncsDeps, CountFuncsParams};
+use parse_file_lib::ParseFileResult;
 use plugin_interface::{
     BoxedPFResult, PFConnector, PFDependencies, PFType, Plugin, Plugin_Ref, PluginFunction,
     QualPFID, UserParameters,
 };
-use plugin1::ParseResult;
 
 use abi_stable::{DynTrait, export_root_module, prefix_type::PrefixTypeTrait, sabi_extern_fn};
 
@@ -18,13 +19,13 @@ fn new_pf_vec2() -> RVec<PFConnector> {
         pf: PluginFunction(new_pf2),
         pf_type: PFType {
             pf_dependencies: rvec![QualPFID {
-                plugin_id: "plugin1".into(),
+                plugin_id: "parse_file_plugin".into(),
                 pf_id: "parse_file".into()
             }],
             user_params: rvec![]
         },
         pf_id: QualPFID {
-            plugin_id: "plugin2".into(),
+            plugin_id: "count_funcs_plugin".into(),
             pf_id: "count_funcs".into()
         }
     }]
@@ -39,21 +40,16 @@ fn new_pf2(pf_results: PFDependencies, user_params: &UserParameters) -> BoxedPFR
 
     let boxed_parse_result = pf_results
         .get(&QualPFID {
-            plugin_id: "plugin1".into(),
+            plugin_id: "parse_file_plugin".into(),
             pf_id: "parse_file".into(),
         })
         .unwrap();
-    let parse_result = unsafe { boxed_parse_result.unchecked_downcast_as::<ParseResult>() };
-    let count_res = count_funcs(&parse_result.file);
+    let parse_file_result =
+        unsafe { boxed_parse_result.unchecked_downcast_as::<ParseFileResult>() };
+
+    let count_res =
+        count_funcs_lib::count_funcs(CountFuncsDeps { parse_file_result }, CountFuncsParams {});
     dbg!(count_res);
 
     DynTrait::from_value(count_res)
-}
-
-fn count_funcs(file: &go_parser::ast::File) -> u32 {
-    file.decls
-        .iter()
-        .filter(|decl| matches!(decl, go_parser::ast::Decl::Func(_)))
-        .map(|_| 1)
-        .sum()
 }

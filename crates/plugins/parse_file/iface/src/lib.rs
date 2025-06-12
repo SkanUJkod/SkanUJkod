@@ -1,13 +1,13 @@
-use abi_stable::{rvec, std_types::RVec};
+use abi_stable::{
+    DynTrait, export_root_module, prefix_type::PrefixTypeTrait, rvec, sabi_extern_fn,
+    std_types::RString, std_types::RVec,
+};
 use plugin_interface::{
     BoxedPFResult, BoxedUserParam, PFConnector, PFDependencies, PFType, Plugin, Plugin_Ref,
     PluginFunction, QualPFID, UserParameters,
 };
-use std::fmt::{self, Display};
 
-use abi_stable::{
-    DynTrait, export_root_module, prefix_type::PrefixTypeTrait, sabi_extern_fn, std_types::RString,
-};
+use parse_file_lib::{ParseFileDep, ParseFileParams};
 
 #[export_root_module]
 pub fn get_library() -> Plugin_Ref {
@@ -23,22 +23,10 @@ fn new_pf_vec() -> RVec<PFConnector> {
             user_params: rvec!["file_path".into()]
         },
         pf_id: QualPFID {
-            plugin_id: "plugin1".into(),
+            plugin_id: "parse_file_plugin".into(),
             pf_id: "parse_file".into()
         }
     }]
-}
-
-#[derive(Debug)]
-pub struct ParseResult {
-    pub file: go_parser::ast::File,
-    pub ast_objects: go_parser::AstObjects,
-}
-
-impl Display for ParseResult {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&0, f)
-    }
 }
 
 /// Appends a string to the erased `StringBuilder`.
@@ -51,16 +39,13 @@ fn parse_file(pf_results: PFDependencies, user_params: &UserParameters) -> Boxed
 
     let boxed_filepath: &BoxedUserParam = user_params.get("file_path").unwrap();
     let filepath = unsafe { boxed_filepath.unchecked_downcast_as::<RString>() };
-    let source = std::fs::read_to_string(filepath.as_str()).expect("Failed to open go source file");
 
-    let mut fs = go_parser::FileSet::new();
-    let mut o = go_parser::AstObjects::new();
-    let el = &mut go_parser::ErrorList::new();
+    let result = parse_file_lib::parse_file(
+        ParseFileDep {},
+        &ParseFileParams {
+            filepath: filepath.clone(),
+        },
+    );
 
-    let (_parser, maybe_file) = go_parser::parse_file(&mut o, &mut fs, el, filepath, &source, true);
-
-    DynTrait::from_value(ParseResult {
-        file: maybe_file.expect("Something went wrong when trying to parse the source"),
-        ast_objects: o,
-    })
+    DynTrait::from_value(result)
 }
