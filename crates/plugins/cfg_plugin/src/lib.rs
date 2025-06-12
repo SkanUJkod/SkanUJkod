@@ -4,6 +4,7 @@ use plugin_interface::{
     PluginFunction, QualPFID, UserParameters,
 };
 use std::fmt::{self, Display};
+use std::io::Write;
 
 use abi_stable::{
     DynTrait, export_root_module, prefix_type::PrefixTypeTrait, sabi_extern_fn, std_types::RString,
