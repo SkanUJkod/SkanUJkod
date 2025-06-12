@@ -44,11 +44,11 @@ This tells us that a language's specification is decoupled from a compiler imple
 
 I used `volatile` for a reason. It's not just unstable in the sense that you need the same version of the compiler to produce compatible binaries. Some layout optimizations are non-deterministic, and there's even an option to explicitly shuffle layouts for compiler testing. Two separate compiler runs can compile the same library source and produce different binaries.
 
-This makes sense from a language developer standpoint, and explains why most modern languages capitalize on static linking almost everywhere. A stable ABI is only something a mature and adopted language can allow itself the luxury of. For new, shiny languages, even fundamental aspects like struct layouts can fluctuate, and sticking to a backwards-compatible ABI will make that more difficult in more ways than one.
+This makes sense from a language developer standpoint, and explains why most modern languages capitalize on static linking almost everywhere[^1]. A stable ABI is only something a mature and adopted language can allow itself the luxury of. For new, shiny languages, even fundamental aspects like struct layouts can fluctuate, and sticking to a backwards-compatible ABI will make that more difficult in more ways than one.
 
 #### C FFI
 
-The standard way to overcome Rust's own ABI being unstable is to use the C "ABI"[^1] and make FFI calls to C dynlibs compiled from native Rust crates. This has many drawbacks and is particularly frustrating for Rust-to-Rust calls:
+The standard way to overcome Rust's own ABI being unstable is to use the C "ABI"[^2] and make FFI calls to C dynlibs compiled from native Rust crates. This has many drawbacks and is particularly frustrating for Rust-to-Rust calls:
 
 #### Type layouts
 
@@ -64,15 +64,15 @@ From [a reddit thread on `repr(C)`](https://www.reddit.com/r/rust/comments/qond4
 
 It follows that any pinnable representation would work to provide a dependable ABI, it's just that the C ABI is the only one available.
 
-TODO: When are `repr(C)` types NOT FFI-safe?
+Also, while a single `repr(C)` does not guarantee FFI safety, it _is_ guaranteed when all types constituting a `struct` etc. are declared with `repr(C)`. Fortunately, there are libraries that provide constructs to do just that, at least validating that a type is recursively `repr(C)`.
 
 #### Type erasure
 
 This is again neatly [discussed by Manero](https://nullderef.com/blog/plugin-dynload/#generics-in-plugins), and was already touched upon in the [model](./model.md) document. Plugins may be interdependent, to which the core is oblivious. In C you would model these data dependencies with a `void*` type. Guided by Manero's decision process on choosing the best dependency to wrap manual linking, we choose the `abi_stable` crate, which also seems to be the de-facto standard for higher level FFI, or Rust-to-Rust dynamic linking.
 
-Modeling `void*`-like types in `abi_stable` is not straightforward. There are two types that can be utilised for it.
+Modeling `void*`-like types in `abi_stable` is not straightforward. There are two types that can be utilised for it. Manero describes both in his [post on `abi_stable`](https://nullderef.com/blog/plugin-abi-stable/#handling-state), and more information can be found in the crate docs ([DynTrait](https://docs.rs/abi_stable/latest/abi_stable/struct.DynTrait.html), [sabi_trait](https://docs.rs/abi_stable/latest/abi_stable/sabi_trait/index.html)).
 
-TODO: describe shortly
+While we've settled on using `DynTrait` for now, it seems like for our use-case it doesn't matter anyway since the only traits possibly utilized by the core are `Debug` and `Display` to dump final analysis results. Its main concern is passing data between the plugin functions. Dependent plugins would usually downcast the opaque object into its concrete type anyway.
 
 The problem with opaque types as they're implemented now is that downcasting is only expected to be done in the same library that produced the opaque type. This directly differs from Manero's requirements, where plugins were not interdependent. `abi_stable` is explicit about this both in its [docs](https://docs.rs/abi_stable/latest/abi_stable/struct.DynTrait.html#impl-DynTrait%3C'borr,+P,+I,+EV%3E-3) but even the error message it produces when one attempts to downcast in a different library.
 
@@ -85,7 +85,9 @@ I've raised a question about this in the `abi_stable_crates` repo by reviving a 
 
 #### Cargo "cdylib" bundling
 
-Another caveat of using `abi_stable` is that it requires `crate-type = "cdylib"` to build the crates as C FFI compatible libraries. Though it's hard to verify from the official docs, it looks like this option produces a binary file that statically links ALL of its cargo dependencies, except perhaps ones like the standard library. For our model this introduces unnecessary redundancies. When `plugin2` depends on `plugin1`, and our pipeline wants to load both, `plugin1` will be loaded two times. This is an unfortunate trade-off, and it seems that only active advancements to the Rust ecosystem in dynamic linking can alleviate it. Which brings us to the final point.
+Another caveat of using `abi_stable` is that it requires `crate-type = "cdylib"` to build the crates as C FFI compatible libraries. Though it's hard to verify from the [official docs](https://rust-lang.github.io/rfcs/1510-cdylib.html#detailed-design), it looks like this option produces a binary file that statically links ALL of its cargo dependencies, except perhaps ones like the standard library.
+
+For our model this introduces unnecessary redundancies. When `plugin2` depends on `plugin1`, and our pipeline wants to load both, `plugin1` will be loaded two times. This is an unfortunate trade-off, and it seems that only active advancements to the Rust ecosystem in dynamic linking can alleviate it. Which brings us to the final point.
 
 #### The future
 
@@ -97,4 +99,5 @@ Of course in the process of researching dynamic linking possibilities for Rust I
 
 I also think a differential approach in analyzing the current global software development ecosystem will be beneficial, like a talk on `Implementing a plugin system in x, where x is your favorite programming language`.
 
-[^1]: As a side note, most languages actually implement an "escape hatch" C FFI, even when it vastly violates their invariants. Haskell allows C FFI calls for low level operations to allow high-performance implementations of things like array-based data structures, even though it's supposed to be a pure language. Most interop is provided via the C FFI for multi-language project, as discussed in [this brilliant talk](https://www.youtube.com/watch?v=3yVc5t-g-VU) on high-level language interoperability (which we'll circle back to when considering future refinements). Rust isn't different in this sense by providing the `unsafe` keyword as a more general escape hatch from its ownership model, which is also required when using [`extern` functions](https://doc.rust-lang.org/book/ch20-01-unsafe-rust.html#using-extern-functions-to-call-external-code) for FFI.
+[^1]: Swift is a notable exception and there's a [great post](https://faultlore.com/blah/swift-abi/) by Aria Desires comparing it to Rust.
+[^2]: As a side note, most languages actually implement an "escape hatch" C FFI, even when it vastly violates their invariants. Haskell allows C FFI calls for low level operations to allow high-performance implementations of things like array-based data structures, even though it's supposed to be a pure language. Most interop is provided via the C FFI for multi-language project, as discussed in [this brilliant talk](https://www.youtube.com/watch?v=3yVc5t-g-VU) on high-level language interoperability (which we'll circle back to when considering future refinements). Rust isn't different in this sense by providing the `unsafe` keyword as a more general escape hatch from its ownership model, which is also required when using [`extern` functions](https://doc.rust-lang.org/book/ch20-01-unsafe-rust.html#using-extern-functions-to-call-external-code) for FFI.
