@@ -16,7 +16,9 @@ members = [
     "crates/plugins/count_funcs/iface",
     "crates/plugins/count_funcs/libimpl",
     "crates/plugins/cfg/iface",
-    "crates/plugins/cfg/libimpl"
+    "crates/plugins/cfg/libimpl",
+    "crates/plugins/git_metrics/iface",
+    "crates/plugins/git_metrics/libimpl"
 ]
 exclude = [
     "crates/plugins/parse_file/iface",

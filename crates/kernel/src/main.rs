@@ -83,6 +83,7 @@ fn main() {
         results.insert(pfc.pf_id.clone(), result);
     }
 
+    dbg!(results);
     println!("success");
 }
 
