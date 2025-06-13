@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
+members = [
+    "parser_lib",
+]
+
+[workspace]
 members = [ 
     "crates/go-parser",
     "crates/go-types", 
@@ -25,3 +30,6 @@ path = "crates/plugin_interface"
 [[bin]]
 name = "opaque_example"
 path = "crates/kernel/src/main.rs"
+
+[dependencies]
+parser_lib = { path = "parser_lib" }
