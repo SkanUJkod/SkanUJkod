@@ -9,7 +9,7 @@ pub struct CountFuncsDeps<'a> {
 pub struct CountFuncsParams {}
 
 pub fn count_funcs(deps: CountFuncsDeps, _params: CountFuncsParams) -> CountFuncsResult {
-    count_funcs_priv(&deps.parse_dir_result.result)
+    count_funcs_priv(&deps.parse_dir_result.packages)
 }
 
 fn count_funcs_priv(packages: &HashMap<String, go_parser::ast::Package>) -> CountFuncsResult {
