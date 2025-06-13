@@ -1,108 +1,247 @@
-use std::path::Path;
-use std::process::Command;
-use std::io;
-use std::fmt;
+use std::collections::HashMap;
+use std::error::Error;
+use std::fs;
+use walkdir::WalkDir;
 
-#[derive(Debug)]
-pub enum PmdError {
-    IoError(io::Error),
-    PmdFailed(String),
+/// Contains information about the location of a token.
+struct TokenInfo {
+    file_path: String,
+    line_number: usize,
 }
 
-impl fmt::Display for PmdError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            PmdError::IoError(e) => write!(f, "IO error: {}", e),
-            PmdError::PmdFailed(msg) => write!(f, "PMD failed: {}", msg),
+/// An improved tokenizer for Go that correctly handles strings and comments.
+/// It processes the code line by line, maintaining state to correctly parse
+/// multi-line comments and string literals.
+fn tokenize_go(code: &str) -> Vec<(String, usize)> {
+    let mut tokens = Vec::new();
+    let mut current_line = 1;
+    let mut in_multiline_comment = false;
+
+    for line in code.lines() {
+        let line_trimmed = line.trim();
+
+        if line_trimmed.starts_with("/*") {
+            in_multiline_comment = true;
         }
-    }
-}
 
-impl std::error::Error for PmdError {}
+        if in_multiline_comment {
+            if line_trimmed.contains("*/") {
+                in_multiline_comment = false;
+            }
+            current_line += 1;
+            continue;
+        }
 
-impl From<io::Error> for PmdError {
-    fn from(err: io::Error) -> Self {
-        PmdError::IoError(err)
-    }
-}
+        if line_trimmed.starts_with("//") || line_trimmed.is_empty() {
+            current_line += 1;
+            continue;
+        }
 
-#[derive(Debug)]
-pub struct PmdRunner {
-    pub pmd_path: String,
-}
+        let mut current_token = String::new();
+        let mut in_string = false;
+        let mut chars = line.chars().peekable();
 
-impl PmdRunner {
-    pub fn analyze_duplicates<P: AsRef<Path>>(
-        &self,
-        path: P,
-        min_tokens: usize,
-        is_directory: bool,
-    ) -> Result<String, PmdError> {
-        let path_ref = path.as_ref();
-        let path_str = path_ref.to_str().ok_or_else(|| {
-            PmdError::PmdFailed("Invalid path: not valid UTF-8".to_string())
-        })?;
-
-        if !is_directory {
-            if let Some(ext) = path_ref.extension().and_then(|e| e.to_str()) {
-                if ext.to_lowercase() != "go" {
-                    eprintln!("Skipping non-Go file (client-side filter): {}", path_str);
-                    return Ok(String::new());
+        while let Some(c) = chars.next() {
+            if in_string {
+                current_token.push(c);
+                if c == '"' {
+                    tokens.push((current_token.clone(), current_line));
+                    current_token.clear();
+                    in_string = false;
                 }
-            } else {
-                eprintln!("Skipping file without extension (client-side filter): {}", path_str);
-                return Ok(String::new());
+                continue;
+            }
+
+            match c {
+                // Start of a single-line comment, ignore the rest of the line
+                '/' if chars.peek() == Some(&'/') => {
+                    if !current_token.is_empty() {
+                        tokens.push((current_token.clone(), current_line));
+                        current_token.clear();
+                    }
+                    break; // Move to the next line
+                }
+                '"' => {
+                    if !current_token.is_empty() {
+                        tokens.push((current_token.clone(), current_line));
+                        current_token.clear();
+                    }
+                    in_string = true;
+                    current_token.push(c);
+                }
+                ',' | ';' | '(' | ')' | '{' | '}' | '[' | ']' | ':' | '=' | '.' | '@' => {
+                    if !current_token.is_empty() {
+                        tokens.push((current_token.clone(), current_line));
+                        current_token.clear();
+                    }
+                    tokens.push((c.to_string(), current_line));
+                }
+                ' ' | '\t' | '\r' => {
+                    if !current_token.is_empty() {
+                        tokens.push((current_token.clone(), current_line));
+                        current_token.clear();
+                    }
+                }
+                _ => {
+                    current_token.push(c);
+                }
             }
         }
 
-        let mut cmd_args = vec![
-            "cpd".to_string(),
-            "--minimum-tokens".to_string(),
-            min_tokens.to_string(),
-            "--language".to_string(),
-            "go".to_string(),
-            "--format".to_string(),
-            "text".to_string(),
-        ];
-
-        if is_directory {
-            cmd_args.push("--dir".to_string());
-            cmd_args.push(path_str.to_string());
-        } else {
-            cmd_args.push(path_str.to_string());
-        }
-        
-        let output = Command::new(&self.pmd_path)
-            .args(&cmd_args)
-            .output()?;
-
-        let stdout_str = String::from_utf8_lossy(&output.stdout).to_string();
-        let stderr_str = String::from_utf8_lossy(&output.stderr).to_string();
-
-        let cpd_found_duplicates_exit_code = Some(4); 
-        let is_cpd_success_with_findings = output.status.code() == cpd_found_duplicates_exit_code && !stdout_str.is_empty();
-
-        if !output.status.success() && !is_cpd_success_with_findings {
-            let mut error_message = format!(
-                "PMD command execution failed. Status: {}.\nPMD Executable: '{}'\nArguments: {:?}\n",
-                output.status, self.pmd_path, cmd_args
-            );
-            if !stdout_str.is_empty() {
-                error_message.push_str(&format!("Stdout (on error):\n{}\n", stdout_str));
-            }
-            if !stderr_str.is_empty() {
-                error_message.push_str(&format!("Stderr (on error):\n{}\n", stderr_str));
-            }
-            return Err(PmdError::PmdFailed(error_message.trim().to_string()));
+        if !current_token.is_empty() {
+            tokens.push((current_token, current_line));
         }
 
-        if !stderr_str.is_empty() {
-             eprintln!(
-                "PMD Info/Warnings (stderr for '{}', exit_code: {:?}):\n{}",
-                path_str, output.status.code(), stderr_str.trim()
-            );
-        }
-        
-        Ok(stdout_str)
+        current_line += 1;
     }
+
+    tokens
+}
+
+
+/// Analyzes Go source files for code duplication using the Rabin-Karp algorithm.
+pub fn analyze_duplicates(path: &str, min_tokens: usize, is_directory: bool) -> Result<String, Box<dyn Error>> {
+    let mut output = String::new();
+
+    let files = if is_directory {
+        WalkDir::new(path)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("go"))
+            .map(|e| e.path().to_str().unwrap().to_string())
+            .collect::<Vec<_>>()
+    } else {
+        if path.ends_with(".go") {
+            vec![path.to_string()]
+        } else {
+            eprintln!("Skipping non-Go file: {}", path);
+            return Ok(String::new());
+        }
+    };
+
+    if files.is_empty() {
+        eprintln!("No Go (.go) files found.");
+        return Ok(output);
+    }
+
+    let mut token_sequence = Vec::new();
+    let mut token_info = Vec::new();
+    let mut token_to_id = HashMap::new();
+    let mut id_to_token = HashMap::new();
+    let mut next_id: u64 = 0;
+
+    for file_path in &files {
+        let code = fs::read_to_string(file_path)?;
+        let tokens = tokenize_go(&code);
+        for (token, line) in tokens {
+            let id = *token_to_id.entry(token.clone()).or_insert_with(|| {
+                let id = next_id;
+                id_to_token.insert(id, token);
+                next_id += 1;
+                id
+            });
+            token_sequence.push(id);
+            token_info.push(TokenInfo {
+                file_path: file_path.clone(),
+                line_number: line,
+            });
+        }
+    }
+
+    if token_sequence.len() < min_tokens {
+        eprintln!(
+            "Not enough tokens to analyze ({} available, {} required)",
+            token_sequence.len(),
+            min_tokens
+        );
+        return Ok(output);
+    }
+
+    let n = min_tokens;
+    let base: u64 = 31;
+    let modulus: u64 = (1u64 << 61) - 1;
+    
+    // --- FIX HERE ---
+    // Use u128 for intermediate calculations to prevent overflow.
+    let modulus_u128 = modulus as u128;
+
+    let mut h: u64 = 1;
+    for _ in 0..n.saturating_sub(1) {
+        // FIXED LINE
+        h = ((h as u128 * base as u128) % modulus_u128) as u64;
+    }
+    
+    let mut hash_map: HashMap<u64, Vec<usize>> = HashMap::new();
+    let mut current_hash: u64 = 0;
+
+    // 1. Calculate the hash for the first window.
+    if n <= token_sequence.len() {
+        for i in 0..n {
+            // FIXED LOGIC
+            let term = token_sequence[i] as u128;
+            current_hash = (((current_hash as u128 * base as u128) % modulus_u128 + term) % modulus_u128) as u64;
+        }
+        hash_map.entry(current_hash).or_default().push(0);
+    }
+
+    // 2. "Roll" the window across the entire sequence.
+    for start in 1..=token_sequence.len() - n {
+        let old_token = token_sequence[start - 1];
+        let new_token = token_sequence[start + n - 1];
+        
+        // --- FIX HERE ---
+        // All multiplications are performed in the u128 context.
+        let old_contrib = ((old_token as u128 * h as u128) % modulus_u128) as u64;
+
+        current_hash = (current_hash.wrapping_sub(old_contrib).wrapping_add(modulus)) % modulus;
+        current_hash = ((current_hash as u128 * base as u128) % modulus_u128) as u64;
+        current_hash = ((current_hash as u128 + new_token as u128) % modulus_u128) as u64;
+        
+        hash_map.entry(current_hash).or_default().push(start);
+    }
+    
+    // 3. Check for collisions and output the result (unchanged).
+    for (_hash, positions) in hash_map {
+        if positions.len() > 1 {
+            for i in 0..positions.len() {
+                for j in i + 1..positions.len() {
+                    let p1 = positions[i];
+                    let p2 = positions[j];
+
+                    // Prevent out-of-bounds access if p2 is too close to the end
+                    if p1 + n > token_sequence.len() || p2 + n > token_sequence.len() {
+                        continue;
+                    }
+                    
+                    let seq1 = &token_sequence[p1..p1 + n];
+                    let seq2 = &token_sequence[p2..p2 + n];
+
+                    if seq1 == seq2 {
+                        let info1 = &token_info[p1];
+                        let info2 = &token_info[p2];
+
+                        if info1.file_path == info2.file_path && info1.line_number == info2.line_number {
+                            continue;
+                        }
+
+                        let tokens_str: Vec<&str> = seq1
+                            .iter()
+                            .map(|&id| id_to_token.get(&id).unwrap().as_str())
+                            .collect();
+                        
+                        output.push_str(&format!(
+                            "Found a duplicate of {} tokens: line {} in file '{}' and line {} in file '{}'.\n  --> Code: \"{}\"\n\n",
+                            n, info1.line_number, info1.file_path, info2.line_number, info2.file_path, tokens_str.join(" ")
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    if output.is_empty() {
+        println!("No duplicates found.");
+    }
+
+    Ok(output)
 }
